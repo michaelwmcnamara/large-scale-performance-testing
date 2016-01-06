@@ -15,7 +15,7 @@ class ArticleUrls(key: String) {
 
   def getUrls: Future[List[String]] = {
     val until = DateTime.now
-    val from = until.minusDays(24)
+    val from = until.minusHours(24)
 
     val searchQuery = new SearchQuery()
       .fromDate(from)
@@ -25,7 +25,7 @@ class ArticleUrls(key: String) {
       .showFields("all")
       .showTags("all")
       .page(1)
-      .pageSize(3)
+      .pageSize(20)
       .orderBy("oldest")
       //      .tag("tone/minute-by-minute")
       .contentType("liveblog")
