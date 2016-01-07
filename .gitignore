@@ -7,6 +7,7 @@ config.config
 
 #results output
 results.csv
+liveBlogPerformanceData.csv
 
 #********************************************************************************************************
 #stock intellij gitignore from https://www.gitignore.io/api/playframework,sbt,eclipse,intellij,scala,osx
