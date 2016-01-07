@@ -17,5 +17,9 @@ libraryDependencies ++= Seq(
   //Taig communicator - wraps OkHttp fro Scala
   "io.taig" %% "communicator" % "2.2.2",
   //scalax.io
-  "org.scalaforge" % "scalax" % "0.1"
+  "org.scalaforge" % "scalax" % "0.1",
+  //aws S3 stuff
+  "com.amazonaws" % "aws-java-sdk-s3" % "1.10.44",
+  // typesafe config
+  "com.typesafe" % "config" % "1.3.0"
 )
