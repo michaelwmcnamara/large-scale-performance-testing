@@ -7,37 +7,50 @@ import java.io.FileWriter
 import app.apiutils.{ArticleUrls, WebPageTest}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.GetObjectRequest
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
 object App {
   def main(args: Array[String]) {
-    val configFile = "config.conf"
-    val resultsFile = "performanceResults.csv"
-    val output:FileWriter = new FileWriter("results.txt")
-    val s3Client = new AmazonS3Client()
-    val s3Object = s3Client.getObject(new GetObjectRequest( "capi-wpt-querybot", "config.conf"))
-    val objectData = s3Object.getObjectContent()
-    val configString = scala.io.Source.fromInputStream(objectData).mkString
-    val conf = ConfigFactory.parseString(configString)
+//  Define location of configuration and output Files
+    val s3Bucket = "capi-wpt-querybot"
+    val configFileName = "config.conf"
+    val output: FileWriter = new FileWriter("results.csv")
+    var resultsString: String = "Article Url, Time to First Paint, Time to Document Complete, Time to Fully Loaded, Speed Index \n"
+//  Retrieve configuration from S3 bucket
+    val conf = getS3Config(s3Bucket, configFileName)
     val contentApiKey:String = conf.getString("content.api.key")
     val wptBaseUrl:String = conf.getString("wpt.api.baseUrl")
     val wptApiKey:String = conf.getString("wpt.api.key")
+//  Obtain a list of urls from the content API
     val articleUrlList = new ArticleUrls(contentApiKey)
+//  For each url in the list send a test request to the webpagetest API, and follow the resulting url to get the results
     articleUrlList.getUrls map { urlList => for (url <- urlList ) yield {
-      println("url: " + url)
-      output.write("page url: " + url + "\n")
-      output.write("Time to First Paint, Time to Document Complete, Time to Fully Loaded, Speed Index \n")
-      val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-      val resultPage: String = webpageTest.sendPage(url)
-      val testResults: webpageTest.ResultElement = webpageTest.getResults(resultPage)
-      println("test results: " + testResults.toStringList())
-      output.write(testResults.toString() + "\n")
-    }
+            println("url: " + url)
+            resultsString = resultsString.concat(url + ", ")
+//          Define new web-page-test API request
+            val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+//          Test the url returned from CAPI
+            val webPageTestResults: webpageTest.ResultElement = webpageTest.test(url)
+            println("test results: " + webPageTestResults.toStringList())
+            resultsString = resultsString.concat(webPageTestResults.toString() + "\n")
+          }
+      //write out results
+      println("Final Results:\n" + resultsString)
+      output.write(resultsString)
       output.close()
     }
+  }
+
+  def getS3Config(bucketName: String, configFileName: String): Config = {
+    val s3Client = new AmazonS3Client()
+    val s3Object = s3Client.getObject(new GetObjectRequest( bucketName, configFileName))
+    val objectData = s3Object.getObjectContent
+    val configString = scala.io.Source.fromInputStream(objectData).mkString
+    val conf = ConfigFactory.parseString(configString)
+    conf
   }
 }
 

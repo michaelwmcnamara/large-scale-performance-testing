@@ -6,7 +6,7 @@
 config.config
 
 #results output
-results.txt
+results.csv
 
 #********************************************************************************************************
 #stock intellij gitignore from https://www.gitignore.io/api/playframework,sbt,eclipse,intellij,scala,osx
