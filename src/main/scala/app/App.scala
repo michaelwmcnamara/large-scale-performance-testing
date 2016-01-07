@@ -5,24 +5,26 @@ package app
 import java.io.FileWriter
 
 import app.apiutils.{ArticleUrls, WebPageTest}
+import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model.GetObjectRequest
+import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
 
 
 object App {
   def main(args: Array[String]) {
-    val configFile = "config.config"
+    val configFile = "config.conf"
     val resultsFile = "performanceResults.csv"
     val output:FileWriter = new FileWriter("results.txt")
-    var contentApiKey:String = ""
-    var wptBaseUrl:String = ""
-    var wptApiKey:String = ""
-    for (line <- Source.fromFile(configFile).getLines()){
-      if (line.contains("content.api.key")){contentApiKey = line.takeRight((line.length - line.indexOf("=")) - 1) }
-      if (line.contains("wpt.api.baseUrl")){wptBaseUrl = line.takeRight((line.length - line.indexOf("=")) - 1) }
-      if (line.contains("wpt.api.key")){wptApiKey = line.takeRight((line.length - line.indexOf("=")) - 1) }
-    }
+    val s3Client = new AmazonS3Client()
+    val s3Object = s3Client.getObject(new GetObjectRequest( "capi-wpt-querybot", "config.conf"))
+    val objectData = s3Object.getObjectContent()
+    val configString = scala.io.Source.fromInputStream(objectData).mkString
+    val conf = ConfigFactory.parseString(configString)
+    val contentApiKey:String = conf.getString("content.api.key")
+    val wptBaseUrl:String = conf.getString("wpt.api.baseUrl")
+    val wptApiKey:String = conf.getString("wpt.api.key")
     val articleUrlList = new ArticleUrls(contentApiKey)
     articleUrlList.getUrls map { urlList => for (url <- urlList ) yield {
       println("url: " + url)
@@ -33,20 +35,20 @@ object App {
       val testResults: webpageTest.ResultElement = webpageTest.getResults(resultPage)
       println("test results: " + testResults.toStringList())
       output.write(testResults.toString() + "\n")
-      //output.flush()
     }
       output.close()
     }
   }
 }
 
-// todo - how to store and present data
-// todo - how to schedule job
-// todo - run multiple tests on different connection speeds for each page
-// todo - look again at what is the most useful data to surface
-// todo - refactor with better name
-// todo - add to github
+// todo - change code to concatenate results to one big string in the loop then write out once at the end
+// todo - once this is done, use code in example here: https://github.com/aws/aws-sdk-java/blob/master/src/samples/AmazonS3/S3Sample.java to write to S3
+// todo - local version is fine but need to get libraries and build working in version cloned from github
+// todo - how to store and present data - ie output to S3 when running on AWS then acces via web page - td 1 and 2 are the start of this
+// todo - how to schedule job - ask Dom about adding as AWS Lamba function - needs to build into a .jar file to work in Lamda - Will catch up with Dom again to look at this
+// todo - add running multiple tests on different connection speeds for each page
+// todo - look again at what is the most useful data to surface - think of your audience
+// todo - capi queries beyond a certain size will time out - need to be able to handle this - ie split query into two or something
 // todo - get local instance of webpagetest serving api - get appropriate key
-// todo - look at alerting functionality
-// todo - refactor - use futures to try and make this more efficient
-// todo - queries beyond a certain size will time out - need to be able to handle this - ie split query into two or something
+// todo - look at alerting functionality - possibly use event monitoring tools in AWS?
+// todo - refactor - clean all the ugly! - use futures to try and make this more efficient
