@@ -36,6 +36,11 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
   }
 
+  def test(gnmPageUrl:String): ResultElement = {
+    val resultPage: String = sendPage(gnmPageUrl)
+    val testResults: ResultElement = getResults(resultPage)
+    testResults
+  }
 
 
   def sendPage(gnmPageUrl:String): String = {
