@@ -22,34 +22,35 @@ object App {
     val s3BucketName = "capi-wpt-querybot"
     val configFileName = "config.conf"
     val outputFileName = "liveBlogPerformanceData.csv"
-    //  Initialize results string - this will be used to acculate the results from each test so that only one write to file is needed.
-    var resultsString: String = "Article Url, Time to First Paint, Time to Document Complete, Time to Fully Loaded, Speed Index \n"
-    //  Define s3Client to all access to config file and enable uploading of results to S3
+//  Initialize results string - this will be used to acculate the results from each test so that only one write to file is needed.
+    var resultsString: String = "Article Url, Time to First Paint, Time to Document Complete, kB transferred at Document Complete, Time to Fully Loaded, kB transferred at Fully Loaded, Speed Index \n"
+//  Define s3Client to all access to config file and enable uploading of results to S3
     val s3Client = new AmazonS3Client()
     //  Retrieve configuration from S3 bucket
     val conf = getS3Config(s3Client, s3BucketName, configFileName)
     val contentApiKey: String = conf.getString("content.api.key")
     val wptBaseUrl: String = conf.getString("wpt.api.baseUrl")
     val wptApiKey: String = conf.getString("wpt.api.key")
-    //  Obtain a list of urls from the content API
+    //  Define new CAPI Query object
     val articleUrlList = new ArticleUrls(contentApiKey)
-    //  For each url in the list send a test request to the webpagetest API, and follow the resulting url to get the results
-    val articleurls: List[String] = articleUrlList.getUrls
-    if (articleurls.isEmpty)
+    //  Request a list of urls from Content API
+    val articleUrls: List[String] = articleUrlList.getUrls
+    if (articleUrls.isEmpty)
       println("no results returned")
     else {
-      val testResults: List[String] = articleurls.map(url => testUrl(url, wptBaseUrl, wptApiKey))
-      println(testResults)
-      resultsString = resultsString.concat(testResults.mkString)
-      println("resultsString with results: \n" + resultsString)
-    }
+            // Send each article URL to the webPageTest API and obtain resulting data
+            val testResults: List[String] = articleUrls.map(url => testUrl(url, wptBaseUrl, wptApiKey))
+            // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
+            resultsString = resultsString.concat(testResults.mkString)
+            println("Final results: \n" + resultsString)
+        }
     if (!iamTestingLocally) {
-      System.out.println("Uploading a new object to S3 from a file\n")
+      System.out.println("Writing the following to S3:\n" + resultsString)
       s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, resultsString)));
     }
     else {
       val output: FileWriter = new FileWriter(outputFileName)
-      println("Final Results:\n" + resultsString)
+      println("Writing the following to local file system:\n" + resultsString)
       output.write(resultsString)
       output.close()
     }
@@ -85,13 +86,4 @@ object App {
     returnString
   }
 }
-// Done! - once this is done, use code in example here: https://github.com/aws/aws-sdk-java/blob/master/src/samples/AmazonS3/S3Sample.java to write to S3
 
-// todo - weird future handling nees to be fixed
-// todo - how to schedule job - ask Dom about adding as AWS Lamba function - needs to build into a .jar file to work in Lamda - Will catch up with Dom again to look at this
-// todo - add running multiple tests on different connection speeds for each page
-// todo - look again at what is the most useful data to surface - think of your audience
-// todo - capi queries beyond a certain size will time out - need to be able to handle this - ie split query into two or something
-// todo - get local instance of webpagetest serving api - get appropriate key
-// todo - look at alerting functionality - possibly use event monitoring tools in AWS?
-// todo - refactor - clean all the ugly! - use futures to try and make this more efficient

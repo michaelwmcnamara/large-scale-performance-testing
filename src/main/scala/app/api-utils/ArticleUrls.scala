@@ -27,7 +27,6 @@ class ArticleUrls(key: String) {
       .page(1)
       .pageSize(20)
       .orderBy("oldest")
-      //      .tag("tone/minute-by-minute")
       .contentType("liveblog")
 
     val apiResponse = contentApiClient.getResponse(searchQuery)

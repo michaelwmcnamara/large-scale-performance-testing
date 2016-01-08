@@ -16,10 +16,12 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   val wptResponseFormat:String = "xml"
   implicit val httpClient = new OkHttpClient()
 
-  class ResultElement(tFP:Int, tDC: Int, tFL: Int, sI: Int) {
+  class ResultElement(tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int) {
     val timeFirstPaint: Int = tFP
     val timeDocComplete: Int = tDC
+    val bytesInDoccomplete: Int = bDC
     val timeFullyLoaded: Int = tFL
+    val bytesInFullyLoaded: Int = bFL
     val speedIndex: Int = sI
 
 
@@ -32,7 +34,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
 
     override def toString(): String = {
-      timeFirstPaint.toString + "ms, " + timeDocComplete.toString + "ms, " + timeFullyLoaded.toString + "ms, " + speedIndex.toString
+      timeFirstPaint.toString + "ms, " + timeDocComplete.toString + "ms, " + (bytesInDoccomplete/1000) + "kB, " + timeFullyLoaded.toString + "ms, " + (bytesInFullyLoaded/1000) + "kB, " + speedIndex.toString
     }
   }
 
@@ -81,9 +83,11 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val result: ResultElement = new ResultElement(
       (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "firstPaint").text.toInt,
       (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "docTime").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "bytesInDoc").text.toInt,
       (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "fullyLoaded").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "bytesIn").text.toInt,
       (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "SpeedIndex").text.toInt)
-    println(result.toString)
+    println(result.toString())
     result
   }
 
