@@ -26,7 +26,6 @@ class ArticleUrls(key: String) {
       .page(1)
       .pageSize(20)
       .orderBy("oldest")
-      //      .tag("tone/minute-by-minute")
       .contentType("liveblog")
 
     contentApiClient.getResponse(searchQuery) map { response =>

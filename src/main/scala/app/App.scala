@@ -25,7 +25,7 @@ object App {
     val configFileName = "config.conf"
     val outputFileName = "liveBlogPerformanceData.csv"
 //  Initialize results string - this will be used to acculate the results from each test so that only one write to file is needed.
-    var resultsString: String = "Article Url, Time to First Paint, Time to Document Complete, Time to Fully Loaded, Speed Index \n"
+    var resultsString: String = "Article Url, Time to First Paint, Time to Document Complete, kB transferred at Document Complete, Time to Fully Loaded, kB transferred at Fully Loaded, Speed Index \n"
 //  Define s3Client to all access to config file and enable uploading of results to S3
     val s3Client = new AmazonS3Client()
 //  Retrieve configuration from S3 bucket
@@ -85,13 +85,4 @@ object App {
   }
 }
 
-// Done! - once this is done, use code in example here: https://github.com/aws/aws-sdk-java/blob/master/src/samples/AmazonS3/S3Sample.java to write to S3
 
-// todo - weird future handling nees to be fixed
-// todo - how to schedule job - ask Dom about adding as AWS Lamba function - needs to build into a .jar file to work in Lamda - Will catch up with Dom again to look at this
-// todo - add running multiple tests on different connection speeds for each page
-// todo - look again at what is the most useful data to surface - think of your audience
-// todo - capi queries beyond a certain size will time out - need to be able to handle this - ie split query into two or something
-// todo - get local instance of webpagetest serving api - get appropriate key
-// todo - look at alerting functionality - possibly use event monitoring tools in AWS?
-// todo - refactor - clean all the ugly! - use futures to try and make this more efficient
