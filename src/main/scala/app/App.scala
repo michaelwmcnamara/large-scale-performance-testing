@@ -15,7 +15,7 @@ object App {
   def main(args: Array[String]) {
     /*  This value stops the forces the config to be read and the output file to be written locally rather than reading and writing from/to S3
     #####################    this should be set to false before merging!!!!################*/
-    val iamTestingLocally = true
+    val iamTestingLocally = false
     /*#####################################################################################*/
 
 
@@ -24,7 +24,7 @@ object App {
     val configFileName = "config.conf"
     val outputFileName = "liveBlogPerformanceData.csv"
 //  Initialize results string - this will be used to acculate the results from each test so that only one write to file is needed.
-    var resultsString: String = "Article Url, Time to First Paint, Time to Document Complete, kB transferred at Document Complete, Time to Fully Loaded, kB transferred at Fully Loaded, Speed Index \n"
+    var resultsString: String = "Article Url, Test Type, Time to First Paint, Time to Document Complete, kB transferred at Document Complete, Time to Fully Loaded, kB transferred at Fully Loaded, Speed Index \n"
     var contentApiKey: String = ""
     var wptBaseUrl: String = ""
     var wptApiKey: String = ""
@@ -94,9 +94,11 @@ object App {
     var returnString: String = url + ", "
     //  Define new web-page-test API request and send it the url to test
     val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-    val webPageTestResults: webpageTest.ResultElement = webpageTest.test(url)
+    val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
+    val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url)
     //  Add results to string which will eventually become the content of our results file
-    returnString = returnString.concat(webPageTestResults.toString() + "\n")
+    returnString = returnString.concat("Desktop, " + webPageDesktopTestResults.toString() + "\n")
+    returnString = returnString.concat(", Android/3G, " + webPageMobileTestResults.toString() + "\n")
     returnString
   }
 }
