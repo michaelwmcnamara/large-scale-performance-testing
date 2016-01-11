@@ -38,16 +38,38 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
   }
 
-  def test(gnmPageUrl:String): ResultElement = {
+  def desktopChromeCableTest(gnmPageUrl:String): ResultElement = {
     val resultPage: String = sendPage(gnmPageUrl)
     val testResults: ResultElement = getResults(resultPage)
     testResults
   }
 
+  def mobileChrome3GTest(gnmPageUrl:String): ResultElement = {
+
+    val resultPage: String = sendPage(gnmPageUrl)
+    val testResults: ResultElement = getResults(resultPage)
+    testResults
+  }
 
   def sendPage(gnmPageUrl:String): String = {
 
     val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey
+    val request: Request = new Request.Builder()
+      .url(getUrl)
+      .get()
+      .build()
+
+    println("sending request: " + request.toString)
+
+    val response: Response = httpClient.newCall(request).execute()
+    val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
+    val resultPage: String =  (responseXML \\ "xmlUrl").text
+    resultPage
+  }
+
+  def sendMobile3GPage(gnmPageUrl:String): String = {
+
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=Dulles:Chrome.3G"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
