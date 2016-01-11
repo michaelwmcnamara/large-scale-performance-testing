@@ -8,13 +8,14 @@ import app.apiutils.{ArticleUrls, WebPageTest}
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{GetObjectRequest, PutObjectRequest}
 import com.typesafe.config.{Config, ConfigFactory}
+import scala.io.Source
 
 
 object App {
   def main(args: Array[String]) {
-    /*  This value stops the output file from being uploaded to S3 and instead stores it locally
+    /*  This value stops the forces the config to be read and the output file to be written locally rather than reading and writing from/to S3
     #####################    this should be set to false before merging!!!!################*/
-    val iamTestingLocally = false
+    val iamTestingLocally = true
     /*#####################################################################################*/
 
 
@@ -24,13 +25,26 @@ object App {
     val outputFileName = "liveBlogPerformanceData.csv"
 //  Initialize results string - this will be used to acculate the results from each test so that only one write to file is needed.
     var resultsString: String = "Article Url, Time to First Paint, Time to Document Complete, kB transferred at Document Complete, Time to Fully Loaded, kB transferred at Fully Loaded, Speed Index \n"
-//  Define s3Client to all access to config file and enable uploading of results to S3
-    val s3Client = new AmazonS3Client()
-    //  Retrieve configuration from S3 bucket
-    val conf = getS3Config(s3Client, s3BucketName, configFileName)
-    val contentApiKey: String = conf.getString("content.api.key")
-    val wptBaseUrl: String = conf.getString("wpt.api.baseUrl")
-    val wptApiKey: String = conf.getString("wpt.api.key")
+    var contentApiKey: String = ""
+    var wptBaseUrl: String = ""
+    var wptApiKey: String = ""
+      //  Define s3Client to all access to config file and enable uploading of results to S3 - due to scoping, this must be defined even if testing locally
+      val s3Client = new AmazonS3Client()
+    if(!iamTestingLocally) {
+      //  Retrieve configuration from S3 bucket
+      val conf = getS3Config(s3Client, s3BucketName, configFileName)
+      contentApiKey = conf.getString("content.api.key")
+      wptBaseUrl = conf.getString("wpt.api.baseUrl")
+      wptApiKey = conf.getString("wpt.api.key")
+    } else
+      {
+            for (line <- Source.fromFile(configFileName).getLines()){
+              if (line.contains("content.api.key")){contentApiKey = line.takeRight((line.length - line.indexOf("=")) - 1) }
+              if (line.contains("wpt.api.baseUrl")){wptBaseUrl = line.takeRight((line.length - line.indexOf("=")) - 1) }
+              if (line.contains("wpt.api.key")){wptApiKey = line.takeRight((line.length - line.indexOf("=")) - 1) }
+            }
+      }
+
     //  Define new CAPI Query object
     val articleUrlList = new ArticleUrls(contentApiKey)
     //  Request a list of urls from Content API
