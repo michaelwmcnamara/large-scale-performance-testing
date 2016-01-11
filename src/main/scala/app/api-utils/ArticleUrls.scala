@@ -25,7 +25,7 @@ class ArticleUrls(key: String) {
       .showFields("all")
       .showTags("all")
       .page(1)
-      .pageSize(2)
+      .pageSize(20)
       .orderBy("oldest")
       .contentType("liveblog")
 
