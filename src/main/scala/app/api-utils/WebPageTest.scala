@@ -104,12 +104,12 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def refineResults(rawXMLResult: Elem): ResultElement = {
     val result: ResultElement = new ResultElement(
-      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "firstPaint").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "docTime").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "bytesInDoc").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "fullyLoaded").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "bytesIn").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "SpeedIndex").text.toInt)
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "firstPaint").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "docTime").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "bytesInDoc").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "fullyLoaded").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "bytesIn").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "SpeedIndex").text.toInt)
     println(result.toString())
     result
   }

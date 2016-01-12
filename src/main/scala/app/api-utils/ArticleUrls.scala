@@ -14,7 +14,7 @@ class ArticleUrls(key: String) {
   val contentApiClient = new GuardianContentClient(key)
 
   def getUrls: List[String] = {
-    getLiveBlogUrls ++ getMinByMinUrls
+    return getLiveBlogUrls ++ getMinByMinUrls
   }
 
   def getLiveBlogUrls: List[String] = {
@@ -36,7 +36,7 @@ class ArticleUrls(key: String) {
     val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
     val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-        println(result.webUrl)
+      println("liveBlog result: " + result.webUrl)
         result.webUrl }
     liveBlogUrlString
   }
@@ -55,12 +55,12 @@ class ArticleUrls(key: String) {
       .page(1)
       .pageSize(20)
       .orderBy("oldest")
-      .tag("minutebyminute")
+      .tag("tone/minutebyminute")
 
     val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
     val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-      println(result.webUrl)
+      println("minBymin result: " + result.webUrl)
       result.webUrl }
     liveBlogUrlString
   }

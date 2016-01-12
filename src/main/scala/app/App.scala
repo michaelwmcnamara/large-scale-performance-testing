@@ -23,7 +23,7 @@ object App {
     val s3BucketName = "capi-wpt-querybot"
     val configFileName = "config.conf"
     val outputFileName = "liveBlogPerformanceData.csv"
-//  Initialize results string - this will be used to acculate the results from each test so that only one write to file is needed.
+//  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
     var resultsString: String = "Article Url, Test Type, Time to First Paint, Time to Document Complete, kB transferred at Document Complete, Time to Fully Loaded, kB transferred at Fully Loaded, Speed Index \n"
     var contentApiKey: String = ""
     var wptBaseUrl: String = ""
