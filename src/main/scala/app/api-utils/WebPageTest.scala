@@ -64,6 +64,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val response: Response = httpClient.newCall(request).execute()
     val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
     val resultPage: String =  (responseXML \\ "xmlUrl").text
+    println(resultPage)
     resultPage
   }
 
@@ -103,12 +104,12 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def refineResults(rawXMLResult: Elem): ResultElement = {
     val result: ResultElement = new ResultElement(
-      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "firstPaint").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "docTime").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "bytesInDoc").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "fullyLoaded").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "bytesIn").text.toInt,
-      (rawXMLResult \\ "response" \ "data" \ "average" \ "firstView" \ "SpeedIndex").text.toInt)
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "firstPaint").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "docTime").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "bytesInDoc").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "fullyLoaded").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "bytesIn").text.toInt,
+      (rawXMLResult \\ "response" \ "data" \ "run" \ "1" \ "firstView" \ "SpeedIndex").text.toInt)
     println(result.toString())
     result
   }
