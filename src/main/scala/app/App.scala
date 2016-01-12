@@ -58,6 +58,7 @@ object App {
             resultsString = resultsString.concat(testResults.mkString)
             println("Final results: \n" + resultsString)
         }
+    articleUrlList.shutDown
     if (!iamTestingLocally) {
       println("Writing the following to S3:\n" + resultsString)
       s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, resultsString)));
@@ -69,7 +70,6 @@ object App {
       output.close()
     }
     println(resultsString)
-
   }
 
 
