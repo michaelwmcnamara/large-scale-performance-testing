@@ -15,7 +15,7 @@ object App {
   def main(args: Array[String]) {
     /*  This value stops the forces the config to be read and the output file to be written locally rather than reading and writing from/to S3
     #####################    this should be set to false before merging!!!!################*/
-    val iamTestingLocally = false
+    val iamTestingLocally = true
     /*#####################################################################################*/
 
 
@@ -59,7 +59,7 @@ object App {
             println("Final results: \n" + resultsString)
         }
     if (!iamTestingLocally) {
-      System.out.println("Writing the following to S3:\n" + resultsString)
+      println("Writing the following to S3:\n" + resultsString)
       s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, resultsString)));
     }
     else {
@@ -69,6 +69,7 @@ object App {
       output.close()
     }
     println(resultsString)
+
   }
 
 

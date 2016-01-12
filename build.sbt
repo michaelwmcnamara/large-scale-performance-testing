@@ -4,7 +4,14 @@ version := "1.0"
 
 scalaVersion := "2.11.7"
 
+//javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+
+
+
 libraryDependencies ++= Seq(
+// Dependencies needed to build as an AWS Lambda file
+  "com.amazonaws" % "aws-lambda-java-core" % "1.0.0",
+  "com.amazonaws" % "aws-lambda-java-events" % "1.0.0",
   "com.gu" %% "content-api-client" % "7.3",
   // Test dependencies
   "org.specs2" %% "specs2" % "2.3.12" % "test",
@@ -23,3 +30,8 @@ libraryDependencies ++= Seq(
   // typesafe config
   "com.typesafe" % "config" % "1.3.0"
 )
+
+assemblyMergeStrategy in assembly := {
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case x => MergeStrategy.first
+}

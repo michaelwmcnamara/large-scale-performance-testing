@@ -16,7 +16,7 @@ class ArticleUrls(key: String) {
   def getUrls: List[String] = {
     getLiveBlogUrls ++ getMinByMinUrls
   }
-  
+
   def getLiveBlogUrls: List[String] = {
     val until = DateTime.now
     val from = until.minusHours(24)
