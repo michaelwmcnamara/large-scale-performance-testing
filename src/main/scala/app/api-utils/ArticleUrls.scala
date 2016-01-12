@@ -17,6 +17,9 @@ class ArticleUrls(key: String) {
     return getLiveBlogUrls ++ getMinByMinUrls
   }
 
+  def shutDown = {
+    contentApiClient.shutdown()
+  }
   def getLiveBlogUrls: List[String] = {
     val until = DateTime.now
     val from = until.minusHours(24)
