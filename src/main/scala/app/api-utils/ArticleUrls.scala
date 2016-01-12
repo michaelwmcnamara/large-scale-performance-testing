@@ -14,10 +14,14 @@ class ArticleUrls(key: String) {
   val contentApiClient = new GuardianContentClient(key)
 
   def getUrls: List[String] = {
+    return getLiveBlogUrls ++ getMinByMinUrls
+  }
+
+  def getLiveBlogUrls: List[String] = {
     val until = DateTime.now
     val from = until.minusHours(24)
 
-    val searchQuery = new SearchQuery()
+    val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)
       .toDate(until)
       .showBlocks("all")
@@ -29,12 +33,38 @@ class ArticleUrls(key: String) {
       .orderBy("oldest")
       .contentType("liveblog")
 
-    val apiResponse = contentApiClient.getResponse(searchQuery)
+    val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
-    val urlString: List[String] = for (result <- returnedResponse.results) yield {
-        println(result.webUrl)
+    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
+      println("liveBlog result: " + result.webUrl)
         result.webUrl }
-    urlString
+    liveBlogUrlString
   }
+
+  def getMinByMinUrls: List[String] = {
+    val until = DateTime.now
+    val from = until.minusHours(24)
+
+    val liveBlogSearchQuery = new SearchQuery()
+      .fromDate(from)
+      .toDate(until)
+      .showBlocks("all")
+      .showElements("all")
+      .showFields("all")
+      .showTags("all")
+      .page(1)
+      .pageSize(20)
+      .orderBy("oldest")
+      .tag("tone/minutebyminute")
+
+    val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
+    val returnedResponse = Await.result(apiResponse, (20, SECONDS))
+    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
+      println("minBymin result: " + result.webUrl)
+      result.webUrl }
+    liveBlogUrlString
+  }
+
+
 }
 
