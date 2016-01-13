@@ -98,24 +98,25 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("Processing response and checking if results are ready")
     var testResults: Elem = scala.xml.XML.loadString(response.body.string)
     var iterator: Int = 0
-    val maxCount: Int = 10
-    val msTimeBetweenPings: Int = 20000
+    val msmaxTime: Int = 90000
+    val msTimeBetweenPings: Int = 5000
+    val maxCount: Int = msmaxTime / msTimeBetweenPings
     while (((testResults \\ "statusCode").text.toInt != 200) && (iterator < maxCount)) {
-      println(DateTime.now + " " + (testResults \\ "statusCode").text + " statusCode response - test not ready. " + iterator + " attempts\n")
+      println(DateTime.now + " " + (testResults \\ "statusCode").text + " statusCode response - test not ready. " + iterator + " of " + maxCount + " attempts\n")
       Thread.sleep(msTimeBetweenPings)
       iterator += 1
       response = httpClient.newCall(request).execute()
       testResults = scala.xml.XML.loadString(response.body.string)
     }
     if (((testResults \\ "statusCode").text.toInt == 200) && ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0) && ((testResults \\ "response" \ "data" \ "successfulRVRuns").text.toInt > 0)) {
-      println("\n" + DateTime.now + " statusCode == 200: Page ready! \n Refining results")
+      println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds\n Refining results")
       refineResults(testResults)
     } else {
         if((testResults \\ "statusCode").text.toInt == 200) {
           println(DateTime.now + " Test results show 0 successful runs ")
           failedTest()
         }else{
-          println(DateTime.now + "Test timed out after " + (iterator * msTimeBetweenPings)/1000 + " seconds")
+          println(DateTime.now + " Test timed out after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds")
           failedTestTimeout()
         }
       }

@@ -15,7 +15,8 @@ class ArticleUrls(key: String) {
 
   def getUrls: List[String] = {
     println("Running Capi Queries")
-    return getLiveBlogUrls ++ getMinByMinUrls
+    val resultString: List[String] = getLiveBlogUrls ++ getMinByMinUrls
+    resultString.distinct
   }
 
   def shutDown = {
