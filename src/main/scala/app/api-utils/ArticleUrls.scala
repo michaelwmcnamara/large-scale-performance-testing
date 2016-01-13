@@ -14,13 +14,16 @@ class ArticleUrls(key: String) {
   val contentApiClient = new GuardianContentClient(key)
 
   def getUrls: List[String] = {
+    println("Running Capi Queries")
     return getLiveBlogUrls ++ getMinByMinUrls
   }
 
   def shutDown = {
+    println("Closing connection to Content API")
     contentApiClient.shutdown()
   }
   def getLiveBlogUrls: List[String] = {
+    println("Creating CAPI query")
     val until = DateTime.now
     val from = until.minusHours(24)
 
@@ -35,9 +38,11 @@ class ArticleUrls(key: String) {
       .pageSize(20)
       .orderBy("oldest")
       .contentType("liveblog")
+    println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
     val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
+    println("CAPI has returned response")
     val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
       println("liveBlog result: " + result.webUrl)
         result.webUrl }
@@ -59,9 +64,12 @@ class ArticleUrls(key: String) {
       .pageSize(20)
       .orderBy("oldest")
       .tag("tone/minutebyminute")
+    println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
     val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
+
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
+    println("CAPI has returned a response")
     val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
       println("minBymin result: " + result.webUrl)
       result.webUrl }
