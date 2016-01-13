@@ -15,7 +15,8 @@ class ArticleUrls(key: String) {
 
   def getUrls: List[String] = {
     println("Running Capi Queries")
-    return getLiveBlogUrls ++ getMinByMinUrls
+    val resultString: List[String] = getLiveBlogUrls ++ getMinByMinUrls
+    resultString.distinct
   }
 
   def shutDown = {
@@ -35,7 +36,7 @@ class ArticleUrls(key: String) {
       .showFields("all")
       .showTags("all")
       .page(1)
-      .pageSize(20)
+      .pageSize(19)
       .orderBy("oldest")
       .contentType("liveblog")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
@@ -61,7 +62,7 @@ class ArticleUrls(key: String) {
       .showFields("all")
       .showTags("all")
       .page(1)
-      .pageSize(20)
+      .pageSize(19)
       .orderBy("oldest")
       .tag("tone/minutebyminute")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
