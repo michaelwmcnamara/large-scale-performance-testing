@@ -28,7 +28,11 @@ libraryDependencies ++= Seq(
   //aws S3 stuff
   "com.amazonaws" % "aws-java-sdk-s3" % "1.10.44",
   // typesafe config
-  "com.typesafe" % "config" % "1.3.0"
+  "com.typesafe" % "config" % "1.3.0",
+  // sbt  command tool dependency
+  "org.scala-sbt" % "command" % "0.13.5"
+  // sbt  task tool dependency
+  //"org.scala-sbt" % "task" % "0.13.5"
 )
 
 assemblyMergeStrategy in assembly := {

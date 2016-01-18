@@ -6,7 +6,7 @@ import java.io._
 
 import app.apiutils.{ArticleUrls, WebPageTest}
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{GetObjectRequest, PutObjectRequest}
+import com.amazonaws.services.s3.model._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.DateTime
 
@@ -25,9 +25,16 @@ object App {
     //  Define names of s3bucket, configuration and output Files
     val s3BucketName = "capi-wpt-querybot"
     val configFileName = "config.conf"
-    val outputFileName = "liveBlogPerformanceData.csv"
+//    val outputFileName = "liveBlogPerformanceData.csv"
+    val outputFileName = "liveBlogPerformanceData.html"
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
-    var resultsString: String = "Article Url, Test Type, Time to First Paint, Time to Document Complete, kB transferred at Document Complete, Time to Fully Loaded, kB transferred at Fully Loaded, Speed Index, Status\n"
+    val hTMLPageHeader:String = "<!DOCTYPE html>\n<html>\n<body>\n"
+    val hTMLJobStarted: String = "Job started at: " + DateTime.now + "\n"
+    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLTableFooters:String = "</table>"
+    val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
+    val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
+    var resultsHtmlString: String = hTMLPageHeader + hTMLJobStarted + hTMLTableHeaders
     var contentApiKey: String = ""
     var wptBaseUrl: String = ""
     var wptApiKey: String = ""
@@ -80,25 +87,33 @@ object App {
     }
     else {
             // Send each article URL to the webPageTest API and obtain resulting data
-            val testResults: List[String] = articleUrls.map(url => testUrl(url, wptBaseUrl, wptApiKey))
+            val testResults: List[String] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey))
             // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
-            resultsString = resultsString.concat(testResults.mkString)
-            println(DateTime.now + " Final results: \n" + resultsString)
+            resultsHtmlString = resultsHtmlString.concat(testResults.mkString)
+            println(DateTime.now + " Results added to accumulator string \n")
         }
     println(DateTime.now + " Closing Content API query connection")
     articleUrlList.shutDown
     if (!iamTestingLocally) {
-      println(DateTime.now + " Writing the following to S3:\n" + resultsString)
-      s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, resultsString)));
+/*      val acl: AccessControlList = new AccessControlList()
+      acl.grantPermission(new CanonicalGrantee("d25639fbe9c19cd30a4c0f43fbf00e2d3f96400a9aa8dabfbbebe1906Example"), Permission.ReadAcp);
+      acl.grantPermission(GroupGrantee.AllUsers, Permission.Read);
+      acl.grantPermission(new EmailAddressGrantee("user@email.com"), Permission.WriteAcp);*/
+      resultsHtmlString = resultsHtmlString.concat(hTMLTableFooters)
+      resultsHtmlString = resultsHtmlString.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+      println(DateTime.now + " Writing the following to S3:\n" + resultsHtmlString)
+      s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, resultsHtmlString)))
     }
     else {
       val output: FileWriter = new FileWriter(outputFileName)
-      println(DateTime.now + " Writing the following to local file " + outputFileName + ":\n" + resultsString)
-      output.write(resultsString)
+      println(DateTime.now + " Writing the following to local file " + outputFileName + ":\n" + resultsHtmlString)
+      resultsHtmlString = resultsHtmlString.concat(hTMLTableFooters)
+      resultsHtmlString = resultsHtmlString.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+      output.write(resultsHtmlString)
       output.close()
       println(DateTime.now + " Writing to file: " + outputFileName + " complete. \n")
     }
-    println(DateTime.now + " The following records written to " + outputFileName + ":\n" + resultsString)
+    println(DateTime.now + " The following records written to " + outputFileName + ":\n" + resultsHtmlString)
     println(DateTime.now + " Job complete")
   }
 
@@ -126,8 +141,26 @@ object App {
     file
   }
 
-  def testUrl(url: String, wptBaseUrl: String, wptApiKey: String): String = {
-    var returnString: String = url + ", "
+/*  def testUrlReturnString(url: String, wptBaseUrl: String, wptApiKey: String): String = {
+    var returnString: String = ""
+    //  Define new web-page-test API request and send it the url to test
+    println(DateTime.now + " creating new WebPageTest object with this base URL: " + wptBaseUrl)
+    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    println(DateTime.now + " calling methods to test url: " + url + " on desktop")
+    val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
+    println(DateTime.now + " calling methods to test url: " + url + " on emulated 3G mobile")
+    //val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url)
+    //  Add results to string which will eventually become the content of our results file
+    println(DateTime.now + " Adding results of desktop test to results string")
+    returnString = returnString.concat("Desktop, " + webPageDesktopTestResults.toString() + "\n")
+    println(DateTime.now + " Adding results of mobile test to results string")
+    //returnString = returnString.concat(", Android/3G, " + webPageMobileTestResults.toString() + "\n")
+    println(DateTime.now + " returning results string to main thread")
+    returnString
+  } */
+
+  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String): String = {
+    var returnString: String = ""
     //  Define new web-page-test API request and send it the url to test
     println(DateTime.now + " creating new WebPageTest object with this base URL: " + wptBaseUrl)
     val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
@@ -137,11 +170,13 @@ object App {
     val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url)
     //  Add results to string which will eventually become the content of our results file
     println(DateTime.now + " Adding results of desktop test to results string")
-    returnString = returnString.concat("Desktop, " + webPageDesktopTestResults.toString() + "\n")
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
     println(DateTime.now + " Adding results of mobile test to results string")
-    returnString = returnString.concat(", Android/3G, " + webPageMobileTestResults.toString() + "\n")
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
     println(DateTime.now + " returning results string to main thread")
     returnString
   }
+
+
 }
 

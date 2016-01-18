@@ -17,7 +17,8 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   val wptResponseFormat:String = "xml"
   implicit val httpClient = new OkHttpClient()
 
-  class ResultElement(tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String) {
+  class ResultElement(url:String, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String) {
+    val testUrl: String = url
     val timeFirstPaint: Int = tFP
     val timeDocComplete: Int = tDC
     val bytesInDoccomplete: Int = bDC
@@ -26,16 +27,16 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val speedIndex: Int = sI
     val resultStatus:String = status
 
-    def toIntList(): List[Int] = {
-      List(timeFirstPaint, timeDocComplete, timeFullyLoaded, speedIndex)
+    def toStringList(): List[String] = {
+      List(testUrl.toString + ", " + timeFirstPaint.toString + "ms", timeDocComplete.toString + "ms", (bytesInDoccomplete/1000) + "kB" , timeFullyLoaded.toString + "ms", (bytesInFullyLoaded/1000) + "kB", speedIndex.toString, resultStatus)
     }
 
-    def toStringList(): List[String] = {
-      List(timeFirstPaint.toString + "ms", timeDocComplete.toString + "ms", timeFullyLoaded.toString + "ms", speedIndex.toString)
+    def toHTMLTableCells(): String = {
+      "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
     }
 
     override def toString(): String = {
-      timeFirstPaint.toString + "ms, " + timeDocComplete.toString + "ms, " + (bytesInDoccomplete/1000) + "kB, " + timeFullyLoaded.toString + "ms, " + (bytesInFullyLoaded/1000) + "kB, " + speedIndex.toString
+      testUrl + ", " + timeFirstPaint.toString + "ms, " + timeDocComplete.toString + "ms, " + (bytesInDoccomplete/1000) + "kB, " + timeFullyLoaded.toString + "ms, " + (bytesInFullyLoaded/1000) + "kB, " + speedIndex.toString + ", " + resultStatus
     }
   }
 
@@ -114,7 +115,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     } else {
         if((testResults \\ "statusCode").text.toInt == 200) {
           println(DateTime.now + " Test results show 0 successful runs ")
-          failedTest()
+          failedTestNoSuccessfulRuns()
         }else{
           println(DateTime.now + " Test timed out after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds")
           failedTestTimeout()
@@ -124,6 +125,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def refineResults(rawXMLResult: Elem): ResultElement = {
     println("parsing the XML results")
+    val testUrl: String = (rawXMLResult \\ "response" \ "data" \ "testUrl").text.toString
     val firstPaint: Int = (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "firstPaint").text.toInt
     println ("firstPaint = " + firstPaint)
     val docTime: Int = (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "docTime").text.toInt
@@ -136,25 +138,29 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println ("Total bytes = " + totalbytesIn)
     val speedIndex: Int = (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "SpeedIndex").text.toInt
     println ("SpeedIndex = " + speedIndex)
-    val status: String = "Test Successful"
+    val status: String = "Test Success"
 
     println("Creating ResultElement")
-    val result: ResultElement = new ResultElement(firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status)
+    val result: ResultElement = new ResultElement(testUrl, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status)
     println("Returning ResultElement")
     result
   }
 
-  def failedTest(): ResultElement = {
+  def failedTestNoSuccessfulRuns(): ResultElement = {
     val failIndicator: Int = -1
     val failStatement: String = "Test Failed"
-    val failElement: ResultElement = new ResultElement(failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failStatement)
+    val failComment: String = "No successful runs of test"
+    val failElement: ResultElement = new ResultElement(failStatement, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
     failElement
   }
 
   def failedTestTimeout(): ResultElement = {
     val failIndicator: Int = -1
-    val failStatement: String = "Test Timed Out"
-    val failElement: ResultElement = new ResultElement(failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failStatement)
+    val failStatement: String = "Test Failed"
+    val failComment: String = "Test request timed out"
+    val failElement: ResultElement = new ResultElement(failStatement, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
     failElement
   }
 }
+
+//todo - add url into results so we can use it in result element - makes the whole html thing easier- get from xml?
