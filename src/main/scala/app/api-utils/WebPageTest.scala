@@ -24,6 +24,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val bytesInDoccomplete: Int = bDC
     val timeFullyLoaded: Int = tFL
     val bytesInFullyLoaded: Int = bFL
+    val costAt5CentsPerMB: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1000000)*0.05)
     val speedIndex: Int = sI
     val resultStatus:String = status
 
@@ -32,7 +33,11 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
 
     def toHTMLTableCells(): String = {
-      "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
+      "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + costAt5CentsPerMB + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
+    }
+
+    def toHTMLSimpleTableCells(): String = {
+      "<th>" + testUrl + " </th><td>" +  (timeDocComplete/1000).toString + "s </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + costAt5CentsPerMB + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
     }
 
     override def toString(): String = {
@@ -161,6 +166,10 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val failElement: ResultElement = new ResultElement(failStatement, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
     failElement
   }
+
+  def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s }
+
 }
+
 
 //todo - add url into results so we can use it in result element - makes the whole html thing easier- get from xml?

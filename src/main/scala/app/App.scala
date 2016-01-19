@@ -24,17 +24,19 @@ object App {
 
     //  Define names of s3bucket, configuration and output Files
     val s3BucketName = "capi-wpt-querybot"
-    val accountId = "642631414762"
     val configFileName = "config.conf"
     val outputFileName = "liveBlogPerformanceData.html"
+    val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
     val hTMLPageHeader:String = "<!DOCTYPE html>\n<html>\n<body>\n"
     val hTMLJobStarted: String = "Job started at: " + DateTime.now + "\n"
-    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
     val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
     val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
-    var resultsHtmlString: String = hTMLPageHeader + hTMLJobStarted + hTMLTableHeaders
+    var results: String = hTMLPageHeader + hTMLJobStarted + hTMLTableHeaders
+    var simplifiedResults: String = hTMLPageHeader + hTMLJobStarted + hTMLSimpleTableHeaders
     var contentApiKey: String = ""
     var wptBaseUrl: String = ""
     var wptApiKey: String = ""
@@ -87,32 +89,52 @@ object App {
     }
     else {
             // Send each article URL to the webPageTest API and obtain resulting data
-            val testResults: List[String] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey))
+            val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey))
             // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
-            resultsHtmlString = resultsHtmlString.concat(testResults.mkString)
+            val resultsList: List[String] = testResults.map(x => x.head)
+            val simplifiedResultsList : List[String] = testResults.map(x => x.tail.head)
+
+            results = results.concat(resultsList.mkString)
+            simplifiedResults = simplifiedResults.concat(simplifiedResultsList.mkString)
             println(DateTime.now + " Results added to accumulator string \n")
         }
     println(DateTime.now + " Closing Content API query connection")
     articleUrlList.shutDown
     if (!iamTestingLocally) {
-      resultsHtmlString = resultsHtmlString.concat(hTMLTableFooters)
-      resultsHtmlString = resultsHtmlString.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
-      println(DateTime.now + " Writing the following to S3:\n" + resultsHtmlString)
-      s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, resultsHtmlString)))
-      val acl2: AccessControlList = s3Client.getObjectAcl(s3BucketName, outputFileName)
-      acl2.grantPermission(GroupGrantee.AllUsers, Permission.Read)
-      s3Client.setObjectAcl(s3BucketName, outputFileName, acl2)
+      results = results.concat(hTMLTableFooters)
+      results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+      simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
+      simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+      println(DateTime.now + " Writing the following to S3:\n" + results + "\n")
+      s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, results)))
+      val aclDevFile: AccessControlList = s3Client.getObjectAcl(s3BucketName, outputFileName)
+      aclDevFile.grantPermission(GroupGrantee.AllUsers, Permission.Read)
+      s3Client.setObjectAcl(s3BucketName, outputFileName, aclDevFile)
+
+      println(DateTime.now + " Writing the following to S3:\n" + simplifiedResults + "\n")
+      s3Client.putObject(new PutObjectRequest(s3BucketName, simpleOutputFileName, createOutputFile(simpleOutputFileName, simplifiedResults)))
+      val aclSimple: AccessControlList = s3Client.getObjectAcl(s3BucketName, simpleOutputFileName)
+      aclSimple.grantPermission(GroupGrantee.AllUsers, Permission.Read)
+      s3Client.setObjectAcl(s3BucketName, simpleOutputFileName, aclSimple)
+
     }
     else {
       val output: FileWriter = new FileWriter(outputFileName)
-      println(DateTime.now + " Writing the following to local file " + outputFileName + ":\n" + resultsHtmlString)
-      resultsHtmlString = resultsHtmlString.concat(hTMLTableFooters)
-      resultsHtmlString = resultsHtmlString.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
-      output.write(resultsHtmlString)
+      val simplifiedOutput: FileWriter = new FileWriter(simpleOutputFileName)
+      println(DateTime.now + " Writing the following to local file " + outputFileName + ":\n" + results)
+      results = results.concat(hTMLTableFooters)
+      results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+      simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
+      simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+      output.write(results)
       output.close()
       println(DateTime.now + " Writing to file: " + outputFileName + " complete. \n")
+      simplifiedOutput.write(simplifiedResults)
+      simplifiedOutput.close()
+      println(DateTime.now + " Writing to file: " + simpleOutputFileName + " complete. \n")
     }
-    println(DateTime.now + " The following records written to " + outputFileName + ":\n" + resultsHtmlString)
+    println(DateTime.now + " The following records written to " + outputFileName + ":\n" + results)
+    println(DateTime.now + " The following records written to " + simpleOutputFileName + ":\n" + simplifiedResults)
     println(DateTime.now + " Job complete")
   }
 
@@ -140,8 +162,9 @@ object App {
     file
   }
 
-  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String): String = {
+  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String): List[String] = {
     var returnString: String = ""
+    var simpleReturnString: String = ""
     //  Define new web-page-test API request and send it the url to test
     println(DateTime.now + " creating new WebPageTest object with this base URL: " + wptBaseUrl)
     val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
@@ -155,7 +178,9 @@ object App {
     println(DateTime.now + " Adding results of mobile test to results string")
     returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
     println(DateTime.now + " returning results string to main thread")
-    returnString
+    simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
+    simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
+    List(returnString, simpleReturnString)
   }
 
 
