@@ -37,9 +37,18 @@ object App {
     val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
     var results: String = hTMLPageHeader + hTMLJobStarted + hTMLTableHeaders
     var simplifiedResults: String = hTMLPageHeader + hTMLJobStarted + hTMLSimpleTableHeaders
+    var roguesGalleryResults: String = hTMLPageHeader + "<p>Average size of liveblogs we have migrated in the past. Recommend investigating any pages whose figures are similar to these </p> " + hTMLSimpleTableHeaders
     var contentApiKey: String = ""
     var wptBaseUrl: String = ""
     var wptApiKey: String = ""
+
+    //initialize rogues Gallery - will set this up as a file another time
+    val roguesGallery: List[String] = List("http://www.theguardian.com/film/filmblog/live/2015/oct/21/back-to-the-future-day-live-experience-21-october-2015-round-the-world",
+      "http://www.theguardian.com/music/live/2016/jan/11/david-bowie-dies-of-cancer-aged-69-reports",
+      "http://www.theguardian.com/world/live/2015/nov/14/paris-terror-attacks-attackers-dead-mass-killing-live-updates",
+      "http://www.theguardian.com/us-news/live/2015/oct/13/cnn-democratic-debate-bernie-sanders-hillary-clinton-las-vegas",
+      "http://www.theguardian.com/politics/blog/live/2015/may/07/election-2015-live-final-votes-cast-as-battle-for-power-looms")
+
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
     val s3Client = new AmazonS3Client()
     if(!iamTestingLocally) {
@@ -100,11 +109,14 @@ object App {
         }
     println(DateTime.now + " Closing Content API query connection")
     articleUrlList.shutDown
+    roguesGalleryResults = roguesGalleryResults.concat(testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey))
+    results = results.concat(hTMLTableFooters)
+    results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+    simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
+    simplifiedResults = simplifiedResults.concat(roguesGalleryResults + hTMLTableFooters)
+    simplifiedResults = simplifiedResults.concat("<p> List of urls used to generate averages: </p> <table border=\"1\">" + roguesGallery.map(url => "<tr><td>" + url + "</td></tr>").mkString + "</table>")
+    simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     if (!iamTestingLocally) {
-      results = results.concat(hTMLTableFooters)
-      results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
-      simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
-      simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
       println(DateTime.now + " Writing the following to S3:\n" + results + "\n")
       s3Client.putObject(new PutObjectRequest(s3BucketName, outputFileName, createOutputFile(outputFileName, results)))
       val aclDevFile: AccessControlList = s3Client.getObjectAcl(s3BucketName, outputFileName)
@@ -122,10 +134,6 @@ object App {
       val output: FileWriter = new FileWriter(outputFileName)
       val simplifiedOutput: FileWriter = new FileWriter(simpleOutputFileName)
       println(DateTime.now + " Writing the following to local file " + outputFileName + ":\n" + results)
-      results = results.concat(hTMLTableFooters)
-      results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
-      simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
-      simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
       output.write(results)
       output.close()
       println(DateTime.now + " Writing to file: " + outputFileName + " complete. \n")
@@ -183,6 +191,114 @@ object App {
     List(returnString, simpleReturnString)
   }
 
+  def testRoguesGallery(urlList: List[String], wptBaseUrl: String, wptApiKey: String ): String = {
+    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    var returnString: String = ""
+
+    var desktopTimeFirstPaint: Int = 0
+    var desktopTimeDocComplete: Int = 0
+    var desktopKBInDoccomplete: Int = 0
+    var desktopTimeFullyLoaded: Int = 0
+    var desktopKBInFullyLoaded: Int = 0
+    var desktopCostAt5CentsPerMB: Double = 0
+    var desktopSpeedIndex: Int = 0
+    var desktopSuccessCount = 0
+
+    var mobileTimeFirstPaint: Int = 0
+    var mobileTimeDocComplete: Int = 0
+    var mobileKBInDoccomplete: Int = 0
+    var mobileTimeFullyLoaded: Int = 0
+    var mobileKBInFullyLoaded: Int = 0
+    var mobileCostAt5CentsPerMB: Double = 0
+    var mobileSpeedIndex: Int = 0
+    var mobileSuccessCount = 0
+
+    urlList.foreach(url => {
+      val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
+      val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url)
+      if (webPageDesktopTestResults.resultStatus == "Test Success"){
+        desktopTimeFirstPaint += webPageDesktopTestResults.timeFirstPaint/1000
+        desktopTimeDocComplete += webPageDesktopTestResults.timeDocComplete/1000
+        desktopKBInDoccomplete += webPageDesktopTestResults.bytesInDoccomplete/1000
+        desktopTimeFullyLoaded += webPageDesktopTestResults.timeFullyLoaded/1000
+        desktopKBInFullyLoaded += webPageDesktopTestResults.bytesInFullyLoaded/1000
+        desktopCostAt5CentsPerMB += webPageDesktopTestResults.costAt5CentsPerMB
+        desktopSpeedIndex += webPageDesktopTestResults.speedIndex
+        desktopSuccessCount += 1
+
+        mobileTimeFirstPaint += webPageMobileTestResults.timeFirstPaint/1000
+        mobileTimeDocComplete += webPageMobileTestResults.timeDocComplete/1000
+        mobileKBInDoccomplete += webPageMobileTestResults.bytesInDoccomplete/1000
+        mobileTimeFullyLoaded += webPageMobileTestResults.timeFullyLoaded/1000
+        mobileKBInFullyLoaded += webPageMobileTestResults.bytesInFullyLoaded/1000
+        mobileCostAt5CentsPerMB += webPageMobileTestResults.costAt5CentsPerMB
+        mobileSpeedIndex += webPageMobileTestResults.speedIndex
+        mobileSuccessCount += 1
+      }
+    })
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>")
+    if(desktopSuccessCount > 1){
+      returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " migrated liveblogs </td>"
+        + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "</td>"
+        + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "</td>"
+        + "<td>" + desktopCostAt5CentsPerMB/desktopSuccessCount + "</td>"
+        + "<td>" + desktopSpeedIndex/desktopSuccessCount + "</td>"
+        + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+      )}
+      else{
+      if (desktopSuccessCount == 1) {
+        returnString = returnString.concat("<td>" + "Example of a liveblog migrated due to size </td>"
+          + "<td>" + desktopTimeDocComplete + "</td>"
+          + "<td>" + desktopKBInFullyLoaded + "</td>"
+          + "<td>" + desktopCostAt5CentsPerMB + "</td>"
+          + "<td>" + desktopSpeedIndex + "</td>"
+          + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+        )
+      }
+      else {
+        returnString = returnString.concat("<td>" + "All tests of migrated liveblogs Failed </td>"
+          + "<td>" + desktopTimeDocComplete + "</td>"
+          + "<td>" + desktopKBInFullyLoaded + "</td>"
+          + "<td>" + desktopCostAt5CentsPerMB + "</td>"
+          + "<td>" + desktopSpeedIndex + "</td>"
+          + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+        )
+      }
+    }
+
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>")
+    if(mobileSuccessCount > 1){
+      returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " migrated liveblogs </td>"
+        + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "</td>"
+        + "<td>" + mobileKBInFullyLoaded/desktopSuccessCount + "</td>"
+        + "<td>" + mobileCostAt5CentsPerMB/desktopSuccessCount + "</td>"
+        + "<td>" + mobileSpeedIndex/desktopSuccessCount + "</td>"
+        + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+      )}
+    else{
+      if (mobileSuccessCount == 1) {
+        returnString = returnString.concat("<td>" + "Example of a liveblog migrated due to size </td>"
+          + "<td>" + mobileTimeDocComplete + "</td>"
+          + "<td>" + mobileKBInFullyLoaded + "</td>"
+          + "<td>" + mobileCostAt5CentsPerMB + "</td>"
+          + "<td>" + mobileSpeedIndex + "</td>"
+          + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+        )
+      }
+      else {
+        returnString = returnString.concat("<td>" + "All tests of migrated liveblogs Failed </td>"
+          + "<td>" + mobileTimeDocComplete + "</td>"
+          + "<td>" + mobileKBInFullyLoaded + "</td>"
+          + "<td>" + mobileCostAt5CentsPerMB + "</td>"
+          + "<td>" + mobileSpeedIndex + "</td>"
+          + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+        )
+      }
+    }
+
+    returnString
+
+  }
 
 }
 

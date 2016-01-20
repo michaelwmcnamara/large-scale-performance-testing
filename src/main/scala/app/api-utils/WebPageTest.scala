@@ -114,7 +114,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       response = httpClient.newCall(request).execute()
       testResults = scala.xml.XML.loadString(response.body.string)
     }
-    if (((testResults \\ "statusCode").text.toInt == 200) && ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0) && ((testResults \\ "response" \ "data" \ "successfulRVRuns").text.toInt > 0)) {
+    if (((testResults \\ "statusCode").text.toInt == 200) && ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0)  ) {
       println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds\n Refining results")
       refineResults(testResults)
     } else {
