@@ -239,27 +239,27 @@ object App {
     returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>")
     if(desktopSuccessCount > 1){
       returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " migrated liveblogs </td>"
-        + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "</td>"
-        + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "</td>"
-        + "<td>" + desktopCostAt5CentsPerMB/desktopSuccessCount + "</td>"
+        + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
+        + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "kB</td>"
+        + "<td> $(US)" + desktopCostAt5CentsPerMB/desktopSuccessCount + "</td>"
         + "<td>" + desktopSpeedIndex/desktopSuccessCount + "</td>"
         + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
       )}
       else{
       if (desktopSuccessCount == 1) {
         returnString = returnString.concat("<td>" + "Example of a liveblog migrated due to size </td>"
-          + "<td>" + desktopTimeDocComplete + "</td>"
-          + "<td>" + desktopKBInFullyLoaded + "</td>"
-          + "<td>" + desktopCostAt5CentsPerMB + "</td>"
+          + "<td>" + desktopTimeDocComplete + "s</td>"
+          + "<td>" + desktopKBInFullyLoaded + "kB</td>"
+          + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
           + "<td>" + desktopSpeedIndex + "</td>"
           + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
         )
       }
       else {
         returnString = returnString.concat("<td>" + "All tests of migrated liveblogs Failed </td>"
-          + "<td>" + desktopTimeDocComplete + "</td>"
-          + "<td>" + desktopKBInFullyLoaded + "</td>"
-          + "<td>" + desktopCostAt5CentsPerMB + "</td>"
+          + "<td>" + desktopTimeDocComplete + "s</td>"
+          + "<td>" + desktopKBInFullyLoaded + "kB</td>"
+          + "<td> $US" + desktopCostAt5CentsPerMB + "</td>"
           + "<td>" + desktopSpeedIndex + "</td>"
           + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
         )
@@ -269,27 +269,27 @@ object App {
     returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>")
     if(mobileSuccessCount > 1){
       returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " migrated liveblogs </td>"
-        + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "</td>"
-        + "<td>" + mobileKBInFullyLoaded/desktopSuccessCount + "</td>"
-        + "<td>" + mobileCostAt5CentsPerMB/desktopSuccessCount + "</td>"
+        + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "s</td>"
+        + "<td>" + mobileKBInFullyLoaded/desktopSuccessCount + "kB</td>"
+        + "<td> $(US)" + mobileCostAt5CentsPerMB/desktopSuccessCount + "</td>"
         + "<td>" + mobileSpeedIndex/desktopSuccessCount + "</td>"
         + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
       )}
     else{
       if (mobileSuccessCount == 1) {
         returnString = returnString.concat("<td>" + "Example of a liveblog migrated due to size </td>"
-          + "<td>" + mobileTimeDocComplete + "</td>"
-          + "<td>" + mobileKBInFullyLoaded + "</td>"
-          + "<td>" + mobileCostAt5CentsPerMB + "</td>"
+          + "<td>" + mobileTimeDocComplete + "s</td>"
+          + "<td>" + mobileKBInFullyLoaded + "kB</td>"
+          + "<td> $(US)" + mobileCostAt5CentsPerMB + "</td>"
           + "<td>" + mobileSpeedIndex + "</td>"
           + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
         )
       }
       else {
         returnString = returnString.concat("<td>" + "All tests of migrated liveblogs Failed </td>"
-          + "<td>" + mobileTimeDocComplete + "</td>"
-          + "<td>" + mobileKBInFullyLoaded + "</td>"
-          + "<td>" + mobileCostAt5CentsPerMB + "</td>"
+          + "<td>" + mobileTimeDocComplete + "s</td>"
+          + "<td>" + mobileKBInFullyLoaded + "kB</td>"
+          + "<td> $US" + mobileCostAt5CentsPerMB + "</td>"
           + "<td>" + mobileSpeedIndex + "</td>"
           + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
         )
