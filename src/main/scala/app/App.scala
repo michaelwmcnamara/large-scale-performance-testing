@@ -93,11 +93,15 @@ object App {
     val articleUrlList = new ArticleUrls(contentApiKey)
     //  Request a list of urls from Content API
     val articleUrls: List[String] = articleUrlList.getUrls
+    println(DateTime.now + " Closing Content API query connection")
+    articleUrlList.shutDown
     if (articleUrls.isEmpty) {
       println(DateTime.now + " WARNING: No results returned from Content API")
     }
     else {
             // Send each article URL to the webPageTest API and obtain resulting data
+            println("combined results from CAPI calls")
+            articleUrls.foreach(println)
             val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey))
             // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
             val resultsList: List[String] = testResults.map(x => x.head)
@@ -107,8 +111,6 @@ object App {
             simplifiedResults = simplifiedResults.concat(simplifiedResultsList.mkString)
             println(DateTime.now + " Results added to accumulator string \n")
         }
-    println(DateTime.now + " Closing Content API query connection")
-    articleUrlList.shutDown
     roguesGalleryResults = roguesGalleryResults.concat(testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey))
     results = results.concat(hTMLTableFooters)
     results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
