@@ -100,8 +100,8 @@ object App {
     }
     else {
             // Send each article URL to the webPageTest API and obtain resulting data
-            println("Resutls returned from call to ArticleUrls.scala")
-            articleUrls.map(println(_))
+            println("combined results from CAPI calls")
+            articleUrls.foreach(println)
             val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey))
             // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
             val resultsList: List[String] = testResults.map(x => x.head)
