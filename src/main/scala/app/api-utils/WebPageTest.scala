@@ -54,9 +54,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     testResults
   }
 
-  def mobileChrome3GTest(gnmPageUrl:String): ResultElement = {
+  def mobileChrome3GTest(gnmPageUrl:String, wptLocation: String): ResultElement = {
     println("Sending mobile webpagetest request to WPT API")
-    val resultPage: String = sendMobile3GPage(gnmPageUrl)
+    val resultPage: String = sendMobile3GPage(gnmPageUrl, wptLocation)
     println("Accessing results at: " + resultPage)
     val testResults: ResultElement = getResults(resultPage)
     testResults
@@ -78,10 +78,10 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     resultPage
   }
 
-  def sendMobile3GPage(gnmPageUrl:String): String = {
+  def sendMobile3GPage(gnmPageUrl:String, wptLocation: String): String = {
     println("Forming mobile 3G webpage test query")
 //    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=Dulles:Chrome.3G"
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=eu-west-1:Nexus5.3G"
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
