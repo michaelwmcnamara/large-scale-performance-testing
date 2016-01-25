@@ -80,7 +80,8 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendMobile3GPage(gnmPageUrl:String): String = {
     println("Forming mobile 3G webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=Dulles:Chrome.3G"
+//    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=Dulles:Chrome.3G"
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=eu-west-1:Nexus5.3G"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
