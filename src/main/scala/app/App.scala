@@ -41,6 +41,7 @@ object App {
     var contentApiKey: String = ""
     var wptBaseUrl: String = ""
     var wptApiKey: String = ""
+    var wptLocation: String = ""
 
     //initialize rogues Gallery - will set this up as a file another time
     val roguesGallery: List[String] = List("http://www.theguardian.com/film/filmblog/live/2015/oct/21/back-to-the-future-day-live-experience-21-october-2015-round-the-world",
@@ -57,6 +58,7 @@ object App {
       contentApiKey = conf.getString("content.api.key")
       wptBaseUrl = conf.getString("wpt.api.baseUrl")
       wptApiKey = conf.getString("wpt.api.key")
+      wptLocation=conf.getString("wpt.location")
       if ((contentApiKey.length > 0) && (wptBaseUrl.length > 0) && (wptApiKey.length > 0))
         println(DateTime.now +" Config retrieval successful. \n You are using the following webpagetest instance: " + wptBaseUrl)
       else {
@@ -78,6 +80,10 @@ object App {
               if (line.contains("wpt.api.key")) {
                 println("wpt api key found")
                 wptApiKey = line.takeRight((line.length - line.indexOf("=")) - 1)
+              }
+              if (line.contains("wpt.location")) {
+                println("wpt location found")
+                wptLocation = line.takeRight((line.length - line.indexOf("=")) - 1)
               }
             }
               if ((contentApiKey.length > 0) && (wptBaseUrl.length > 0) && (wptApiKey.length > 0)){
@@ -102,7 +108,7 @@ object App {
             // Send each article URL to the webPageTest API and obtain resulting data
             println("combined results from CAPI calls")
             articleUrls.foreach(println)
-            val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey))
+            val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation))
             // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
             val resultsList: List[String] = testResults.map(x => x.head)
             val simplifiedResultsList : List[String] = testResults.map(x => x.tail.head)
@@ -111,7 +117,7 @@ object App {
             simplifiedResults = simplifiedResults.concat(simplifiedResultsList.mkString)
             println(DateTime.now + " Results added to accumulator string \n")
         }
-    roguesGalleryResults = roguesGalleryResults.concat(testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey))
+    roguesGalleryResults = roguesGalleryResults.concat(testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey, wptLocation))
     results = results.concat(hTMLTableFooters)
     results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
@@ -172,7 +178,7 @@ object App {
     file
   }
 
-  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String): List[String] = {
+  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[String] = {
     var returnString: String = ""
     var simpleReturnString: String = ""
     //  Define new web-page-test API request and send it the url to test
@@ -181,7 +187,7 @@ object App {
     println(DateTime.now + " calling methods to test url: " + url + " on desktop")
     val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
     println(DateTime.now + " calling methods to test url: " + url + " on emulated 3G mobile")
-    val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url)
+    val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
     //  Add results to string which will eventually become the content of our results file
     println(DateTime.now + " Adding results of desktop test to results string")
     returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
@@ -193,7 +199,7 @@ object App {
     List(returnString, simpleReturnString)
   }
 
-  def testRoguesGallery(urlList: List[String], wptBaseUrl: String, wptApiKey: String ): String = {
+  def testRoguesGallery(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String ): String = {
     val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
     var returnString: String = ""
 
@@ -217,7 +223,7 @@ object App {
 
     urlList.foreach(url => {
       val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
-      val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url)
+      val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
       if (webPageDesktopTestResults.resultStatus == "Test Success"){
         desktopTimeFirstPaint += webPageDesktopTestResults.timeFirstPaint/1000
         desktopTimeDocComplete += webPageDesktopTestResults.timeDocComplete/1000
