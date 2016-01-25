@@ -221,7 +221,9 @@ object App {
     var mobileSpeedIndex: Int = 0
     var mobileSuccessCount = 0
 
-    urlList.foreach(url => {
+    def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s}
+
+      urlList.foreach(url => {
       val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
       val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
       if (webPageDesktopTestResults.resultStatus == "Test Success"){
@@ -249,7 +251,7 @@ object App {
       returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " migrated liveblogs </td>"
         + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
         + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "kB</td>"
-        + "<td> $(US)" + desktopCostAt5CentsPerMB/desktopSuccessCount + "</td>"
+        + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
         + "<td>" + desktopSpeedIndex/desktopSuccessCount + "</td>"
         + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
       )}
@@ -279,7 +281,7 @@ object App {
       returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " migrated liveblogs </td>"
         + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "s</td>"
         + "<td>" + mobileKBInFullyLoaded/desktopSuccessCount + "kB</td>"
-        + "<td> $(US)" + mobileCostAt5CentsPerMB/desktopSuccessCount + "</td>"
+        + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
         + "<td>" + mobileSpeedIndex/desktopSuccessCount + "</td>"
         + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
       )}
