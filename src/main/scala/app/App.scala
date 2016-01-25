@@ -27,17 +27,24 @@ object App {
     val configFileName = "config.conf"
     val outputFileName = "liveBlogPerformanceData.html"
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
+    val interactiveOutputFilename = "interactivePerformanceData.html"
+
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
     val hTMLPageHeader:String = "<!DOCTYPE html>\n<html>\n<body>\n"
+    val hTMLTitleLiveblog:String = "<h1>Currrent Performance of today's Liveblogs</h1>"
+    val hTMLTitleInteractive:String = "<h1>Currrent Performance of today's Interactives</h1>"
     val hTMLJobStarted: String = "Job started at: " + DateTime.now + "\n"
     val hTMLTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
     val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
     val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
-    var results: String = hTMLPageHeader + hTMLJobStarted + hTMLTableHeaders
-    var simplifiedResults: String = hTMLPageHeader + hTMLJobStarted + hTMLSimpleTableHeaders
+    var results: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLTableHeaders
+    var simplifiedResults: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLSimpleTableHeaders
     var roguesGalleryResults: String = hTMLPageHeader + "<p>Average size of liveblogs we have migrated in the past. Recommend investigating any pages whose figures are similar to these </p> " + hTMLSimpleTableHeaders
+
+    var interactiveResults: String = hTMLPageHeader + hTMLTitleInteractive + hTMLJobStarted + hTMLSimpleTableHeaders
+
     var contentApiKey: String = ""
     var wptBaseUrl: String = ""
     var wptApiKey: String = ""
@@ -98,15 +105,17 @@ object App {
     //  Define new CAPI Query object
     val articleUrlList = new ArticleUrls(contentApiKey)
     //  Request a list of urls from Content API
-    val articleUrls: List[String] = articleUrlList.getUrls
-    println(DateTime.now + " Closing Content API query connection")
+    val articleUrls: List[String] = articleUrlList.getLiveBlogUrls
+    println(DateTime.now + " Closing Liveblog Content API query connection")
     articleUrlList.shutDown
     if (articleUrls.isEmpty) {
-      println(DateTime.now + " WARNING: No results returned from Content API")
+      println(DateTime.now + " WARNING: No results returned from Content API for LiveBlog Queries")
+      results = results.concat("<tr><th>No Liveblogs found to test</th></tr>")
+      simplifiedResults = simplifiedResults.concat("<tr><th>No Liveblogs found to test</th></tr>")
     }
     else {
             // Send each article URL to the webPageTest API and obtain resulting data
-            println("combined results from CAPI calls")
+            println("combined results from LiveBLog CAPI calls")
             articleUrls.foreach(println)
             val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation))
             // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
@@ -151,6 +160,47 @@ object App {
     }
     println(DateTime.now + " The following records written to " + outputFileName + ":\n" + results)
     println(DateTime.now + " The following records written to " + simpleOutputFileName + ":\n" + simplifiedResults)
+    println("LiveBlog Performance Test Complete")
+
+    //  Define new CAPI Query object
+    val interactiveUrlList = new ArticleUrls(contentApiKey)
+    //  Request a list of urls from Content API
+    val interactiveUrls: List[String] = interactiveUrlList.getInteractiveUrls
+    println(DateTime.now + " Closing Interactive Content API query connection")
+    interactiveUrlList.shutDown
+    if (interactiveUrls.isEmpty) {
+      println(DateTime.now + " WARNING: No results returned from Content API for Interactive Query")
+      interactiveResults = interactiveResults.concat("<tr><th>No Interactives found to test</th></tr>")
+    }
+    else {
+      // Send each article URL to the webPageTest API and obtain resulting data
+      println("Results from Interactive CAPI calls")
+      interactiveUrls.foreach(println)
+      val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation))
+      // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
+      val interactiveResultsList: List[String] = interactiveTestResults.map(x => x.head)
+      val simplifiedResultsList : List[String] = interactiveTestResults.map(x => x.tail.head)
+
+      interactiveResults = interactiveResults.concat(simplifiedResultsList.mkString)
+      println(DateTime.now + " Results added to accumulator string \n")
+    }
+    interactiveResults = interactiveResults.concat(hTMLTableFooters)
+    interactiveResults = interactiveResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
+
+    if (!iamTestingLocally) {
+      println(DateTime.now + " Writing the following to S3:\n" + interactiveResults + "\n")
+      s3Client.putObject(new PutObjectRequest(s3BucketName, interactiveOutputFilename, createOutputFile(interactiveOutputFilename, interactiveResults)))
+      val interactivesAclDevFile: AccessControlList = s3Client.getObjectAcl(s3BucketName, interactiveOutputFilename)
+      interactivesAclDevFile.grantPermission(GroupGrantee.AllUsers, Permission.Read)
+      s3Client.setObjectAcl(s3BucketName, outputFileName, interactivesAclDevFile)
+    }
+    else {
+      val interactiveOutput: FileWriter = new FileWriter(interactiveOutputFilename)
+      println(DateTime.now + " Writing the following to local file: " + interactiveOutputFilename + ":\n" + interactiveResults)
+      interactiveOutput.write(results)
+      interactiveOutput.close()
+      println(DateTime.now + " Writing to file: " + interactiveOutputFilename + " complete. \n")
+    }
     println(DateTime.now + " Job complete")
   }
 
