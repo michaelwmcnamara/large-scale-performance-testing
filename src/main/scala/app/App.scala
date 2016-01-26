@@ -192,7 +192,7 @@ object App {
       s3Client.putObject(new PutObjectRequest(s3BucketName, interactiveOutputFilename, createOutputFile(interactiveOutputFilename, interactiveResults)))
       val interactivesAclDevFile: AccessControlList = s3Client.getObjectAcl(s3BucketName, interactiveOutputFilename)
       interactivesAclDevFile.grantPermission(GroupGrantee.AllUsers, Permission.Read)
-      s3Client.setObjectAcl(s3BucketName, outputFileName, interactivesAclDevFile)
+      s3Client.setObjectAcl(s3BucketName, interactiveOutputFilename, interactivesAclDevFile)
     }
     else {
       val interactiveOutput: FileWriter = new FileWriter(interactiveOutputFilename)
