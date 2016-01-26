@@ -34,14 +34,13 @@ object App {
     val hTMLTitleLiveblog:String = "<h1>Currrent Performance of today's Liveblogs</h1>"
     val hTMLTitleInteractive:String = "<h1>Currrent Performance of today's Interactives</h1>"
     val hTMLJobStarted: String = "Job started at: " + DateTime.now + "\n"
-    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
-    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"#B0C0E0\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"#B0C0E0\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
     val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
     val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
     var results: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLTableHeaders
     var simplifiedResults: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLSimpleTableHeaders
-    var roguesGalleryResults: String = hTMLPageHeader + "<p>Average size of liveblogs we have migrated in the past. Recommend investigating any pages whose figures are similar to these </p> " + hTMLSimpleTableHeaders
 
     var interactiveResults: String = hTMLPageHeader + hTMLTitleInteractive + hTMLJobStarted + hTMLSimpleTableHeaders
 
@@ -114,11 +113,15 @@ object App {
       simplifiedResults = simplifiedResults.concat("<tr><th>No Liveblogs found to test</th></tr>")
     }
     else {
-            // Send each article URL to the webPageTest API and obtain resulting data
-            println("combined results from LiveBLog CAPI calls")
+            println("Combined results from LiveBLog CAPI calls")
             articleUrls.foreach(println)
-            val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation))
-            // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
+            println("Generating average values for migrated liveblogs")
+            val migratedLiveBlogAverages: PageAverageObject = testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey, wptLocation)
+            simplifiedResults = simplifiedResults.concat(migratedLiveBlogAverages.toHTMLString)
+            println("Performance testing liveblogs")
+            // Send each article URL to the webPageTest API and obtain resulting data
+            val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, migratedLiveBlogAverages))
+            // Add results to a single string so that we only need to write to S3 once (S3 will only take complete objects).
             val resultsList: List[String] = testResults.map(x => x.head)
             val simplifiedResultsList : List[String] = testResults.map(x => x.tail.head)
 
@@ -126,11 +129,10 @@ object App {
             simplifiedResults = simplifiedResults.concat(simplifiedResultsList.mkString)
             println(DateTime.now + " Results added to accumulator string \n")
         }
-    roguesGalleryResults = roguesGalleryResults.concat(testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey, wptLocation))
+//    roguesGalleryResults = roguesGalleryResults.concat(testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey, wptLocation))
     results = results.concat(hTMLTableFooters)
     results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
-    simplifiedResults = simplifiedResults.concat(roguesGalleryResults + hTMLTableFooters)
     simplifiedResults = simplifiedResults.concat("<p> List of urls used to generate averages: </p> <table border=\"1\">" + roguesGallery.map(url => "<tr><td>" + url + "</td></tr>").mkString + "</table>")
     simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     if (!iamTestingLocally) {
@@ -176,7 +178,7 @@ object App {
       // Send each article URL to the webPageTest API and obtain resulting data
       println("Results from Interactive CAPI calls")
       interactiveUrls.foreach(println)
-      val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation))
+      val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, new PageAverageObject(1, 1, 1, 1, 1, 1.0, 1, 1, 1, 1, 1, 1, 1, 1.0, 1, 1, "<tr><td>Please add a list of overly large liveblog pages.</td></tr>")))
       // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
       val interactiveResultsList: List[String] = interactiveTestResults.map(x => x.head)
       val simplifiedResultsList : List[String] = interactiveTestResults.map(x => x.tail.head)
@@ -228,7 +230,8 @@ object App {
     file
   }
 
-  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[String] = {
+
+  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String, averages: PageAverageObject): List[String] = {
     var returnString: String = ""
     var simpleReturnString: String = ""
     //  Define new web-page-test API request and send it the url to test
@@ -240,16 +243,28 @@ object App {
     val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
     //  Add results to string which will eventually become the content of our results file
     println(DateTime.now + " Adding results of desktop test to results string")
-    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+    if(webPageDesktopTestResults.timeDocComplete >= averages.desktopTimeDocComplete80thPercentile ||
+      webPageDesktopTestResults.bytesInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile ||
+      webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile ||
+      webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile)
+          {returnString = returnString.concat("<tr bgcolor=\"#FFFF00\"><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")}
+    else
+          {returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")}
     println(DateTime.now + " Adding results of mobile test to results string")
-    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+    if(webPageMobileTestResults.timeDocComplete >= averages.mobileTimeDocComplete80thPercentile ||
+      webPageMobileTestResults.bytesInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile ||
+      webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile ||
+      webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile)
+          {returnString = returnString.concat("<tr>bgcolor=\"#FFFF00\"<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")}
+    else
+          {returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")}
     println(DateTime.now + " returning results string to main thread")
     simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
     simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
     List(returnString, simpleReturnString)
   }
 
-  def testRoguesGallery(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String ): String = {
+  def testRoguesGallery(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String ): PageAverageObject = {
     val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
     var returnString: String = ""
 
@@ -296,9 +311,9 @@ object App {
         mobileSuccessCount += 1
       }
     })
-    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>")
+    returnString = returnString.concat("<tr bgcolor=\"#B0C0E0\"><td>" + DateTime.now + "</td><td>Desktop</td>")
     if(desktopSuccessCount > 1){
-      returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " migrated liveblogs </td>"
+      returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " liveblogs that were migrated due to size </td>"
         + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
         + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "kB</td>"
         + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
@@ -326,9 +341,9 @@ object App {
       }
     }
 
-    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>")
+    returnString = returnString.concat("<tr bgcolor=\"#B0C0E0\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
     if(mobileSuccessCount > 1){
-      returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " migrated liveblogs </td>"
+      returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " liveblogs that were migrated due to size </td>"
         + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "s</td>"
         + "<td>" + mobileKBInFullyLoaded/desktopSuccessCount + "kB</td>"
         + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
@@ -356,9 +371,67 @@ object App {
       }
     }
 
-    returnString
-
+    new PageAverageObject(
+      desktopTimeFirstPaint,
+      desktopTimeDocComplete,
+      desktopKBInDoccomplete,
+      desktopTimeFullyLoaded,
+      desktopKBInFullyLoaded,
+      desktopCostAt5CentsPerMB,
+      desktopSpeedIndex,
+      desktopSuccessCount,
+      mobileTimeFirstPaint,
+      mobileTimeDocComplete,
+      mobileKBInDoccomplete,
+      mobileTimeFullyLoaded,
+      mobileKBInFullyLoaded,
+      mobileCostAt5CentsPerMB,
+      mobileSpeedIndex,
+      mobileSuccessCount,
+      returnString
+    )
   }
 
+  class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, dcfl: Double, dsi: Int, dsc: Int, mtfp: Int, mtdc: Int, msdc: Int, mtfl: Int, msfl: Int, mcfl: Double, msi: Int, msc: Int, resultString: String) {
+
+
+    val desktopTimeFirstPaint: Int = dtfp
+    val desktopTimeDocComplete: Int = dtdc
+    val desktopKBInDoccomplete: Int = dsdc
+    val desktopTimeFullyLoaded: Int = dtfl
+    val desktopKBInFullyLoaded: Int = dsfl
+    val desktopCostAt5CentsPerMB: Double = dcfl
+    val desktopSpeedIndex: Int = dsi
+    val desktopSuccessCount = dsc
+
+    val mobileTimeFirstPaint: Int = mtfp
+    val mobileTimeDocComplete: Int = mtdc
+    val mobileKBInDocComplete: Int = msdc
+    val mobileTimeFullyLoaded: Int = mtfl
+    val mobileKBInFullyLoaded: Int = msfl
+    val mobileCostAt5CentsPerMB: Double = mcfl
+    val mobileSpeedIndex: Int = msi
+    val mobileSuccessCount = msc
+
+    val formattedHTMLResultString: String = resultString
+
+    val desktopTimeFirstPaint80thPercentile: Int = (desktopTimeFirstPaint*80)/100
+    val desktopTimeDocComplete80thPercentile: Int = (desktopTimeDocComplete*80)/100
+    val desktopKBInDoccomplete80thPercentile: Int = (desktopKBInDoccomplete*80)/100
+    val desktopTimeFullyLoaded80thPercentile: Int = (desktopTimeFullyLoaded*80)/100
+    val desktopKBInFullyLoaded80thPercentile: Int = (desktopKBInFullyLoaded*80)/100
+    val desktopCostAt5CentsPerMB80thPercentile: Double = (desktopCostAt5CentsPerMB*80)/100
+    val desktopSpeedIndex80thPercentile: Int = (desktopSpeedIndex*80)/100
+    val mobileTimeFirstPaint80thPercentile: Int = (mobileTimeFirstPaint*80)/100
+    val mobileTimeDocComplete80thPercentile: Int = (mobileTimeDocComplete*80)/100
+    val mobileKBInDocComplete80thPercentile: Int = (mobileKBInDocComplete*80)/100
+    val mobileTimeFullyLoaded80thPercentile: Int = (mobileTimeFullyLoaded*80)/100
+    val mobileKBInFullyLoaded80thPercentile: Int = (mobileKBInFullyLoaded*80)/100
+    val mobileCostAt5CentsPerMB80thPercentile: Double = (mobileCostAt5CentsPerMB*80)/100
+    val mobileSpeedIndex80thPercentile: Int = (mobileSpeedIndex*80)/100
+
+    def toHTMLString:String = formattedHTMLResultString
+
+  }
 }
 
