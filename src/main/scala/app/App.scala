@@ -53,11 +53,13 @@ object App {
     var wptLocation: String = ""
 
     //initialize rogues Gallery - will set this up as a file another time
-    val roguesGallery: List[String] = List("http://www.theguardian.com/film/filmblog/live/2015/oct/21/back-to-the-future-day-live-experience-21-october-2015-round-the-world",
+    val listOfMigratedLiveBlogs: List[String] = List("http://www.theguardian.com/film/filmblog/live/2015/oct/21/back-to-the-future-day-live-experience-21-october-2015-round-the-world",
       "http://www.theguardian.com/music/live/2016/jan/11/david-bowie-dies-of-cancer-aged-69-reports",
       "http://www.theguardian.com/world/live/2015/nov/14/paris-terror-attacks-attackers-dead-mass-killing-live-updates",
       "http://www.theguardian.com/us-news/live/2015/oct/13/cnn-democratic-debate-bernie-sanders-hillary-clinton-las-vegas",
       "http://www.theguardian.com/politics/blog/live/2015/may/07/election-2015-live-final-votes-cast-as-battle-for-power-looms")
+
+    val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
 
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
     val s3Client = new AmazonS3Client()
@@ -78,7 +80,7 @@ object App {
       {
             println(DateTime.now + " retrieving local config file: " + configFileName)
             for (line <- Source.fromFile(configFileName).getLines()) {
-              if (line.contains("content.api.key")) {
+              if (line.contains("contehttp://www.theguardian.com/world/2016/jan/23/drone-strike-victim-barack-obamant.api.key")) {
                 println("capi key found")
                 contentApiKey = line.takeRight((line.length - line.indexOf("=")) - 1)
               }
@@ -119,7 +121,7 @@ object App {
             println("Combined results from LiveBLog CAPI calls")
             articleUrls.foreach(println)
             println("Generating average values for migrated liveblogs")
-            val migratedLiveBlogAverages: PageAverageObject = testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey, wptLocation)
+            val migratedLiveBlogAverages: PageAverageObject = testRoguesGallery(listOfMigratedLiveBlogs ,wptBaseUrl, wptApiKey, wptLocation)
             simplifiedResults = simplifiedResults.concat(migratedLiveBlogAverages.toHTMLString)
             println("Performance testing liveblogs")
             // Send each article URL to the webPageTest API and obtain resulting data
@@ -135,7 +137,7 @@ object App {
     results = results.concat(hTMLTableFooters)
     results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
-    simplifiedResults = simplifiedResults.concat("<p> List of urls used to generate averages: </p> <table border=\"1\">" + roguesGallery.map(url => "<tr><td>" + url + "</td></tr>").mkString + "</table>")
+    simplifiedResults = simplifiedResults.concat("<p> List of urls used to generate averages: </p> <table border=\"1\">" + listOfMigratedLiveBlogs.map(url => "<tr><td>" + url + "</td></tr>").mkString + "</table>")
     simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     if (!iamTestingLocally) {
       println(DateTime.now + " Writing the following to S3:\n" + results + "\n")
@@ -180,7 +182,11 @@ object App {
       // Send each article URL to the webPageTest API and obtain resulting data
       println("Results from Interactive CAPI calls")
       interactiveUrls.foreach(println)
-      val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, new PageAverageObject(1, 1, 1, 1, 1, 1.0, 1, 1, 1, 1, 1, 1, 1, 1.0, 1, 1, "<tr><td>Please add a list of overly large liveblog pages.</td></tr>"), warningColor, alertColor))
+      println("Generating average values for migrated liveblogs")
+      val largeInteractivesAverages: PageAverageObject = testRoguesGallery(listofLargeInteractives ,wptBaseUrl, wptApiKey, wptLocation)
+      interactiveResults = interactiveResults.concat(largeInteractivesAverages.toHTMLString)
+
+      val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, largeInteractivesAverages, warningColor, alertColor))
       // Add results to a single string so that we only need to write to S3 once (S3 will only take complete objects).
       val interactiveResultsList: List[String] = interactiveTestResults.map(x => x.head)
       val simplifiedResultsList : List[String] = interactiveTestResults.map(x => x.tail.head)
