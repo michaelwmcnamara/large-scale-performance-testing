@@ -104,7 +104,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("Processing response and checking if results are ready")
     var testResults: Elem = scala.xml.XML.loadString(response.body.string)
     var iterator: Int = 0
-    val msmaxTime: Int = 90000
+    val msmaxTime: Int = 120000
     val msTimeBetweenPings: Int = 5000
     val maxCount: Int = msmaxTime / msTimeBetweenPings
     while (((testResults \\ "statusCode").text.toInt != 200) && (iterator < maxCount)) {
@@ -120,10 +120,10 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     } else {
         if((testResults \\ "statusCode").text.toInt == 200) {
           println(DateTime.now + " Test results show 0 successful runs ")
-          failedTestNoSuccessfulRuns()
+          failedTestNoSuccessfulRuns(resultUrl)
         }else{
           println(DateTime.now + " Test timed out after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds")
-          failedTestTimeout()
+          failedTestTimeout(resultUrl)
         }
       }
   }
@@ -151,19 +151,17 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     result
   }
 
-  def failedTestNoSuccessfulRuns(): ResultElement = {
+  def failedTestNoSuccessfulRuns(url: String): ResultElement = {
     val failIndicator: Int = -1
-    val failStatement: String = "Test Failed"
     val failComment: String = "No successful runs of test"
-    val failElement: ResultElement = new ResultElement(failStatement, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
+    val failElement: ResultElement = new ResultElement(url , failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
     failElement
   }
 
-  def failedTestTimeout(): ResultElement = {
+  def failedTestTimeout(url: String): ResultElement = {
     val failIndicator: Int = -1
-    val failStatement: String = "Test Failed"
     val failComment: String = "Test request timed out"
-    val failElement: ResultElement = new ResultElement(failStatement, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
+    val failElement: ResultElement = new ResultElement(url , failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
     failElement
   }
 
