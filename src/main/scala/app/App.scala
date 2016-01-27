@@ -34,8 +34,8 @@ object App {
     val hTMLTitleLiveblog:String = "<h1>Currrent Performance of today's Liveblogs</h1>"
     val hTMLTitleInteractive:String = "<h1>Currrent Performance of today's Interactives</h1>"
     val hTMLJobStarted: String = "Job started at: " + DateTime.now + "\n"
-    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"#B0C0E0\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
-    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"#B0C0E0\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"grey\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"grey\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
     val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
     val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
@@ -129,7 +129,6 @@ object App {
             simplifiedResults = simplifiedResults.concat(simplifiedResultsList.mkString)
             println(DateTime.now + " Results added to accumulator string \n")
         }
-//    roguesGalleryResults = roguesGalleryResults.concat(testRoguesGallery(roguesGallery ,wptBaseUrl, wptApiKey, wptLocation))
     results = results.concat(hTMLTableFooters)
     results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
@@ -179,7 +178,7 @@ object App {
       println("Results from Interactive CAPI calls")
       interactiveUrls.foreach(println)
       val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, new PageAverageObject(1, 1, 1, 1, 1, 1.0, 1, 1, 1, 1, 1, 1, 1, 1.0, 1, 1, "<tr><td>Please add a list of overly large liveblog pages.</td></tr>")))
-      // Add results to a single string so that we only need ot write to S3 once (S3 will only take complete objects).
+      // Add results to a single string so that we only need to write to S3 once (S3 will only take complete objects).
       val interactiveResultsList: List[String] = interactiveTestResults.map(x => x.head)
       val simplifiedResultsList : List[String] = interactiveTestResults.map(x => x.tail.head)
 
@@ -242,25 +241,39 @@ object App {
     println(DateTime.now + " calling methods to test url: " + url + " on emulated 3G mobile")
     val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
     //  Add results to string which will eventually become the content of our results file
-    println(DateTime.now + " Adding results of desktop test to results string")
-    if(webPageDesktopTestResults.timeDocComplete >= averages.desktopTimeDocComplete80thPercentile ||
-      webPageDesktopTestResults.bytesInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile ||
-      webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile ||
-      webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile)
-          {returnString = returnString.concat("<tr bgcolor=\"#FFFF00\"><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")}
+    println(DateTime.now + " Adding results of desktop test to simple results string")
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
+
+    if((webPageDesktopTestResults.timeDocComplete >= averages.desktopTimeDocComplete80thPercentile) ||
+      (webPageDesktopTestResults.bytesInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
+      (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile) ||
+      (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile))
+          {
+            println("row should be yellow one of the items qualifies")
+            simpleReturnString = simpleReturnString.concat("<tr bgcolor=\"#FFFF00\"><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+          }
     else
-          {returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")}
-    println(DateTime.now + " Adding results of mobile test to results string")
-    if(webPageMobileTestResults.timeDocComplete >= averages.mobileTimeDocComplete80thPercentile ||
-      webPageMobileTestResults.bytesInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile ||
-      webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile ||
-      webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile)
-          {returnString = returnString.concat("<tr>bgcolor=\"#FFFF00\"<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")}
+          {
+            println("all fields within size limits")
+            simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+          }
+    println(DateTime.now + " Adding results of mobile test to simple results string")
+    if((webPageMobileTestResults.timeDocComplete >= averages.mobileTimeDocComplete80thPercentile) ||
+      (webPageMobileTestResults.bytesInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
+      (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile) ||
+      (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile))
+          {
+            println("row should be yellow one of the items qualifies")
+            simpleReturnString = simpleReturnString.concat("<tr>bgcolor=\"#FFFF00\"<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+          }
     else
-          {returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")}
+          {
+
+            println("row should be yellow one of the items qualifies")
+            simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+          }
     println(DateTime.now + " returning results string to main thread")
-    simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
-    simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
     List(returnString, simpleReturnString)
   }
 
