@@ -245,8 +245,8 @@ object App {
     val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
     //  Add results to string which will eventually become the content of our results file
     println(DateTime.now + " Adding results of desktop test to simple results string")
-    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
-    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+    returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
 
     if((webPageDesktopTestResults.timeDocComplete >= averages.desktopTimeDocComplete80thPercentile) ||
       (webPageDesktopTestResults.bytesInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
@@ -259,17 +259,17 @@ object App {
               (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex))
               {
                 println("row should be red one of the items qualifies")
-                simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+                simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
               }
               else {
                       println("row should be yellow one of the items qualifies")
-                      simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+                      simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
             }
           }
     else
           {
             println("all fields within size limits")
-            simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+            simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
           }
     println(DateTime.now + " Adding results of mobile test to simple results string")
     if((webPageMobileTestResults.timeDocComplete >= averages.mobileTimeDocComplete80thPercentile) ||
@@ -283,18 +283,18 @@ object App {
               (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile))
               {
                 println("row should be red one of the items qualifies")
-                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + alertColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + alertColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
               }
             else {
                 println("row should be yellow one of the items qualifies")
-                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + warningColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + warningColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
             }
           }
     else
           {
 
             println("row should be yellow one of the items qualifies")
-            simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+            simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
           }
     println(DateTime.now + " returning results string to main thread")
     List(returnString, simpleReturnString)
@@ -347,7 +347,7 @@ object App {
         mobileSuccessCount += 1
       }
     })
-    returnString = returnString.concat("<tr bgcolor=\"#B0C0E0\"><td>" + DateTime.now + "</td><td>Desktop</td>")
+    returnString = returnString.concat("<tr bgcolor=\"#B0C0E0><td>" + DateTime.now + "</td><td>Desktop</td>")
     if(desktopSuccessCount > 1){
       returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " liveblogs that were migrated due to size </td>"
         + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
