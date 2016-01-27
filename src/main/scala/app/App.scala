@@ -30,12 +30,15 @@ object App {
     val interactiveOutputFilename = "interactivePerformanceData.html"
 
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
+    val averageColor: String = "\"grey\""
+    val warningColor: String = "\"#FFFF00\""
+    val alertColor = "\"#FF0000\""
     val hTMLPageHeader:String = "<!DOCTYPE html>\n<html>\n<body>\n"
     val hTMLTitleLiveblog:String = "<h1>Currrent Performance of today's Liveblogs</h1>"
     val hTMLTitleInteractive:String = "<h1>Currrent Performance of today's Interactives</h1>"
     val hTMLJobStarted: String = "Job started at: " + DateTime.now + "\n"
-    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"grey\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
-    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=\"grey\">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=" +averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor="+ averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
     val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
     val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
@@ -120,7 +123,7 @@ object App {
             simplifiedResults = simplifiedResults.concat(migratedLiveBlogAverages.toHTMLString)
             println("Performance testing liveblogs")
             // Send each article URL to the webPageTest API and obtain resulting data
-            val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, migratedLiveBlogAverages))
+            val testResults: List[List[String]] = articleUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, migratedLiveBlogAverages, warningColor, alertColor))
             // Add results to a single string so that we only need to write to S3 once (S3 will only take complete objects).
             val resultsList: List[String] = testResults.map(x => x.head)
             val simplifiedResultsList : List[String] = testResults.map(x => x.tail.head)
@@ -177,7 +180,7 @@ object App {
       // Send each article URL to the webPageTest API and obtain resulting data
       println("Results from Interactive CAPI calls")
       interactiveUrls.foreach(println)
-      val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, new PageAverageObject(1, 1, 1, 1, 1, 1.0, 1, 1, 1, 1, 1, 1, 1, 1.0, 1, 1, "<tr><td>Please add a list of overly large liveblog pages.</td></tr>")))
+      val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, new PageAverageObject(1, 1, 1, 1, 1, 1.0, 1, 1, 1, 1, 1, 1, 1, 1.0, 1, 1, "<tr><td>Please add a list of overly large liveblog pages.</td></tr>"), warningColor, alertColor))
       // Add results to a single string so that we only need to write to S3 once (S3 will only take complete objects).
       val interactiveResultsList: List[String] = interactiveTestResults.map(x => x.head)
       val simplifiedResultsList : List[String] = interactiveTestResults.map(x => x.tail.head)
@@ -230,7 +233,7 @@ object App {
   }
 
 
-  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String, averages: PageAverageObject): List[String] = {
+  def testUrlReturnHtml(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String, averages: PageAverageObject, warningColor: String, alertColor: String): List[String] = {
     var returnString: String = ""
     var simpleReturnString: String = ""
     //  Define new web-page-test API request and send it the url to test
@@ -250,8 +253,18 @@ object App {
       (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile) ||
       (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile))
           {
-            println("row should be yellow one of the items qualifies")
-            simpleReturnString = simpleReturnString.concat("<tr bgcolor=\"#FFFF00\"><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+            if((webPageDesktopTestResults.timeDocComplete >= averages.desktopTimeDocComplete) ||
+              (webPageDesktopTestResults.bytesInFullyLoaded >= averages.desktopKBInFullyLoaded) ||
+              (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB) ||
+              (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex))
+              {
+                println("row should be red one of the items qualifies")
+                simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+              }
+              else {
+                      println("row should be yellow one of the items qualifies")
+                      simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
+            }
           }
     else
           {
@@ -264,8 +277,18 @@ object App {
       (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile) ||
       (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile))
           {
-            println("row should be yellow one of the items qualifies")
-            simpleReturnString = simpleReturnString.concat("<tr>bgcolor=\"#FFFF00\"<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+            if((webPageMobileTestResults.timeDocComplete >= averages.mobileTimeDocComplete80thPercentile) ||
+              (webPageMobileTestResults.bytesInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
+              (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile) ||
+              (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile))
+              {
+                println("row should be red one of the items qualifies")
+                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + alertColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+              }
+            else {
+                println("row should be yellow one of the items qualifies")
+                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + warningColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
+            }
           }
     else
           {
