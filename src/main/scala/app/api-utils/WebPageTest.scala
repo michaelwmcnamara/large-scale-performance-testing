@@ -147,6 +147,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
     println("Creating ResultElement")
     val result: ResultElement = new ResultElement(testUrl, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status)
+    println("Result time doc complete: " + result.timeDocComplete)
+    println("Result time bytes fully loaded: " + result.bytesInFullyLoaded)
+    println("Result string: " + result.toHTMLSimpleTableCells())
     println("Returning ResultElement")
     result
   }

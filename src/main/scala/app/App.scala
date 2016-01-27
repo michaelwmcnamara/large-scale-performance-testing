@@ -36,7 +36,7 @@ object App {
     val hTMLPageHeader:String = "<!DOCTYPE html>\n<html>\n<body>\n"
     val hTMLTitleLiveblog:String = "<h1>Currrent Performance of today's Liveblogs</h1>"
     val hTMLTitleInteractive:String = "<h1>Currrent Performance of today's Interactives</h1>"
-    val hTMLJobStarted: String = "Job started at: " + DateTime.now + "\n"
+    val hTMLJobStarted: String = "<p>Job started at: " + DateTime.now + "\n</p>"
     val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=" +averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor="+ averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
@@ -248,13 +248,13 @@ object App {
     returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLTableCells() + "</tr>")
     returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLTableCells() + "</tr>")
 
-    if((webPageDesktopTestResults.timeDocComplete >= averages.desktopTimeDocComplete80thPercentile) ||
-      (webPageDesktopTestResults.bytesInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
+    if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete80thPercentile) ||
+      (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded80thPercentile) ||
       (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile) ||
       (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile))
           {
-            if((webPageDesktopTestResults.timeDocComplete >= averages.desktopTimeDocComplete) ||
-              (webPageDesktopTestResults.bytesInFullyLoaded >= averages.desktopKBInFullyLoaded) ||
+            if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete) ||
+              (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded) ||
               (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB) ||
               (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex))
               {
@@ -272,15 +272,15 @@ object App {
             simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
           }
     println(DateTime.now + " Adding results of mobile test to simple results string")
-    if((webPageMobileTestResults.timeDocComplete >= averages.mobileTimeDocComplete80thPercentile) ||
-      (webPageMobileTestResults.bytesInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
+    if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete80thPercentile) ||
+      (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded80thPercentile) ||
       (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile) ||
       (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile))
           {
-            if((webPageMobileTestResults.timeDocComplete >= averages.mobileTimeDocComplete80thPercentile) ||
-              (webPageMobileTestResults.bytesInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
-              (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile) ||
-              (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile))
+            if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete) ||
+              (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded) ||
+              (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB) ||
+              (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex))
               {
                 println("row should be red one of the items qualifies")
                 simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + alertColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
@@ -347,7 +347,7 @@ object App {
         mobileSuccessCount += 1
       }
     })
-    returnString = returnString.concat("<tr bgcolor=\"#B0C0E0><td>" + DateTime.now + "</td><td>Desktop</td>")
+    returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Desktop</td>")
     if(desktopSuccessCount > 1){
       returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " liveblogs that were migrated due to size </td>"
         + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
@@ -377,7 +377,7 @@ object App {
       }
     }
 
-    returnString = returnString.concat("<tr bgcolor=\"#B0C0E0\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
+    returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
     if(mobileSuccessCount > 1){
       returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " liveblogs that were migrated due to size </td>"
         + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "s</td>"
