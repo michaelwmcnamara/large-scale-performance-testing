@@ -41,7 +41,7 @@ object App {
     val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor="+ averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
     val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
-    val hTMLPageFooterEnd: String = "</i></p>\n</body>\n<html>"
+    val hTMLPageFooterEnd: String = "</i></p>\n</body>\n</html>"
     var results: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLTableHeaders
     var simplifiedResults: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLSimpleTableHeaders
 
@@ -52,7 +52,7 @@ object App {
     var wptApiKey: String = ""
     var wptLocation: String = ""
 
-    //initialize rogues Gallery - will set this up as a file another time
+    //initialize list of Migrated LiveBlogs - will set this up as a file another time
     val listOfMigratedLiveBlogs: List[String] = List("http://www.theguardian.com/film/filmblog/live/2015/oct/21/back-to-the-future-day-live-experience-21-october-2015-round-the-world",
       "http://www.theguardian.com/music/live/2016/jan/11/david-bowie-dies-of-cancer-aged-69-reports",
       "http://www.theguardian.com/world/live/2015/nov/14/paris-terror-attacks-attackers-dead-mass-killing-live-updates",
@@ -60,6 +60,9 @@ object App {
       "http://www.theguardian.com/politics/blog/live/2015/may/07/election-2015-live-final-votes-cast-as-battle-for-power-looms")
 
     val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
+
+    val liveBlogItemlabel: String = "LiveBlog"
+    val interactiveItemLabel: String = "Interactive"
 
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
     val s3Client = new AmazonS3Client()
@@ -121,7 +124,7 @@ object App {
             println("Combined results from LiveBLog CAPI calls")
             articleUrls.foreach(println)
             println("Generating average values for migrated liveblogs")
-            val migratedLiveBlogAverages: PageAverageObject = testRoguesGallery(listOfMigratedLiveBlogs ,wptBaseUrl, wptApiKey, wptLocation)
+            val migratedLiveBlogAverages: PageAverageObject = testMigratedLiveBlogList(listOfMigratedLiveBlogs ,wptBaseUrl, wptApiKey, wptLocation, liveBlogItemlabel)
             simplifiedResults = simplifiedResults.concat(migratedLiveBlogAverages.toHTMLString)
             println("Performance testing liveblogs")
             // Send each article URL to the webPageTest API and obtain resulting data
@@ -183,15 +186,15 @@ object App {
       println("Results from Interactive CAPI calls")
       interactiveUrls.foreach(println)
       println("Generating average values for migrated liveblogs")
-      val largeInteractivesAverages: PageAverageObject = testRoguesGallery(listofLargeInteractives ,wptBaseUrl, wptApiKey, wptLocation)
+      val largeInteractivesAverages: PageAverageObject = testMigratedLiveBlogList(listofLargeInteractives ,wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel)
       interactiveResults = interactiveResults.concat(largeInteractivesAverages.toHTMLString)
 
       val interactiveTestResults: List[List[String]] = interactiveUrls.map(url => testUrlReturnHtml(url, wptBaseUrl, wptApiKey, wptLocation, largeInteractivesAverages, warningColor, alertColor))
       // Add results to a single string so that we only need to write to S3 once (S3 will only take complete objects).
       val interactiveResultsList: List[String] = interactiveTestResults.map(x => x.head)
-      val simplifiedResultsList : List[String] = interactiveTestResults.map(x => x.tail.head)
+      val simplifiedInteractiveResultsList : List[String] = interactiveTestResults.map(x => x.tail.head)
 
-      interactiveResults = interactiveResults.concat(simplifiedResultsList.mkString)
+      interactiveResults = interactiveResults.concat(simplifiedInteractiveResultsList.mkString)
       println(DateTime.now + " Results added to accumulator string \n")
     }
     interactiveResults = interactiveResults.concat(hTMLTableFooters)
@@ -289,11 +292,11 @@ object App {
               (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex))
               {
                 println("row should be red one of the items qualifies")
-                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + alertColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
+                simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
               }
             else {
                 println("row should be yellow one of the items qualifies")
-                simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + warningColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
+                simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
             }
           }
     else
@@ -306,84 +309,97 @@ object App {
     List(returnString, simpleReturnString)
   }
 
-  def testRoguesGallery(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String ): PageAverageObject = {
-    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-    var returnString: String = ""
 
-    var desktopTimeFirstPaint: Int = 0
-    var desktopTimeDocComplete: Int = 0
-    var desktopKBInDoccomplete: Int = 0
-    var desktopTimeFullyLoaded: Int = 0
-    var desktopKBInFullyLoaded: Int = 0
-    var desktopCostAt5CentsPerMB: Double = 0
-    var desktopSpeedIndex: Int = 0
-    var desktopSuccessCount = 0
+    def testMigratedLiveBlogList(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
+      val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+      var returnString: String = ""
 
-    var mobileTimeFirstPaint: Int = 0
-    var mobileTimeDocComplete: Int = 0
-    var mobileKBInDoccomplete: Int = 0
-    var mobileTimeFullyLoaded: Int = 0
-    var mobileKBInFullyLoaded: Int = 0
-    var mobileCostAt5CentsPerMB: Double = 0
-    var mobileSpeedIndex: Int = 0
-    var mobileSuccessCount = 0
+      var desktopTimeFirstPaint: Int = 0
+      var desktopTimeDocComplete: Int = 0
+      var desktopKBInDoccomplete: Int = 0
+      var desktopTimeFullyLoaded: Int = 0
+      var desktopKBInFullyLoaded: Int = 0
+      var desktopCostAt5CentsPerMB: Double = 0
+      var desktopSpeedIndex: Int = 0
+      var desktopSuccessCount = 0
 
-    def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s}
+      var mobileTimeFirstPaint: Int = 0
+      var mobileTimeDocComplete: Int = 0
+      var mobileKBInDoccomplete: Int = 0
+      var mobileTimeFullyLoaded: Int = 0
+      var mobileKBInFullyLoaded: Int = 0
+      var mobileCostAt5CentsPerMB: Double = 0
+      var mobileSpeedIndex: Int = 0
+      var mobileSuccessCount = 0
+
+      val multipleLiveBlogs:String = "liveblogs that were migrated due to size"
+      val singleLiveBlog: String = "Example of a liveblog migrated due to size"
+      val noLiveBlogs: String = "All tests of migrated liveblogs failed"
+
+      val multipleInteractives:String = "interactives with known size or performance issues"
+      val singleInteractive: String = "Example of an interactive with known size or performance issues"
+      val noInteractives: String = "All tests of interactives with size or performance issues have failed"
+
+
+      def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s}
 
       urlList.foreach(url => {
-      val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
-      val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
-      if (webPageDesktopTestResults.resultStatus == "Test Success"){
-        desktopTimeFirstPaint += webPageDesktopTestResults.timeFirstPaint/1000
-        desktopTimeDocComplete += webPageDesktopTestResults.timeDocComplete/1000
-        desktopKBInDoccomplete += webPageDesktopTestResults.bytesInDoccomplete/1000
-        desktopTimeFullyLoaded += webPageDesktopTestResults.timeFullyLoaded/1000
-        desktopKBInFullyLoaded += webPageDesktopTestResults.bytesInFullyLoaded/1000
-        desktopCostAt5CentsPerMB += webPageDesktopTestResults.costAt5CentsPerMB
-        desktopSpeedIndex += webPageDesktopTestResults.speedIndex
-        desktopSuccessCount += 1
+        val webPageDesktopTestResults: webpageTest.ResultElement = webpageTest.desktopChromeCableTest(url)
+        val webPageMobileTestResults: webpageTest.ResultElement = webpageTest.mobileChrome3GTest(url, wptLocation)
+        if (webPageDesktopTestResults.resultStatus == "Test Success"){
+          desktopTimeFirstPaint += webPageDesktopTestResults.timeFirstPaint/1000
+          desktopTimeDocComplete += webPageDesktopTestResults.timeDocComplete/1000
+          desktopKBInDoccomplete += webPageDesktopTestResults.bytesInDoccomplete/1000
+          desktopTimeFullyLoaded += webPageDesktopTestResults.timeFullyLoaded/1000
+          desktopKBInFullyLoaded += webPageDesktopTestResults.bytesInFullyLoaded/1000
+          desktopCostAt5CentsPerMB += webPageDesktopTestResults.costAt5CentsPerMB
+          desktopSpeedIndex += webPageDesktopTestResults.speedIndex
+          desktopSuccessCount += 1
 
-        mobileTimeFirstPaint += webPageMobileTestResults.timeFirstPaint/1000
-        mobileTimeDocComplete += webPageMobileTestResults.timeDocComplete/1000
-        mobileKBInDoccomplete += webPageMobileTestResults.bytesInDoccomplete/1000
-        mobileTimeFullyLoaded += webPageMobileTestResults.timeFullyLoaded/1000
-        mobileKBInFullyLoaded += webPageMobileTestResults.bytesInFullyLoaded/1000
-        mobileCostAt5CentsPerMB += webPageMobileTestResults.costAt5CentsPerMB
-        mobileSpeedIndex += webPageMobileTestResults.speedIndex
-        mobileSuccessCount += 1
-      }
-    })
-    returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Desktop</td>")
-    if(desktopSuccessCount > 1){
-      returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + " liveblogs that were migrated due to size </td>"
-        + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
-        + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "kB</td>"
-        + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
-        + "<td>" + desktopSpeedIndex/desktopSuccessCount + "</td>"
-        + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
-      )}
+          mobileTimeFirstPaint += webPageMobileTestResults.timeFirstPaint/1000
+          mobileTimeDocComplete += webPageMobileTestResults.timeDocComplete/1000
+          mobileKBInDoccomplete += webPageMobileTestResults.bytesInDoccomplete/1000
+          mobileTimeFullyLoaded += webPageMobileTestResults.timeFullyLoaded/1000
+          mobileKBInFullyLoaded += webPageMobileTestResults.bytesInFullyLoaded/1000
+          mobileCostAt5CentsPerMB += webPageMobileTestResults.costAt5CentsPerMB
+          mobileSpeedIndex += webPageMobileTestResults.speedIndex
+          mobileSuccessCount += 1
+        }
+      })
+      returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Desktop</td>")
+      if(desktopSuccessCount > 1){
+        val multipleAverageString: String = if (itemtype == "LiveBlog") multipleLiveBlogs else multipleInteractives
+        returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + multipleAverageString + "</td>"
+          + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
+          + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "kB</td>"
+          + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
+          + "<td>" + desktopSpeedIndex/desktopSuccessCount + "</td>"
+          + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+        )}
       else{
-      if (desktopSuccessCount == 1) {
-        returnString = returnString.concat("<td>" + "Example of a liveblog migrated due to size </td>"
-          + "<td>" + desktopTimeDocComplete + "s</td>"
-          + "<td>" + desktopKBInFullyLoaded + "kB</td>"
-          + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
-          + "<td>" + desktopSpeedIndex + "</td>"
-          + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
-        )
+        if (desktopSuccessCount == 1) {
+          val singleAverageString: String = if (itemtype == "LiveBlog") singleLiveBlog else singleInteractive
+          returnString = returnString.concat("<td>" + singleAverageString + "</td>"
+            + "<td>" + desktopTimeDocComplete + "s</td>"
+            + "<td>" + desktopKBInFullyLoaded + "kB</td>"
+            + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
+            + "<td>" + desktopSpeedIndex + "</td>"
+            + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+          )
+        }
+        else {
+          val noAverages: String = if (itemtype == "LiveBlog") noLiveBlogs else noInteractives
+          returnString = returnString.concat("<td>" + noAverages + "</td>"
+            + "<td>" + desktopTimeDocComplete + "s</td>"
+            + "<td>" + desktopKBInFullyLoaded + "kB</td>"
+            + "<td> $US" + desktopCostAt5CentsPerMB + "</td>"
+            + "<td>" + desktopSpeedIndex + "</td>"
+            + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+          )
+        }
       }
-      else {
-        returnString = returnString.concat("<td>" + "All tests of migrated liveblogs Failed </td>"
-          + "<td>" + desktopTimeDocComplete + "s</td>"
-          + "<td>" + desktopKBInFullyLoaded + "kB</td>"
-          + "<td> $US" + desktopCostAt5CentsPerMB + "</td>"
-          + "<td>" + desktopSpeedIndex + "</td>"
-          + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
-        )
-      }
-    }
 
-    returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
+      returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
     if(mobileSuccessCount > 1){
       returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " liveblogs that were migrated due to size </td>"
         + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "s</td>"
@@ -403,7 +419,7 @@ object App {
         )
       }
       else {
-        returnString = returnString.concat("<td>" + "All tests of migrated liveblogs Failed </td>"
+        returnString = returnString.concat("<td>" + "All tests of migrated liveblogs failed </td>"
           + "<td>" + mobileTimeDocComplete + "s</td>"
           + "<td>" + mobileKBInFullyLoaded + "kB</td>"
           + "<td> $US" + mobileCostAt5CentsPerMB + "</td>"
@@ -433,6 +449,10 @@ object App {
       returnString
     )
   }
+
+
+
+
 
   class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, dcfl: Double, dsi: Int, dsc: Int, mtfp: Int, mtdc: Int, msdc: Int, mtfl: Int, msfl: Int, mcfl: Double, msi: Int, msc: Int, resultString: String) {
 
