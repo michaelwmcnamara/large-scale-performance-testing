@@ -481,7 +481,7 @@ object App {
     val mobileSpeedIndex: Int = 5000
     val mobileSuccessCount = 1
 
-    val formattedHTMLResultString: String = "\"<tr bgcolor=\\\"#A9BCF5\\\">" +
+    val formattedHTMLResultString: String = "\"<tr bgcolor=\"A9BCF5\">" +
       "<td>" + DateTime.now + "</td>" +
       "<td>Desktop</td>" +
       "<td> Alerting thresholds determined by past liveblogs we have migrated</td>" +
@@ -490,7 +490,7 @@ object App {
       "<td>" + desktopCostAt5CentsPerMB + "</td>" +
       "<td>" + desktopSpeedIndex + "</td>" +
       "<td>Predefined standards</td></tr>" +
-      "\"<tr bgcolor=\\\"#A9BCF5\\\">" +
+      "\"<tr bgcolor=\"A9BCF5\">" +
       "<td>" + DateTime.now + "</td>" +
       "<td>Mobile</td>" +
       "<td> Yellow indicates within danger zone of threshold. Red indicates threshold has been crossed </td>" +
