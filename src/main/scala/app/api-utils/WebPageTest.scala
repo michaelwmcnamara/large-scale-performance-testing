@@ -104,7 +104,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("Processing response and checking if results are ready")
     var testResults: Elem = scala.xml.XML.loadString(response.body.string)
     var iterator: Int = 0
-    val msmaxTime: Int = 120000
+    val msmaxTime: Int = 300000
     val msTimeBetweenPings: Int = 5000
     val maxCount: Int = msmaxTime / msTimeBetweenPings
     while (((testResults \\ "statusCode").text.toInt != 200) && (iterator < maxCount)) {
