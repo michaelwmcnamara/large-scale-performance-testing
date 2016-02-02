@@ -124,7 +124,7 @@ object App {
             println("Combined results from LiveBLog CAPI calls")
             articleUrls.foreach(println)
             println("Generating average values for migrated liveblogs")
-            val migratedLiveBlogAverages: PageAverageObject = testMigratedLiveBlogList(listOfMigratedLiveBlogs ,wptBaseUrl, wptApiKey, wptLocation, liveBlogItemlabel)
+            val migratedLiveBlogAverages: PageAverageObject = defaultAverageForLiveBlogs()
             simplifiedResults = simplifiedResults.concat(migratedLiveBlogAverages.toHTMLString)
             println("Performance testing liveblogs")
             // Send each article URL to the webPageTest API and obtain resulting data
@@ -140,7 +140,7 @@ object App {
     results = results.concat(hTMLTableFooters)
     results = results.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     simplifiedResults = simplifiedResults.concat(hTMLTableFooters)
-    simplifiedResults = simplifiedResults.concat("<p> List of urls used to generate averages: </p> <table border=\"1\">" + listOfMigratedLiveBlogs.map(url => "<tr><td>" + url + "</td></tr>").mkString + "</table>")
+//    simplifiedResults = simplifiedResults.concat("<p> List of urls used to generate averages: </p> <table border=\"1\">" + listOfMigratedLiveBlogs.map(url => "<tr><td>" + url + "</td></tr>").mkString + "</table>")
     simplifiedResults = simplifiedResults.concat(hTMLPageFooterStart + DateTime.now + hTMLPageFooterEnd)
     if (!iamTestingLocally) {
       println(DateTime.now + " Writing the following to S3:\n" + results + "\n")
@@ -462,6 +462,66 @@ object App {
     )
   }
 
+  def defaultAverageForLiveBlogs(): PageAverageObject = {
+    val desktopTimeFirstPaint: Int = 1
+    val desktopTimeDocComplete: Int = 15
+    val desktopKBInDoccomplete: Int = 10000
+    val desktopTimeFullyLoaded: Int = 20
+    val desktopKBInFullyLoaded: Int = 15000
+    val desktopCostAt5CentsPerMB: Double = 50.0
+    val desktopSpeedIndex: Int = 5000
+    val desktopSuccessCount = 1
+
+    val mobileTimeFirstPaint: Int = 1
+    val mobileTimeDocComplete: Int = 15
+    val mobileKBInDocComplete: Int = 6000
+    val mobileTimeFullyLoaded: Int = 20
+    val mobileKBInFullyLoaded: Int = 6000
+    val mobileCostAt5CentsPerMB: Double = 30.0
+    val mobileSpeedIndex: Int = 5000
+    val mobileSuccessCount = 1
+
+    val formattedHTMLResultString: String = "\"<tr bgcolor=\\\"#A9BCF5\\\">" +
+      "<td>" + DateTime.now + "</td>" +
+      "<td>Desktop</td>" +
+      "<td> Alerting thresholds determined by past liveblogs we have migrated</td>" +
+      "<td>" + desktopTimeDocComplete + "</td>" +
+      "<td>" + desktopKBInDoccomplete + "</td>" +
+      "<td>" + desktopCostAt5CentsPerMB + "</td>" +
+      "<td>" + desktopSpeedIndex + "</td>" +
+      "<td>Predefined standards</td></tr>" +
+      "\"<tr bgcolor=\\\"#A9BCF5\\\">" +
+      "<td>" + DateTime.now + "</td>" +
+      "<td>Mobile</td>" +
+      "<td> Yellow indicates within danger zone of threshold. Red indicates threshold has been crossed </td>" +
+      "<td>" + mobileTimeDocComplete + "</td>" +
+      "<td>" + mobileKBInDocComplete + "</td>" +
+      "<td>" + mobileCostAt5CentsPerMB + "</td>" +
+      "<td>" + mobileSpeedIndex + "</td>" +
+      "<td>Predefined standards</td></tr>"
+
+    new PageAverageObject(
+      desktopTimeFirstPaint,
+      desktopTimeDocComplete,
+      desktopKBInDoccomplete,
+      desktopTimeFullyLoaded,
+      desktopKBInFullyLoaded,
+      desktopCostAt5CentsPerMB,
+      desktopSpeedIndex,
+      desktopSuccessCount,
+      mobileTimeFirstPaint,
+      mobileTimeDocComplete,
+      mobileKBInDocComplete,
+      mobileTimeFullyLoaded,
+      mobileKBInFullyLoaded,
+      mobileCostAt5CentsPerMB,
+      mobileSpeedIndex,
+      mobileSuccessCount,
+      formattedHTMLResultString
+    )
+
+
+  }
 
 
 
