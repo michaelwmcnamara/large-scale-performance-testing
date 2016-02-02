@@ -259,13 +259,11 @@ object App {
 
     if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete80thPercentile) ||
       (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded80thPercentile) ||
-      (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile) ||
-      (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile))
+      (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile))
           {
             if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete) ||
               (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded) ||
-              (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB) ||
-              (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex))
+              (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB))
               {
                 println("row should be red one of the items qualifies")
                 simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
@@ -283,13 +281,11 @@ object App {
     println(DateTime.now + " Adding results of mobile test to simple results string")
     if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete80thPercentile) ||
       (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded80thPercentile) ||
-      (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile) ||
-      (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile))
+      (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile))
           {
             if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete) ||
               (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded) ||
-              (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB) ||
-              (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex))
+              (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB))
               {
                 println("row should be red one of the items qualifies")
                 simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
