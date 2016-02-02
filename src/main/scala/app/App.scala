@@ -306,6 +306,7 @@ object App {
             simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
           }
     println(DateTime.now + " returning results string to main thread")
+    println(simpleReturnString)
     List(returnString, simpleReturnString)
   }
 
@@ -366,14 +367,22 @@ object App {
           mobileSuccessCount += 1
         }
       })
+
       returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Desktop</td>")
       if(desktopSuccessCount > 1){
+        desktopTimeFirstPaint = desktopTimeFirstPaint/desktopSuccessCount
+        desktopTimeDocComplete = desktopTimeDocComplete/desktopSuccessCount
+        desktopKBInDoccomplete = desktopKBInDoccomplete/desktopSuccessCount
+        desktopTimeFullyLoaded = desktopTimeFullyLoaded/desktopSuccessCount
+        desktopKBInFullyLoaded = desktopKBInFullyLoaded/desktopSuccessCount
+        desktopCostAt5CentsPerMB = roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount)
+        desktopSpeedIndex = desktopSpeedIndex/desktopSuccessCount
         val multipleAverageString: String = if (itemtype == "LiveBlog") multipleLiveBlogs else multipleInteractives
         returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + multipleAverageString + "</td>"
-          + "<td>" + desktopTimeDocComplete/desktopSuccessCount + "s</td>"
-          + "<td>" + desktopKBInFullyLoaded/desktopSuccessCount + "kB</td>"
-          + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
-          + "<td>" + desktopSpeedIndex/desktopSuccessCount + "</td>"
+          + "<td>" + desktopTimeDocComplete + "s</td>"
+          + "<td>" + desktopKBInFullyLoaded + "kB</td>"
+          + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
+          + "<td>" + desktopSpeedIndex + "</td>"
           + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
         )}
       else{
@@ -401,11 +410,18 @@ object App {
 
       returnString = returnString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
     if(mobileSuccessCount > 1){
+      mobileTimeFirstPaint = mobileTimeFirstPaint/mobileSuccessCount
+      mobileTimeDocComplete = mobileTimeDocComplete/mobileSuccessCount
+      mobileKBInDoccomplete = mobileKBInDoccomplete/mobileSuccessCount
+      mobileTimeFullyLoaded = mobileTimeFullyLoaded/mobileSuccessCount
+      mobileKBInFullyLoaded = mobileKBInFullyLoaded/mobileSuccessCount
+      mobileCostAt5CentsPerMB = roundAt(2)(mobileCostAt5CentsPerMB/mobileSuccessCount)
+      mobileSpeedIndex = mobileSpeedIndex/mobileSuccessCount
       returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " liveblogs that were migrated due to size </td>"
-        + "<td>" + mobileTimeDocComplete/desktopSuccessCount + "s</td>"
-        + "<td>" + mobileKBInFullyLoaded/desktopSuccessCount + "kB</td>"
-        + "<td> $(US)" + roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount) + "</td>"
-        + "<td>" + mobileSpeedIndex/desktopSuccessCount + "</td>"
+        + "<td>" + mobileTimeDocComplete + "s</td>"
+        + "<td>" + mobileKBInFullyLoaded + "kB</td>"
+        + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
+        + "<td>" + mobileSpeedIndex + "</td>"
         + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
       )}
     else{
