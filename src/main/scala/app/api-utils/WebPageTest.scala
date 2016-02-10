@@ -24,7 +24,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val bytesInDoccomplete: Int = bDC
     val timeFullyLoaded: Int = tFL
     val bytesInFullyLoaded: Int = bFL
-    val costAt5CentsPerMB: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1000000)*0.05)
+    // translate bytes to MB and apply a constant to get cost
+    val estUSPrePaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.10)
+    val estUSPostPaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.06)
     val speedIndex: Int = sI
     val resultStatus:String = status
 
@@ -33,11 +35,11 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
 
     def toHTMLTableCells(): String = {
-      "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + costAt5CentsPerMB + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
+      "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
     }
 
     def toHTMLSimpleTableCells(): String = {
-      "<th>" + testUrl + " </th><td>" +  (timeDocComplete/1000).toString + "s </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + costAt5CentsPerMB + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
+      "<th>" + testUrl + " </th><td>" +  (timeDocComplete/1000).toString + "s </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>(US)$" + estUSPrePaidCost + "</td><td>(US)$" + estUSPostPaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
     }
 
     override def toString(): String = {

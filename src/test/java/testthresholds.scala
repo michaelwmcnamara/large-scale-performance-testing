@@ -21,10 +21,11 @@ class ResultElement(url:String, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int,
   val bytesInDoccomplete: Int = bDC
   val timeFullyLoaded: Int = tFL
   val bytesInFullyLoaded: Int = bFL
-  val costAt5CentsPerMB: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1000000)*0.05)
+  // translate bytes to MB and apply a constant to get cost
+  val estUSPrePaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.10)
+  val estUSPostpaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.06)
   val speedIndex: Int = sI
   val resultStatus:String = status
-
   def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s }
 
   def toStringList(): List[String] = {
@@ -32,11 +33,11 @@ class ResultElement(url:String, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int,
   }
 
   def toHTMLTableCells(): String = {
-    "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + costAt5CentsPerMB + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
+    "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
   }
 
   def toHTMLSimpleTableCells(): String = {
-    "<th>" + testUrl + " </th><td>" +  (timeDocComplete/1000).toString + "s </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + costAt5CentsPerMB + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
+    "<th>" + testUrl + " </th><td>" +  (timeDocComplete/1000).toString + "s </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>(US)$" + estUSPrePaidCost + "</td><td>(US)$" + estUSPostpaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
   }
 
   override def toString(): String = {
@@ -81,7 +82,7 @@ class testthresholds extends UnitSpec with Matchers {
   //    val app = new PageAverageObject
 
   def returnResultsString(url: String): List[String] = {
-    val averages = new PageAverageObject(3, 6, 3600, 9, 5500, 0.3, 4000, 5, 3, 19, 2500, 20, 3000, 0.3, 5000, 3, "")
+    val averages = new PageAverageObject(3, 6, 3600, 9, 5500, 0.6, 0.5, 4000, 5, 3, 19, 2500, 20, 3000, 0.4, 0.3, 5000, 3, "")
 
     //  Define new web-page-test API request and send it the url to test
     val desktopResultFilename = "/Users/mmcnamara/git/capi-wpt-querybot/desktoptest.xml"
@@ -110,9 +111,13 @@ class testthresholds extends UnitSpec with Matchers {
     println("Average: " + averages.desktopKBInFullyLoaded)
     println("Average 80th %ile: " + averages.desktopKBInFullyLoaded80thPercentile + "\n")
 
-    println("Result: " + webPageDesktopTestResults.costAt5CentsPerMB)
-    println("Average: " + averages.desktopCostAt5CentsPerMB)
-    println("Average 80th %ile: " + averages.desktopCostAt5CentsPerMB80thPercentile + "\n")
+    println("Result: " + webPageDesktopTestResults.estUSPrePaidCost)
+    println("Average: " + averages.desktopCostUSPrepaid)
+    println("Average 80th %ile: " + averages.desktopCostUSprepaid80thPercentile + "\n")
+
+    println("Result: " + webPageDesktopTestResults.estUSPostpaidCost)
+    println("Average: " + averages.desktopCostUSPostPaid)
+    println("Average 80th %ile: " + averages.desktopCostUSpostpaid80thPercentile + "\n")
 
     println("Result: " + webPageDesktopTestResults.speedIndex)
     println("Average: " + averages.desktopSpeedIndex)
@@ -129,9 +134,13 @@ class testthresholds extends UnitSpec with Matchers {
     println("Average: " + averages.mobileKBInFullyLoaded)
     println("Average 80th %ile: " + averages.mobileKBInFullyLoaded80thPercentile + "\n")
 
-    println("Result: " + webPageMobileTestResults.costAt5CentsPerMB)
-    println("Average: " + averages.mobileCostAt5CentsPerMB)
-    println("Average 80th %ile: " + averages.mobileCostAt5CentsPerMB80thPercentile + "\n")
+    println("Result: " + webPageDesktopTestResults.estUSPrePaidCost)
+    println("Average: " + averages.mobileCostUSPrepaid)
+    println("Average 80th %ile: " + averages.mobileCostUSPrepaid80thPercentile + "\n")
+
+    println("Result: " + webPageDesktopTestResults.estUSPostpaidCost)
+    println("Average: " + averages.mobileCostUSPostPaid)
+    println("Average 80th %ile: " + averages.mobileCostUSPostpaid80thPercentile + "\n")
 
     println("Result: " + webPageMobileTestResults.speedIndex)
     println("Average: " + averages.mobileSpeedIndex)
@@ -141,11 +150,13 @@ class testthresholds extends UnitSpec with Matchers {
 
     if ((webPageDesktopTestResults.timeDocComplete / 1000 >= averages.desktopTimeDocComplete80thPercentile) ||
       (webPageDesktopTestResults.bytesInFullyLoaded / 1000 >= averages.desktopKBInFullyLoaded80thPercentile) ||
-      (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile) ||
+      (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopCostUSprepaid80thPercentile) ||
+      (webPageDesktopTestResults.estUSPostpaidCost >= averages.desktopCostUSpostpaid80thPercentile) ||
       (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile)) {
       if ((webPageDesktopTestResults.timeDocComplete / 1000 >= averages.desktopTimeDocComplete) ||
         (webPageDesktopTestResults.bytesInFullyLoaded / 1000 >= averages.desktopKBInFullyLoaded) ||
-        (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB) ||
+        (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopCostUSPrepaid) ||
+        (webPageDesktopTestResults.estUSPostpaidCost >= averages.desktopCostUSPostPaid) ||
         (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex)) {
         println("row should be red one of the items qualifies")
         simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
@@ -162,11 +173,13 @@ class testthresholds extends UnitSpec with Matchers {
     println(DateTime.now + " Adding results of mobile test to simple results string")
     if ((webPageMobileTestResults.timeDocComplete / 1000 >= averages.mobileTimeDocComplete80thPercentile) ||
       (webPageMobileTestResults.bytesInFullyLoaded / 1000 >= averages.mobileKBInFullyLoaded80thPercentile) ||
-      (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile) ||
+      (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileCostUSPrepaid80thPercentile) ||
+      (webPageMobileTestResults.estUSPostpaidCost >= averages.mobileCostUSPostpaid80thPercentile) ||
       (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile)) {
       if ((webPageMobileTestResults.timeDocComplete / 1000 >= averages.mobileTimeDocComplete) ||
         (webPageMobileTestResults.bytesInFullyLoaded / 1000 >= averages.mobileKBInFullyLoaded) ||
-        (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB) ||
+        (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileCostUSPrepaid) ||
+        (webPageMobileTestResults.estUSPostpaidCost >= averages.mobileCostUSPostPaid) ||
         (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex)) {
         println("row should be red one of the items qualifies")
         simpleReturnString = simpleReturnString.concat("<tr>bgcolor=" + alertColor + "<td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")

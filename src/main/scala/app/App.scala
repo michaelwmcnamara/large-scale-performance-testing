@@ -37,8 +37,8 @@ object App {
     val hTMLTitleLiveblog:String = "<h1>Currrent Performance of today's Liveblogs</h1>"
     val hTMLTitleInteractive:String = "<h1>Currrent Performance of today's Interactives</h1>"
     val hTMLJobStarted: String = "<p>Job started at: " + DateTime.now + "\n</p>"
-    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=" +averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
-    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor="+ averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>Cost at $0.05(US) per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLTableHeaders:String = "<table border=\"1\">\n<tr bgcolor=" +averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>kB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>kB transferred at Fully Loaded</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+    val hTMLSimpleTableHeaders:String = "<table border=\"1\">\n<tr bgcolor="+ averageColor +">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>kB transferred</th>\n<th>US Prepaid Cost $US0.10 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
     val hTMLTableFooters:String = "</table>"
     val hTMLPageFooterStart: String =  "\n<p><i>Job completed at: "
     val hTMLPageFooterEnd: String = "</i></p>\n</body>\n</html>"
@@ -259,11 +259,13 @@ object App {
 
     if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete80thPercentile) ||
       (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded80thPercentile) ||
-      (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB80thPercentile))
+      (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopCostUSprepaid80thPercentile) ||
+      (webPageDesktopTestResults.estUSPostPaidCost >= averages.desktopCostUSpostpaid80thPercentile))
           {
             if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete) ||
               (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded) ||
-              (webPageDesktopTestResults.costAt5CentsPerMB >= averages.desktopCostAt5CentsPerMB))
+              (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopCostUSPrepaid) ||
+              (webPageDesktopTestResults.estUSPostPaidCost >= averages.desktopCostUSPostPaid))
               {
                 println("row should be red one of the items qualifies")
                 simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
@@ -281,11 +283,13 @@ object App {
     println(DateTime.now + " Adding results of mobile test to simple results string")
     if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete80thPercentile) ||
       (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded80thPercentile) ||
-      (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB80thPercentile))
+      (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileCostUSPrepaid80thPercentile) ||
+      (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileCostUSPostpaid80thPercentile))
           {
             if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete) ||
               (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded) ||
-              (webPageMobileTestResults.costAt5CentsPerMB >= averages.mobileCostAt5CentsPerMB))
+              (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileCostUSPrepaid) ||
+              (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileCostUSPostPaid))
               {
                 println("row should be red one of the items qualifies")
                 simpleReturnString = simpleReturnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + webPageMobileTestResults.toHTMLSimpleTableCells() + "</tr>")
@@ -316,16 +320,18 @@ object App {
       var desktopKBInDoccomplete: Int = 0
       var desktopTimeFullyLoaded: Int = 0
       var desktopKBInFullyLoaded: Int = 0
-      var desktopCostAt5CentsPerMB: Double = 0
+      var desktopUSPrepaidCost: Double = 0
+      var desktopUSPostpaidCost: Double = 0
       var desktopSpeedIndex: Int = 0
       var desktopSuccessCount = 0
 
       var mobileTimeFirstPaint: Int = 0
       var mobileTimeDocComplete: Int = 0
-      var mobileKBInDoccomplete: Int = 0
+      var mobileKBInDocComplete: Int = 0
       var mobileTimeFullyLoaded: Int = 0
       var mobileKBInFullyLoaded: Int = 0
-      var mobileCostAt5CentsPerMB: Double = 0
+      var mobileUSPrepaidCost: Double = 0
+      var mobileUSPostpaidCost: Double = 0
       var mobileSpeedIndex: Int = 0
       var mobileSuccessCount = 0
 
@@ -349,16 +355,18 @@ object App {
           desktopKBInDoccomplete += webPageDesktopTestResults.bytesInDoccomplete/1000
           desktopTimeFullyLoaded += webPageDesktopTestResults.timeFullyLoaded/1000
           desktopKBInFullyLoaded += webPageDesktopTestResults.bytesInFullyLoaded/1000
-          desktopCostAt5CentsPerMB += webPageDesktopTestResults.costAt5CentsPerMB
+          desktopUSPrepaidCost += webPageDesktopTestResults.estUSPrePaidCost
+          desktopUSPostpaidCost += webPageDesktopTestResults.estUSPrePaidCost
           desktopSpeedIndex += webPageDesktopTestResults.speedIndex
           desktopSuccessCount += 1
 
           mobileTimeFirstPaint += webPageMobileTestResults.timeFirstPaint/1000
           mobileTimeDocComplete += webPageMobileTestResults.timeDocComplete/1000
-          mobileKBInDoccomplete += webPageMobileTestResults.bytesInDoccomplete/1000
+          mobileKBInDocComplete += webPageMobileTestResults.bytesInDoccomplete/1000
           mobileTimeFullyLoaded += webPageMobileTestResults.timeFullyLoaded/1000
           mobileKBInFullyLoaded += webPageMobileTestResults.bytesInFullyLoaded/1000
-          mobileCostAt5CentsPerMB += webPageMobileTestResults.costAt5CentsPerMB
+          mobileUSPrepaidCost += webPageMobileTestResults.estUSPrePaidCost
+          mobileUSPostpaidCost += webPageMobileTestResults.estUSPostPaidCost
           mobileSpeedIndex += webPageMobileTestResults.speedIndex
           mobileSuccessCount += 1
         }
@@ -371,13 +379,15 @@ object App {
         desktopKBInDoccomplete = desktopKBInDoccomplete/desktopSuccessCount
         desktopTimeFullyLoaded = desktopTimeFullyLoaded/desktopSuccessCount
         desktopKBInFullyLoaded = desktopKBInFullyLoaded/desktopSuccessCount
-        desktopCostAt5CentsPerMB = roundAt(2)(desktopCostAt5CentsPerMB/desktopSuccessCount)
+        desktopUSPrepaidCost = roundAt(2)(desktopUSPrepaidCost/desktopSuccessCount)
+        desktopUSPostpaidCost = roundAt(2)(desktopUSPostpaidCost/desktopSuccessCount)
         desktopSpeedIndex = desktopSpeedIndex/desktopSuccessCount
         val multipleAverageString: String = if (itemtype == "LiveBlog") multipleLiveBlogs else multipleInteractives
         returnString = returnString.concat("<td>" + "Average of " + desktopSuccessCount + multipleAverageString + "</td>"
           + "<td>" + desktopTimeDocComplete + "s</td>"
           + "<td>" + desktopKBInFullyLoaded + "kB</td>"
-          + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
+          + "<td> $(US)" + desktopUSPrepaidCost + "</td>"
+          + "<td> $(US)" + desktopUSPostpaidCost + "</td>"
           + "<td>" + desktopSpeedIndex + "</td>"
           + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
         )}
@@ -387,7 +397,8 @@ object App {
           returnString = returnString.concat("<td>" + singleAverageString + "</td>"
             + "<td>" + desktopTimeDocComplete + "s</td>"
             + "<td>" + desktopKBInFullyLoaded + "kB</td>"
-            + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
+            + "<td> $(US)" + desktopUSPrepaidCost + "</td>"
+            + "<td> $(US)" + desktopUSPostpaidCost + "</td>"
             + "<td>" + desktopSpeedIndex + "</td>"
             + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
           )
@@ -397,7 +408,8 @@ object App {
           returnString = returnString.concat("<td>" + noAverages + "</td>"
             + "<td>" + desktopTimeDocComplete + "s</td>"
             + "<td>" + desktopKBInFullyLoaded + "kB</td>"
-            + "<td> $US" + desktopCostAt5CentsPerMB + "</td>"
+            + "<td> $US" + desktopUSPrepaidCost + "</td>"
+            + "<td> $US" + desktopUSPostpaidCost + "</td>"
             + "<td>" + desktopSpeedIndex + "</td>"
             + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
           )
@@ -408,15 +420,17 @@ object App {
     if(mobileSuccessCount > 1){
       mobileTimeFirstPaint = mobileTimeFirstPaint/mobileSuccessCount
       mobileTimeDocComplete = mobileTimeDocComplete/mobileSuccessCount
-      mobileKBInDoccomplete = mobileKBInDoccomplete/mobileSuccessCount
+      mobileKBInDocComplete = mobileKBInDocComplete/mobileSuccessCount
       mobileTimeFullyLoaded = mobileTimeFullyLoaded/mobileSuccessCount
       mobileKBInFullyLoaded = mobileKBInFullyLoaded/mobileSuccessCount
-      mobileCostAt5CentsPerMB = roundAt(2)(mobileCostAt5CentsPerMB/mobileSuccessCount)
+      mobileUSPrepaidCost = roundAt(2)(mobileUSPrepaidCost/mobileSuccessCount)
+      mobileUSPostpaidCost = roundAt(2)(mobileUSPostpaidCost/mobileSuccessCount)
       mobileSpeedIndex = mobileSpeedIndex/mobileSuccessCount
       returnString = returnString.concat("<td>" + "Average of " + mobileSuccessCount + " liveblogs that were migrated due to size </td>"
         + "<td>" + mobileTimeDocComplete + "s</td>"
         + "<td>" + mobileKBInFullyLoaded + "kB</td>"
-        + "<td> $(US)" + desktopCostAt5CentsPerMB + "</td>"
+        + "<td> $(US)" + mobileUSPrepaidCost + "</td>"
+        + "<td> $(US)" + mobileUSPostpaidCost + "</td>"
         + "<td>" + mobileSpeedIndex + "</td>"
         + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
       )}
@@ -425,7 +439,8 @@ object App {
         returnString = returnString.concat("<td>" + "Example of a liveblog migrated due to size </td>"
           + "<td>" + mobileTimeDocComplete + "s</td>"
           + "<td>" + mobileKBInFullyLoaded + "kB</td>"
-          + "<td> $(US)" + mobileCostAt5CentsPerMB + "</td>"
+          + "<td> $(US)" + mobileUSPrepaidCost + "</td>"
+          + "<td> $(US)" + mobileUSPostpaidCost + "</td>"
           + "<td>" + mobileSpeedIndex + "</td>"
           + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
         )
@@ -434,32 +449,35 @@ object App {
         returnString = returnString.concat("<td>" + "All tests of migrated liveblogs failed </td>"
           + "<td>" + mobileTimeDocComplete + "s</td>"
           + "<td>" + mobileKBInFullyLoaded + "kB</td>"
-          + "<td> $US" + mobileCostAt5CentsPerMB + "</td>"
+          + "<td> $US" + mobileUSPrepaidCost + "</td>"
+          + "<td> $US" + mobileUSPostpaidCost + "</td>"
           + "<td>" + mobileSpeedIndex + "</td>"
           + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
         )
       }
     }
 
-    new PageAverageObject(
-      desktopTimeFirstPaint,
-      desktopTimeDocComplete,
-      desktopKBInDoccomplete,
-      desktopTimeFullyLoaded,
-      desktopKBInFullyLoaded,
-      desktopCostAt5CentsPerMB,
-      desktopSpeedIndex,
-      desktopSuccessCount,
-      mobileTimeFirstPaint,
-      mobileTimeDocComplete,
-      mobileKBInDoccomplete,
-      mobileTimeFullyLoaded,
-      mobileKBInFullyLoaded,
-      mobileCostAt5CentsPerMB,
-      mobileSpeedIndex,
-      mobileSuccessCount,
-      returnString
-    )
+      new PageAverageObject(
+        desktopTimeFirstPaint,
+        desktopTimeDocComplete,
+        desktopKBInDoccomplete,
+        desktopTimeFullyLoaded,
+        desktopKBInFullyLoaded,
+        desktopUSPrepaidCost,
+        desktopUSPostpaidCost,
+        desktopSpeedIndex,
+        desktopSuccessCount,
+        mobileTimeFirstPaint,
+        mobileTimeDocComplete,
+        mobileKBInDocComplete,
+        mobileTimeFullyLoaded,
+        mobileKBInFullyLoaded,
+        mobileUSPrepaidCost,
+        mobileUSPostpaidCost,
+        mobileSpeedIndex,
+        mobileSuccessCount,
+        returnString
+      )
   }
 
   def defaultAverageForLiveBlogs(): PageAverageObject = {
@@ -468,7 +486,8 @@ object App {
     val desktopKBInDoccomplete: Int = 10000
     val desktopTimeFullyLoaded: Int = 20
     val desktopKBInFullyLoaded: Int = 15000
-    val desktopCostAt5CentsPerMB: Double = 50.0
+    val desktopUSPrepaidCost: Double = 60.0
+    val desktopUSPostpaidCost: Double = 50.0
     val desktopSpeedIndex: Int = 5000
     val desktopSuccessCount = 1
 
@@ -477,7 +496,8 @@ object App {
     val mobileKBInDocComplete: Int = 6000
     val mobileTimeFullyLoaded: Int = 20
     val mobileKBInFullyLoaded: Int = 6000
-    val mobileCostAt5CentsPerMB: Double = 30.0
+    val mobileUSPrepaidCost: Double = 40.0
+    val mobileUSPostpaidCost: Double = 30.0
     val mobileSpeedIndex: Int = 5000
     val mobileSuccessCount = 1
 
@@ -487,7 +507,8 @@ object App {
       "<td> Alerting thresholds determined by past liveblogs we have migrated</td>" +
       "<td>" + desktopTimeDocComplete + "</td>" +
       "<td>" + desktopKBInDoccomplete + "</td>" +
-      "<td>" + desktopCostAt5CentsPerMB + "</td>" +
+      "<td>" + desktopUSPrepaidCost + "</td>" +
+      "<td>" + desktopUSPostpaidCost + "</td>" +
       "<td>" + desktopSpeedIndex + "</td>" +
       "<td>Predefined standards</td></tr>" +
       "\"<tr bgcolor=\"A9BCF5\">" +
@@ -496,7 +517,8 @@ object App {
       "<td> Yellow indicates within danger zone of threshold. Red indicates threshold has been crossed </td>" +
       "<td>" + mobileTimeDocComplete + "</td>" +
       "<td>" + mobileKBInDocComplete + "</td>" +
-      "<td>" + mobileCostAt5CentsPerMB + "</td>" +
+      "<td>" + mobileUSPrepaidCost + "</td>" +
+      "<td>" + mobileUSPostpaidCost + "</td>" +
       "<td>" + mobileSpeedIndex + "</td>" +
       "<td>Predefined standards</td></tr>"
 
@@ -506,7 +528,8 @@ object App {
       desktopKBInDoccomplete,
       desktopTimeFullyLoaded,
       desktopKBInFullyLoaded,
-      desktopCostAt5CentsPerMB,
+      desktopUSPrepaidCost,
+      desktopUSPostpaidCost,
       desktopSpeedIndex,
       desktopSuccessCount,
       mobileTimeFirstPaint,
@@ -514,7 +537,8 @@ object App {
       mobileKBInDocComplete,
       mobileTimeFullyLoaded,
       mobileKBInFullyLoaded,
-      mobileCostAt5CentsPerMB,
+      mobileUSPrepaidCost,
+      mobileUSPostpaidCost,
       mobileSpeedIndex,
       mobileSuccessCount,
       formattedHTMLResultString
@@ -526,7 +550,7 @@ object App {
 
 
 
-  class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, dcfl: Double, dsi: Int, dsc: Int, mtfp: Int, mtdc: Int, msdc: Int, mtfl: Int, msfl: Int, mcfl: Double, msi: Int, msc: Int, resultString: String) {
+  class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, dcprefl: Double, dcpostfl: Double, dsi: Int, dsc: Int, mtfp: Int, mtdc: Int, msdc: Int, mtfl: Int, msfl: Int, mcprefl: Double, mcpostfl: Double, msi: Int, msc: Int, resultString: String) {
 
 
     val desktopTimeFirstPaint: Int = dtfp
@@ -534,7 +558,8 @@ object App {
     val desktopKBInDoccomplete: Int = dsdc
     val desktopTimeFullyLoaded: Int = dtfl
     val desktopKBInFullyLoaded: Int = dsfl
-    val desktopCostAt5CentsPerMB: Double = dcfl
+    val desktopCostUSPrepaid: Double = dcprefl
+    val desktopCostUSPostPaid: Double = dcpostfl
     val desktopSpeedIndex: Int = dsi
     val desktopSuccessCount = dsc
 
@@ -543,7 +568,8 @@ object App {
     val mobileKBInDocComplete: Int = msdc
     val mobileTimeFullyLoaded: Int = mtfl
     val mobileKBInFullyLoaded: Int = msfl
-    val mobileCostAt5CentsPerMB: Double = mcfl
+    val mobileCostUSPrepaid: Double = mcprefl
+    val mobileCostUSPostPaid: Double = mcpostfl
     val mobileSpeedIndex: Int = msi
     val mobileSuccessCount = msc
 
@@ -554,14 +580,16 @@ object App {
     val desktopKBInDoccomplete80thPercentile: Int = (desktopKBInDoccomplete*80)/100
     val desktopTimeFullyLoaded80thPercentile: Int = (desktopTimeFullyLoaded*80)/100
     val desktopKBInFullyLoaded80thPercentile: Int = (desktopKBInFullyLoaded*80)/100
-    val desktopCostAt5CentsPerMB80thPercentile: Double = (desktopCostAt5CentsPerMB*80)/100
+    val desktopCostUSprepaid80thPercentile: Double = (desktopCostUSPrepaid*80)/100
+    val desktopCostUSpostpaid80thPercentile: Double = (desktopCostUSPostPaid*80)/100
     val desktopSpeedIndex80thPercentile: Int = (desktopSpeedIndex*80)/100
     val mobileTimeFirstPaint80thPercentile: Int = (mobileTimeFirstPaint*80)/100
     val mobileTimeDocComplete80thPercentile: Int = (mobileTimeDocComplete*80)/100
     val mobileKBInDocComplete80thPercentile: Int = (mobileKBInDocComplete*80)/100
     val mobileTimeFullyLoaded80thPercentile: Int = (mobileTimeFullyLoaded*80)/100
     val mobileKBInFullyLoaded80thPercentile: Int = (mobileKBInFullyLoaded*80)/100
-    val mobileCostAt5CentsPerMB80thPercentile: Double = (mobileCostAt5CentsPerMB*80)/100
+    val mobileCostUSPrepaid80thPercentile: Double = (mobileCostUSPrepaid*80)/100
+    val mobileCostUSPostpaid80thPercentile: Double = (mobileCostUSPostPaid*80)/100
     val mobileSpeedIndex80thPercentile: Int = (mobileSpeedIndex*80)/100
 
     def toHTMLString:String = formattedHTMLResultString
