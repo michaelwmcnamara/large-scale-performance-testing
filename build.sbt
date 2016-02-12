@@ -30,7 +30,9 @@ libraryDependencies ++= Seq(
   // typesafe config
   "com.typesafe" % "config" % "1.3.0",
   // sbt  command tool dependency
-  "org.scala-sbt" % "command" % "0.13.5"
+  "org.scala-sbt" % "command" % "0.13.5",
+  "org.scalactic" %% "scalactic" % "2.2.6",
+  "org.scalatest" %% "scalatest" % "2.2.6" % "test"
   // sbt  task tool dependency
   //"org.scala-sbt" % "task" % "0.13.5"
 )

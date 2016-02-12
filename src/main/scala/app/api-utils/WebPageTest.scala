@@ -1,5 +1,6 @@
 package app.apiutils
 
+//import app.api.PerformanceResultsObject
 import com.squareup.okhttp.{OkHttpClient, Request, Response}
 import org.joda.time.DateTime
 
@@ -17,50 +18,20 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   val wptResponseFormat:String = "xml"
   implicit val httpClient = new OkHttpClient()
 
-  class ResultElement(url:String, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String) {
-    val testUrl: String = url
-    val timeFirstPaint: Int = tFP
-    val timeDocComplete: Int = tDC
-    val bytesInDoccomplete: Int = bDC
-    val timeFullyLoaded: Int = tFL
-    val bytesInFullyLoaded: Int = bFL
-    // translate bytes to MB and apply a constant to get cost
-    val estUSPrePaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.10)
-    val estUSPostPaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.06)
-    val speedIndex: Int = sI
-    val resultStatus:String = status
-
-    def toStringList(): List[String] = {
-      List(testUrl.toString + ", " + timeFirstPaint.toString + "ms", timeDocComplete.toString + "ms", (bytesInDoccomplete/1000) + "kB" , timeFullyLoaded.toString + "ms", (bytesInFullyLoaded/1000) + "kB", speedIndex.toString, resultStatus)
-    }
-
-    def toHTMLTableCells(): String = {
-      "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocComplete.toString + "ms </td><td>" + (bytesInDoccomplete/1000) + "kB </td><td>" + timeFullyLoaded.toString + "ms </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
-    }
-
-    def toHTMLSimpleTableCells(): String = {
-      "<th>" + testUrl + " </th><td>" +  (timeDocComplete/1000).toString + "s </td><td>" + (bytesInFullyLoaded/1000) + "kB </td><td>(US)$" + estUSPrePaidCost + "</td><td>(US)$" + estUSPostPaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
-    }
-
-    override def toString(): String = {
-      testUrl + ", " + timeFirstPaint.toString + "ms, " + timeDocComplete.toString + "ms, " + (bytesInDoccomplete/1000) + "kB, " + timeFullyLoaded.toString + "ms, " + (bytesInFullyLoaded/1000) + "kB, " + speedIndex.toString + ", " + resultStatus
-    }
-  }
-
-  def desktopChromeCableTest(gnmPageUrl:String): ResultElement = {
+  def desktopChromeCableTest(gnmPageUrl:String): PerformanceResultsObject = {
     println("Sending desktop webpagetest request to WPT API")
     val resultPage: String = sendPage(gnmPageUrl)
     println("Accessing results at: " + resultPage)
-    val testResults: ResultElement = getResults(resultPage)
+    val testResults: PerformanceResultsObject = getResults(resultPage)
     println("Results returned")
     testResults
   }
 
-  def mobileChrome3GTest(gnmPageUrl:String, wptLocation: String): ResultElement = {
+  def mobileChrome3GTest(gnmPageUrl:String, wptLocation: String): PerformanceResultsObject = {
     println("Sending mobile webpagetest request to WPT API")
     val resultPage: String = sendMobile3GPage(gnmPageUrl, wptLocation)
     println("Accessing results at: " + resultPage)
-    val testResults: ResultElement = getResults(resultPage)
+    val testResults: PerformanceResultsObject = getResults(resultPage)
     testResults
   }
 
@@ -96,7 +67,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   }
 
 
-  def getResults(resultUrl: String):ResultElement = {
+  def getResults(resultUrl: String):PerformanceResultsObject = {
     println("Requesting url:" + resultUrl)
     val request: Request = new Request.Builder()
       .url(resultUrl)
@@ -130,7 +101,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       }
   }
 
-  def refineResults(rawXMLResult: Elem): ResultElement = {
+  def refineResults(rawXMLResult: Elem): PerformanceResultsObject = {
     println("parsing the XML results")
     val testUrl: String = (rawXMLResult \\ "response" \ "data" \ "testUrl").text.toString
     val firstPaint: Int = (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "firstPaint").text.toInt
@@ -147,30 +118,30 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println ("SpeedIndex = " + speedIndex)
     val status: String = "Test Success"
 
-    println("Creating ResultElement")
-    val result: ResultElement = new ResultElement(testUrl, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status)
+    println("Creating PerformanceResultsObject")
+    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false)
     println("Result time doc complete: " + result.timeDocComplete)
     println("Result time bytes fully loaded: " + result.bytesInFullyLoaded)
     println("Result string: " + result.toHTMLSimpleTableCells())
-    println("Returning ResultElement")
+    println("Returning PerformanceResultsObject")
     result
   }
 
-  def failedTestNoSuccessfulRuns(url: String): ResultElement = {
+  def failedTestNoSuccessfulRuns(url: String): PerformanceResultsObject = {
     val failIndicator: Int = -1
     val failComment: String = "No successful runs of test"
-    val failElement: ResultElement = new ResultElement(url , failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
+    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url , failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, false, false)
     failElement
   }
 
-  def failedTestTimeout(url: String): ResultElement = {
+  def failedTestTimeout(url: String): PerformanceResultsObject = {
     val failIndicator: Int = -1
     val failComment: String = "Test request timed out"
-    val failElement: ResultElement = new ResultElement(url , failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment)
+    // set warning status as result may have timed out due to very large page
+    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url , failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, true, false)
     failElement
   }
 
-  def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s }
 
 }
 
