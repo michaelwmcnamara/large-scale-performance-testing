@@ -148,6 +148,7 @@ class testthresholds extends UnitSpec with Matchers {
     println("Average: " + averages.mobileEstUSPostPaidCost)
     println("Average 80th %ile: " + averages.mobileEstUSPostPaidCost80thPercentile + "\n")
 
+
     println("Result: " + webPageMobileTestResults.speedIndex)
     println("Average: " + averages.mobileSpeedIndex)
     println("Average 80th %ile: " + averages.mobileSpeedIndex80thPercentile + "\n \n \n")
