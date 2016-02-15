@@ -37,7 +37,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendPage(gnmPageUrl:String): String = {
     println("Forming desktop webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&script =navigate  " + gnmPageUrl + "#noads"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
@@ -53,7 +53,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendMobile3GPage(gnmPageUrl:String, wptLocation: String): String = {
     println("Forming mobile 3G webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G"
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&script =navigate  " + gnmPageUrl + "#noads"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
