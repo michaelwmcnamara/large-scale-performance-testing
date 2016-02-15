@@ -1,11 +1,15 @@
 package app.apiutils
 
+import scala.xml.Elem
+
 
 /**
  * Created by mmcnamara on 10/02/16.
  */
-class PerformanceResultsObject(url:String, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String, warning: Boolean, alert: Boolean) {
+class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String, warning: Boolean, alert: Boolean) {
   val testUrl: String = url
+  val typeOfTest: String = testType
+  val timeToFirstByte: Int = tTFB
   val timeFirstPaint: Int = tFP
   val timeDocComplete: Int = tDC
   val bytesInDoccomplete: Int = bDC

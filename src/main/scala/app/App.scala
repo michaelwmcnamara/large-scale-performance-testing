@@ -85,10 +85,21 @@ object App {
       simplifiedResults = simplifiedResults.concat(migratedLiveBlogAverages.toHTMLString)
       println("Performance testing liveblogs")
       // Send each article URL to the webPageTest API and obtain resulting data
-      val testResults: List[Array[PerformanceResultsObject]] = articleUrls.map(url => {
+      val testResults: List[PerformanceResultsObject] = articleUrls.flatMap(url => {
         testUrl(url, wptBaseUrl, wptApiKey, wptLocation, migratedLiveBlogAverages)
       })
-      val resultsList: List[String] = testResults.map(x => htmlString.generateHTMLRow("Desktop", x(0)) + htmlString.generateHTMLRow("Mobile", x(1)))
+      println("Summary of List of results: ")
+      testResults.foreach(x => println(x.testUrl + " " + x.typeOfTest))
+//      val testResultsList: List[PerformanceResultsObject] = testResults.flatten
+      //
+      val confirmedTestResults = testResults.map(x => {
+        if(x.alertStatus)
+          confirmAlert(x, wptBaseUrl, wptApiKey, wptLocation)
+        else
+          x
+      })
+
+      val resultsList: List[String] = confirmedTestResults.map(x => htmlString.generateHTMLRow(x))
       simplifiedResults = simplifiedResults.concat(resultsList.mkString)
       println(DateTime.now + " Results added to accumulator string \n")
     }
@@ -134,10 +145,16 @@ object App {
         val averageInteractivesPerformance: PageAverageObject = generatePageAverages(listofLargeInteractives, wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel)
         interactiveResults = interactiveResults.concat(averageInteractivesPerformance.toHTMLString)
 
-        val interactiveTestResults: List[Array[PerformanceResultsObject]] = articleUrls.map(url => {
+        val interactiveTestResults: List[PerformanceResultsObject] = articleUrls.flatMap(url => {
           testUrl(url, wptBaseUrl, wptApiKey, wptLocation, averageInteractivesPerformance)
         })
-        val simplifiedInteractiveResultsList: List[String] = interactiveTestResults.map(x => htmlString.generateHTMLRow("Desktop", x(0)) + htmlString.generateHTMLRow("Mobile", x(1)))
+        val confirmedInteractiveResults = interactiveTestResults.map(x => {
+          if(x.alertStatus)
+            confirmAlert(x, wptBaseUrl, wptApiKey, wptLocation)
+          else
+            x
+        })
+        val simplifiedInteractiveResultsList: List[String] = confirmedInteractiveResults.map(x => htmlString.generateHTMLRow(x))
         interactiveResults = interactiveResults.concat(simplifiedInteractiveResultsList.mkString)
         println(DateTime.now + " Results added to accumulator string \n")
       }
@@ -226,6 +243,14 @@ object App {
     Array(webPageDesktopTestResults, webPageMobileTestResults)
   }
 
+
+  def confirmAlert(initialResult: PerformanceResultsObject, wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
+    val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    val testCount: Int = if(initialResult.timeToFirstByte > 700) {9} else {5}
+    println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
+    val AlertConfirmationTestResult: PerformanceResultsObject = webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount)
+    AlertConfirmationTestResult
+  }
 
     def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
       val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
