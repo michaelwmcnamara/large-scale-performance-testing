@@ -20,7 +20,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def desktopChromeCableTest(gnmPageUrl:String): PerformanceResultsObject = {
     println("Sending desktop webpagetest request to WPT API")
-    val resultPage: String = sendPage(gnmPageUrl + "noads")
+    val resultPage: String = sendPage(gnmPageUrl + "#noads")
     println("Accessing results at: " + resultPage)
     val testResults: PerformanceResultsObject = getResults(resultPage)
     println("Results returned")
