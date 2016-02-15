@@ -25,43 +25,43 @@ class HtmlStringOperations(average: String, warning: String, alert: String) {
 //  var simplifiedResults: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLSimpleTableHeaders
 
 
-  def generateHTMLRow(testType: String, resultsObject: PerformanceResultsObject): String = {
+  def generateHTMLRow(resultsObject: PerformanceResultsObject): String = {
     var returnString: String = ""
     //  Define new web-page-test API request and send it the url to test
     //  Add results to string which will eventually become the content of our results file
 
-    if (testType == "Desktop") {
-    if (resultsObject.warningStatus) {
-    if (resultsObject.alertStatus) {
-    println ("row should be red one of the items qualifies")
-    returnString = returnString.concat ("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
-  }
+    if (resultsObject.typeOfTest == "Desktop") {
+      if (resultsObject.warningStatus) {
+        if (resultsObject.alertStatus) {
+          println ("row should be red one of the items qualifies")
+          returnString = returnString.concat ("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
+        }
+        else {
+          println ("row should be yellow one of the items qualifies")
+          returnString = returnString.concat ("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
+        }
+      }
+      else {
+        println ("all fields within size limits")
+        returnString = returnString.concat ("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
+      }
+    }
     else {
-    println ("row should be yellow one of the items qualifies")
-    returnString = returnString.concat ("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
-  }
-  }
-    else {
-    println ("all fields within size limits")
-    returnString = returnString.concat ("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
-  }
-  }
-    else {
-    if (resultsObject.warningStatus) {
-    if (resultsObject.alertStatus) {
-    println ("row should be red one of the items qualifies")
-    returnString = returnString.concat ("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
-  }
-    else {
-    println ("row should be yellow one of the items qualifies")
-    returnString = returnString.concat ("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
-  }
-  }
-    else {
-    println ("no alerts")
-    returnString = returnString.concat ("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
-  }
-  }
+      if (resultsObject.warningStatus) {
+        if (resultsObject.alertStatus) {
+          println ("row should be red one of the items qualifies")
+          returnString = returnString.concat ("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
+        }
+        else {
+          println ("row should be yellow one of the items qualifies")
+          returnString = returnString.concat ("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
+        }
+      }
+      else {
+        println ("no alerts")
+        returnString = returnString.concat ("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells () + "</tr>")
+      }
+    }
     println (DateTime.now + " returning results string to main thread")
     println (returnString)
     returnString
