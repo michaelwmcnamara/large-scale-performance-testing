@@ -139,7 +139,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   if (result(0).resultStatus == "Test Success") {
     accumulatorDesktopTimeFirstPaint += result(0).timeFirstPaint / 1000
     accumulatorDesktopTimeDocComplete += result(0).timeDocComplete / 1000
-    accumulatorDesktopKBInDocComplete += result(0).bytesInDoccomplete / 1024
+    accumulatorDesktopKBInDocComplete += result(0).bytesInDocComplete / 1024
     accumulatorDesktopTimeFullyLoaded += result(0).timeFullyLoaded / 1000
     accumulatorDesktopKBInFullyLoaded += result(0).bytesInFullyLoaded / 1024
     accumulatorDesktopEstUSPrePaidCost += result(0).estUSPrePaidCost
@@ -150,7 +150,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   if (result(1).resultStatus == "Test Success") {
     accumulatorMobileTimeFirstPaint += result(1).timeFirstPaint/1000
     accumulatorMobileTimeDocComplete += result(1).timeDocComplete/1000
-    accumulatorMobileKBInDoccomplete += result(1).bytesInDoccomplete/1024
+    accumulatorMobileKBInDoccomplete += result(1).bytesInDocComplete/1024
     accumulatorMobileTimeFullyLoaded += result(1).timeFullyLoaded/1000
     accumulatorMobileKBInFullyLoaded += result(1).bytesInFullyLoaded/1024
     accumulatorMobileEstUSPrePaidCost += result(0).estUSPrePaidCost
