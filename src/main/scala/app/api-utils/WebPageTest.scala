@@ -122,7 +122,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
     println("Creating PerformanceResultsObject")
     val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false)
-    println("Result time doc complete: " + result.timeDocComplete)
+    println("Result time doc complete: " + result.timeDocCompleteInMs)
     println("Result time bytes fully loaded: " + result.bytesInFullyLoaded)
     println("Result string: " + result.toHTMLSimpleTableCells())
     println("Returning PerformanceResultsObject")
@@ -130,6 +130,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   }
 
   def testMultipleTimes(url: String, typeOfTest: String, wptLocation: String, testCount: Int): PerformanceResultsObject = {
+      println("Alert registered on url: " + url + "\n" + "verify by retesting " + testCount + " times and taking median value")
       if(typeOfTest == "Desktop"){
         val getUrl: String = apiBaseUrl + "/runtest.php?url=" + url + "&f=" + wptResponseFormat + "&k=" + apiKey + "&runs=" + testCount
         val request: Request = new Request.Builder()
@@ -217,7 +218,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val status: String = "Test Success"
     println("Creating PerformanceResultsObject")
     val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false)
-    println("Result time doc complete: " + result.timeDocComplete)
+    println("Result time doc complete: " + result.timeDocCompleteInMs)
     println("Result time bytes fully loaded: " + result.bytesInFullyLoaded)
     println("Result string: " + result.toHTMLSimpleTableCells())
     println("Returning PerformanceResultsObject")

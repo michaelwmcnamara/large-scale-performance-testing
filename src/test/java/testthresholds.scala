@@ -110,8 +110,8 @@ class testthresholds extends UnitSpec with Matchers {
     println("\n*******************  Desktop Results  ***********************************************************\n")
     println("Time Doc Complete: \n")
     println("Result: " + webPageDesktopTestResults.timeDocComplete/1000)
-    println("Average: " + averages.desktopTimeDocComplete)
-    println("Average 80th %ile: " + averages.desktopTimeDocComplete80thPercentile + "\n")
+    println("Average: " + averages.desktopTimeDocCompleteInMs)
+    println("Average 80th %ile: " + averages.desktopTimeDocCompleteInMs80thPercentile + "\n")
 
     println("Result: " + webPageDesktopTestResults.bytesInFullyLoaded/1000)
     println("Average: " + averages.desktopKBInFullyLoaded)
@@ -133,8 +133,8 @@ class testthresholds extends UnitSpec with Matchers {
 
     println("Time Doc Complete: \n")
     println("Result: " + webPageMobileTestResults.timeDocComplete/1000)
-    println("Average: " + averages.mobileTimeDocComplete)
-    println("Average 80th %ile: " + averages.mobileTimeDocComplete80thPercentile + "\n")
+    println("Average: " + averages.mobileTimeDocCompleteInMs)
+    println("Average 80th %ile: " + averages.mobileTimeDocCompleteInMs80thPercentile + "\n")
 
     println("Result: " + webPageMobileTestResults.bytesInFullyLoaded/1000)
     println("Average: " + averages.mobileKBInFullyLoaded)
@@ -155,14 +155,14 @@ class testthresholds extends UnitSpec with Matchers {
 
 
 
-    if ((webPageDesktopTestResults.timeDocComplete / 1000 >= averages.desktopTimeDocComplete80thPercentile) ||
+    if ((webPageDesktopTestResults.timeDocComplete / 1000 >= averages.desktopTimeDocCompleteInMs80thPercentile) ||
       (webPageDesktopTestResults.bytesInFullyLoaded / 1000 >= averages.desktopKBInFullyLoaded80thPercentile) ||
       (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost) ||
       (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost80thPercentile) ||
       (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPostPaidCost) ||
       (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPostPaidCost80thPercentile) ||
       (webPageDesktopTestResults.speedIndex >= averages.desktopSpeedIndex80thPercentile)) {
-      if ((webPageDesktopTestResults.timeDocComplete / 1000 >= averages.desktopTimeDocComplete) ||
+      if ((webPageDesktopTestResults.timeDocComplete / 1000 >= averages.desktopTimeDocCompleteInMs) ||
         (webPageDesktopTestResults.bytesInFullyLoaded / 1000 >= averages.desktopKBInFullyLoaded) ||
         (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost) ||
         (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPostPaidCost) ||
@@ -180,12 +180,12 @@ class testthresholds extends UnitSpec with Matchers {
       simpleReturnString = simpleReturnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + webPageDesktopTestResults.toHTMLSimpleTableCells() + "</tr>")
     }
     println(DateTime.now + " Adding results of mobile test to simple results string")
-    if ((webPageMobileTestResults.timeDocComplete / 1000 >= averages.mobileTimeDocComplete80thPercentile) ||
+    if ((webPageMobileTestResults.timeDocComplete / 1000 >= averages.mobileTimeDocCompleteInMs80thPercentile) ||
       (webPageMobileTestResults.bytesInFullyLoaded / 1000 >= averages.mobileKBInFullyLoaded80thPercentile) ||
       (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost80thPercentile) ||
       (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost80thPercentile) ||
       (webPageMobileTestResults.speedIndex >= averages.mobileSpeedIndex80thPercentile)) {
-      if ((webPageMobileTestResults.timeDocComplete / 1000 >= averages.mobileTimeDocComplete) ||
+      if ((webPageMobileTestResults.timeDocComplete / 1000 >= averages.mobileTimeDocCompleteInMs) ||
         (webPageMobileTestResults.bytesInFullyLoaded / 1000 >= averages.mobileKBInFullyLoaded) ||
         (webPageMobileTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost) ||
         (webPageMobileTestResults.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost) ||
