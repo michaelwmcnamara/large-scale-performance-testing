@@ -16,7 +16,7 @@ object App {
   def main(args: Array[String]) {
     /*  This value stops the forces the config to be read and the output file to be written locally rather than reading and writing from/to S3
     #####################    this should be set to false before merging!!!!################*/
-    val iamTestingLocally = false
+    val iamTestingLocally = true
     /*#####################################################################################*/
     println("Job started at: " + DateTime.now)
     println("Local Testing Flag is set to: " + iamTestingLocally.toString)
@@ -38,7 +38,6 @@ object App {
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
 
     val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
-    val liveBlogItemlabel: String = "LiveBlog"
     val interactiveItemLabel: String = "Interactive"
 
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
@@ -149,10 +148,14 @@ object App {
           testUrl(url, wptBaseUrl, wptApiKey, wptLocation, averageInteractivesPerformance)
         })
         val confirmedInteractiveResults = interactiveTestResults.map(x => {
-          if(x.alertStatus)
+          if(x.alertStatus) {
+            println("alert status detected on " + x.testUrl + "\n" + "Retesting to confirm")
             confirmAlert(x, wptBaseUrl, wptApiKey, wptLocation)
-          else
+          }
+          else {
+            println("no alert status detected - leaving untouched")
             x
+          }
         })
         val simplifiedInteractiveResultsList: List[String] = confirmedInteractiveResults.map(x => htmlString.generateHTMLRow(x))
         interactiveResults = interactiveResults.concat(simplifiedInteractiveResultsList.mkString)
@@ -185,19 +188,20 @@ object App {
     println(DateTime.now + " calling methods to test url: " + url + " on emulated 3G mobile")
     val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation)
     //  Add results to string which will eventually become the content of our results file
-    if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete80thPercentile) ||
+    if((webPageDesktopTestResults.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs80thPercentile) ||
       (webPageDesktopTestResults.kBInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
       (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost80thPercentile) ||
       (webPageDesktopTestResults.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost80thPercentile))
     {
-      if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete) ||
-        (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded) ||
+      if((webPageDesktopTestResults.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs) ||
+        (webPageDesktopTestResults.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) ||
         (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost) ||
         (webPageDesktopTestResults.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost))
       {
         println("row should be red one of the items qualifies")
         webPageDesktopTestResults.warningStatus = true
         webPageDesktopTestResults.alertStatus = true
+
       }
       else {
         println("row should be yellow one of the items qualifies")
@@ -213,12 +217,12 @@ object App {
     }
 
     //checking if status of mobile test needs an alert
-    if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete80thPercentile) ||
+    if((webPageMobileTestResults.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs80thPercentile) ||
       (webPageMobileTestResults.kBInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
       (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost80thPercentile) ||
       (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost80thPercentile))
     {
-      if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete) ||
+      if((webPageMobileTestResults.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs) ||
         (webPageMobileTestResults.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) ||
         (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost) ||
         (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost))
