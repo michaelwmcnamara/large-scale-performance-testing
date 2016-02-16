@@ -186,7 +186,7 @@ object App {
     val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation)
     //  Add results to string which will eventually become the content of our results file
     if((webPageDesktopTestResults.timeDocComplete/1000 >= averages.desktopTimeDocComplete80thPercentile) ||
-      (webPageDesktopTestResults.bytesInFullyLoaded/1000 >= averages.desktopKBInFullyLoaded80thPercentile) ||
+      (webPageDesktopTestResults.kBInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
       (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost80thPercentile) ||
       (webPageDesktopTestResults.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost80thPercentile))
     {
@@ -214,12 +214,12 @@ object App {
 
     //checking if status of mobile test needs an alert
     if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete80thPercentile) ||
-      (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded80thPercentile) ||
+      (webPageMobileTestResults.kBInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
       (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost80thPercentile) ||
       (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost80thPercentile))
     {
       if((webPageMobileTestResults.timeDocComplete/1000 >= averages.mobileTimeDocComplete) ||
-        (webPageMobileTestResults.bytesInFullyLoaded/1000 >= averages.mobileKBInFullyLoaded) ||
+        (webPageMobileTestResults.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) ||
         (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost) ||
         (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost))
       {
