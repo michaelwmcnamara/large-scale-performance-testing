@@ -13,8 +13,12 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   val timeFirstPaint: Int = tFP
   val timeDocComplete: Int = tDC
   val bytesInDoccomplete: Int = bDC
+  val kBInDocComplete: Double = roundAt(2)(bytesInDoccomplete/1024)
+  val mBInDocComplete: Double = roundAt(2)(bytesInDoccomplete/1048576)
   val timeFullyLoaded: Int = tFL
   val bytesInFullyLoaded: Int = bFL
+  val kBInFullyLoaded: Double = roundAt(2)(bytesInFullyLoaded/1024)
+  val mBInFullyLoaded: Double = roundAt(2)(bytesInFullyLoaded/1048576)
   val estUSPrePaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.10)
   val estUSPostPaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.06)
   val speedIndex: Int = sI
