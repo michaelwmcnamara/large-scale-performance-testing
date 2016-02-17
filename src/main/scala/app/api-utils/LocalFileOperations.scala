@@ -17,6 +17,8 @@ class LocalFileOperations {
     var wptBaseUrl: String = ""
     var wptApiKey: String = ""
     var wptLocation: String = ""
+    var emailUsername: String = ""
+    var emailPassword: String = ""
 
     println(DateTime.now + " retrieving local config file: " + fileName)
     for (line <- Source.fromFile(fileName).getLines()) {
@@ -36,8 +38,16 @@ class LocalFileOperations {
         println("wpt location found")
         wptLocation = line.takeRight((line.length - line.indexOf("=")) - 1)
       }
+      if (line.contains("email.username")) {
+        println("email username found")
+        emailUsername = line.takeRight((line.length - line.indexOf("=")) - 1)
+      }
+      if (line.contains("email.password")) {
+        println("email password found")
+        emailPassword = line.takeRight((line.length - line.indexOf("=")) - 1)
+      }
     }
-    Array(contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
+    Array(contentApiKey, wptBaseUrl, wptApiKey, wptLocation, emailUsername, emailPassword)
   }
 
   def writeLocalResultFile(outputFileName: String, results: String): Int = {
