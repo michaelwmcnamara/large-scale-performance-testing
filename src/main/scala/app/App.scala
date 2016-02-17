@@ -3,6 +3,7 @@ package app
 // note an _ instead of {} would get everything
 
 import java.io._
+import java.util
 
 import app.api.S3Operations
 import app.apiutils._
@@ -16,7 +17,7 @@ object App {
   def main(args: Array[String]) {
     /*  This value stops the forces the config to be read and the output file to be written locally rather than reading and writing from/to S3
     #####################    this should be set to false before merging!!!!################*/
-    val iamTestingLocally = false
+    val iamTestingLocally = true
     /*#####################################################################################*/
     println("Job started at: " + DateTime.now)
     println("Local Testing Flag is set to: " + iamTestingLocally.toString)
@@ -28,21 +29,32 @@ object App {
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
     val interactiveOutputFilename = "interactivePerformanceData.html"
 
-    //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
+    val liveBlogResultsUrl: String = "https://s3-eu-west-1.amazonaws.com/" + s3BucketName + "/" + simpleOutputFileName
+    val interactiveResultsUrl: String = "https://s3-eu-west-1.amazonaws.com/" + s3BucketName + "/" + interactiveOutputFilename
+
+    //Define colors to be used for average values, warnings and alerts
     val averageColor: String = "\"grey\""
     val warningColor: String = "\"#FFFF00\""
     val alertColor = "\"#FF0000\""
 
-    val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor)
+    //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
+    val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl)
     var simplifiedResults: String = htmlString.initialisePageForLiveblog + htmlString.initialiseTable
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
+    var liveBlogAlertMessageBody: String = ""
+    var interactiveAlertMessageBody: String = ""
 
+    //Initialise List of sample items to be used to make alerting levels for different content types
     val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
     val interactiveItemLabel: String = "Interactive"
 
+    //Initialise List of email contacts (todo - this must be put in a file before going onto git)
+    val emailAddressList: List[String] = List("michael.mcnamara@guardian.co.uk", "m_w_mcnamara@hotmail.com")
+
+    //Create new S3 Client
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
     val s3Interface = new S3Operations(s3BucketName, configFileName)
-    var configArray: Array[String] = Array("", "", "", "")
+    var configArray: Array[String] = Array("", "", "", "", "", "")
 
     //Get config settings
     println("Extracting configuration values")
@@ -58,10 +70,12 @@ object App {
     println("checking validity of config values")
     if ((configArray(0).length < 1) || (configArray(1).length < 1) || (configArray(2).length < 1) || (configArray(3).length < 1)) {
       println("problem extracting config\n" +
-        "contentApiKey: " + configArray(0) + "\n" +
-        "wptBaseUrl: " + configArray(1) + "\n" +
-        "wptApiKey: " + configArray(2) + "\n" +
-        "wptLocation: " + configArray(3))
+        "contentApiKey length: " + configArray(0).length + "\n" +
+        "wptBaseUrl length: " + configArray(1).length + "\n" +
+        "wptApiKey length: " + configArray(2).length + "\n" +
+        "wptLocation length: " + configArray(3).length + "\n" +
+        "emailUsername length: " + configArray(4).length + "\n" +
+        "emailPassword length: " + configArray(5).length)
       System exit 1
     }
     println("config values ok")
@@ -69,6 +83,12 @@ object App {
     val wptBaseUrl: String = configArray(1)
     val wptApiKey: String = configArray(2)
     val wptLocation: String = configArray(3)
+    val emailUsername: String = configArray(4)
+    val emailPassword: String = configArray(5)
+
+    //Create Email Handler class
+    val emailer: EmailOperations = new EmailOperations(emailUsername, emailPassword)
+
 
     //  Define new CAPI Query object
     val articleUrlList = new ArticleUrls(contentApiKey)
@@ -87,16 +107,16 @@ object App {
       val testResults: List[PerformanceResultsObject] = articleUrls.flatMap(url => {
         testUrl(url, wptBaseUrl, wptApiKey, wptLocation, migratedLiveBlogAverages)
       })
-      println("Summary of List of results: ")
-      testResults.foreach(x => println(x.testUrl + " " + x.typeOfTest))
-//      val testResultsList: List[PerformanceResultsObject] = testResults.flatten
-      //
+      //Confirm alert status by retesting alerting urls
       val confirmedTestResults = testResults.map(x => {
         if(x.alertStatus)
           confirmAlert(x, migratedLiveBlogAverages, wptBaseUrl, wptApiKey, wptLocation)
         else
           x
       })
+      //Create a list of alerting pages and write to string
+      val liveBlogAlertList: List[PerformanceResultsObject] = for (result <- confirmedTestResults if result.alertStatus) yield result
+      liveBlogAlertMessageBody = htmlString.generateAlertEmailBodyElement(liveBlogAlertList, migratedLiveBlogAverages)
 
       val resultsList: List[String] = confirmedTestResults.map(x => htmlString.generateHTMLRow(x))
       simplifiedResults = simplifiedResults.concat(resultsList.mkString)
@@ -124,6 +144,7 @@ object App {
         println("problem writing local outputfile")
         System exit 1
       }
+    }
       println("LiveBlog Performance Test Complete")
 
       //  Define new CAPI Query object
@@ -148,7 +169,7 @@ object App {
           testUrl(url, wptBaseUrl, wptApiKey, wptLocation, averageInteractivesPerformance)
         })
         val confirmedInteractiveResults = interactiveTestResults.map(x => {
-          if(x.alertStatus) {
+          if (x.alertStatus) {
             println("alert status detected on " + x.testUrl + "\n" + "Retesting to confirm")
             confirmAlert(x, averageInteractivesPerformance, wptBaseUrl, wptApiKey, wptLocation)
           }
@@ -157,6 +178,10 @@ object App {
             x
           }
         })
+        //Create a list of alerting pages and write to string
+        val interactiveAlertList: List[PerformanceResultsObject] = for (result <- confirmedInteractiveResults if result.alertStatus) yield result
+        interactiveAlertMessageBody = htmlString.generateAlertEmailBodyElement(interactiveAlertList, averageInteractivesPerformance)
+
         val simplifiedInteractiveResultsList: List[String] = confirmedInteractiveResults.map(x => htmlString.generateHTMLRow(x))
         interactiveResults = interactiveResults.concat(simplifiedInteractiveResultsList.mkString)
         println(DateTime.now + " Results added to accumulator string \n")
@@ -175,9 +200,18 @@ object App {
         interactiveOutput.close()
         println(DateTime.now + " Writing to file: " + interactiveOutputFilename + " complete. \n")
       }
-      println(DateTime.now + " Job complete")
+      println("compiling and sending email")
+      if ((liveBlogAlertMessageBody.length > 0) || (interactiveAlertMessageBody.length > 0)) {
+        val emailSuccess = emailer.send(emailAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody))
+        if (emailSuccess)
+          println(DateTime.now + " Emails sent successfully. \n Job complete")
+        else
+          println(DateTime.now + "ERROR: Job completed, but sending of emails failed")
+      } else {
+        println("No pages to alert on. Email not sent. \n Job complete")
+      }
     }
-  }
+
 
   def testUrl(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String, averages: PageAverageObject): Array[PerformanceResultsObject] = {
     //  Define new web-page-test API request and send it the url to test

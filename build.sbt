@@ -31,10 +31,17 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.3.0",
   // sbt  command tool dependency
   "org.scala-sbt" % "command" % "0.13.5",
+  //scalactic dependencies
   "org.scalactic" %% "scalactic" % "2.2.6",
-  "org.scalatest" %% "scalatest" % "2.2.6" % "test"
-  // sbt  task tool dependency
-  //"org.scala-sbt" % "task" % "0.13.5"
+  "org.scalatest" %% "scalatest" % "2.2.6" % "test",
+  // gmail api dependencies
+  "com.google.apis" % "google-api-services-gmail" % "v1-rev37-1.21.0",
+  // javax
+  "javax.mail" % "mail" % "1.5.0-b01"
+  // courier (email library) dependencies
+  //"me.lessis" %% "courier" % "0.1.3",
+  //mock java mail - for testing emails
+  //"org.jvnet.mock-javamail" % "mock-javamail" % "1.9" % "test"
 )
 
 assemblyMergeStrategy in assembly := {

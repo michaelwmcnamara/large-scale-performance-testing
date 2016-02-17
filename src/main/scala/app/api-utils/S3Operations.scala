@@ -36,6 +36,8 @@ class S3Operations(s3BucketName: String, configFile: String) {
     val wptBaseUrl: String = conf.getString("wpt.api.baseUrl")
     val wptApiKey: String = conf.getString("wpt.api.key")
     val wptLocation = conf.getString("wpt.location")
+    val emailUsername = conf.getString("email.username")
+    val emailPassword = conf.getString("email.password")
     if ((contentApiKey.length > 0) && (wptBaseUrl.length > 0) && (wptApiKey.length > 0)){
       println(DateTime.now + " Config retrieval successful. \n You are using the following webpagetest instance: " + wptBaseUrl)
       val returnArray = Array(contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
