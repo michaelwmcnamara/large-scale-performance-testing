@@ -93,7 +93,7 @@ object App {
       //
       val confirmedTestResults = testResults.map(x => {
         if(x.alertStatus)
-          confirmAlert(x, wptBaseUrl, wptApiKey, wptLocation)
+          confirmAlert(x, migratedLiveBlogAverages, wptBaseUrl, wptApiKey, wptLocation)
         else
           x
       })
@@ -150,7 +150,7 @@ object App {
         val confirmedInteractiveResults = interactiveTestResults.map(x => {
           if(x.alertStatus) {
             println("alert status detected on " + x.testUrl + "\n" + "Retesting to confirm")
-            confirmAlert(x, wptBaseUrl, wptApiKey, wptLocation)
+            confirmAlert(x, averageInteractivesPerformance, wptBaseUrl, wptApiKey, wptLocation)
           }
           else {
             println("no alert status detected - leaving untouched")
@@ -188,72 +188,76 @@ object App {
     println(DateTime.now + " calling methods to test url: " + url + " on emulated 3G mobile")
     val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation)
     //  Add results to string which will eventually become the content of our results file
-    if((webPageDesktopTestResults.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs80thPercentile) ||
-      (webPageDesktopTestResults.kBInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
-      (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost80thPercentile) ||
-      (webPageDesktopTestResults.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost80thPercentile))
-    {
-      if((webPageDesktopTestResults.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs) ||
-        (webPageDesktopTestResults.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) ||
-        (webPageDesktopTestResults.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost) ||
-        (webPageDesktopTestResults.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost))
-      {
-        println("row should be red one of the items qualifies")
-        webPageDesktopTestResults.warningStatus = true
-        webPageDesktopTestResults.alertStatus = true
-
-      }
-      else {
-        println("row should be yellow one of the items qualifies")
-        webPageDesktopTestResults.warningStatus = true
-        webPageDesktopTestResults.alertStatus = false
-      }
-    }
-    else
-    {
-      println("all fields within size limits")
-      webPageDesktopTestResults.warningStatus = false
-      webPageDesktopTestResults.alertStatus = false
-    }
-
-    //checking if status of mobile test needs an alert
-    if((webPageMobileTestResults.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs80thPercentile) ||
-      (webPageMobileTestResults.kBInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
-      (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost80thPercentile) ||
-      (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost80thPercentile))
-    {
-      if((webPageMobileTestResults.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs) ||
-        (webPageMobileTestResults.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) ||
-        (webPageMobileTestResults.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost) ||
-        (webPageMobileTestResults.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost))
-      {
-        println("warning and alert statuses set to true")
-        webPageMobileTestResults.warningStatus = true
-        webPageMobileTestResults.alertStatus = true
-      }
-      else {
-        println("warning status set to true")
-        webPageMobileTestResults.warningStatus = true
-        webPageMobileTestResults.alertStatus = false
-      }
-    }
-    else
-    {
-      println("all fields within size limits - both warning and alert status set to false")
-      webPageMobileTestResults.warningStatus = false
-      webPageMobileTestResults.alertStatus = false
-    }
+    val desktopTestWithAlertsSet: PerformanceResultsObject = setAlertStatus(webPageDesktopTestResults,averages)
+    val mobileTestWithAlertsSet: PerformanceResultsObject = setAlertStatus(webPageMobileTestResults,averages)
     println("Returning desktop and mobile results")
-    Array(webPageDesktopTestResults, webPageMobileTestResults)
+    Array(desktopTestWithAlertsSet, mobileTestWithAlertsSet)
   }
 
 
-  def confirmAlert(initialResult: PerformanceResultsObject, wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
+  def confirmAlert(initialResult: PerformanceResultsObject, averages: PageAverageObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
     val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
     val testCount: Int = if(initialResult.timeToFirstByte > 700) {9} else {5}
     println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
-    val AlertConfirmationTestResult: PerformanceResultsObject = webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount)
+    val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
     AlertConfirmationTestResult
+  }
+
+  def setAlertStatus(resultObject: PerformanceResultsObject, averages: PageAverageObject): PerformanceResultsObject ={
+    //  Add results to string which will eventually become the content of our results file
+    if(resultObject.typeOfTest == "Desktop") {
+      if ((resultObject.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs80thPercentile) ||
+        (resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
+        (resultObject.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost80thPercentile) ||
+        (resultObject.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost80thPercentile)) {
+        if ((resultObject.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs) ||
+          (resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) ||
+          (resultObject.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost) ||
+          (resultObject.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost)) {
+          println("row should be red one of the items qualifies")
+          resultObject.warningStatus = true
+          resultObject.alertStatus = true
+
+        }
+        else {
+          println("row should be yellow one of the items qualifies")
+          resultObject.warningStatus = true
+          resultObject.alertStatus = false
+        }
+      }
+      else {
+        println("all fields within size limits")
+        resultObject.warningStatus = false
+        resultObject.alertStatus = false
+      }
+    } else {
+      //checking if status of mobile test needs an alert
+      if ((resultObject.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs80thPercentile) ||
+        (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
+        (resultObject.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost80thPercentile) ||
+        (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost80thPercentile)) {
+        if ((resultObject.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs) ||
+          (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) ||
+          (resultObject.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost) ||
+          (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost)) {
+          println("warning and alert statuses set to true")
+          resultObject.warningStatus = true
+          resultObject.alertStatus = true
+        }
+        else {
+          println("warning status set to true")
+          resultObject.warningStatus = true
+          resultObject.alertStatus = false
+        }
+      }
+      else {
+        println("all fields within size limits - both warning and alert status set to false")
+        resultObject.warningStatus = false
+        resultObject.alertStatus = false
+      }
+    }
+    println("Returning test result with alert flags set")
+    resultObject
   }
 
     def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
