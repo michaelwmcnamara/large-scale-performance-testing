@@ -103,6 +103,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   }
 
   def generateLiveBlogAlertFooter(): String = {
+    "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content\n</p>" +
     "<p>Full results can be viewed <a href=" + liveBlogResultsPage + ">here</a></p>"
   }
 
@@ -111,21 +112,21 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   }
 
   def generateInteractiveAlertFooter(): String = {
+    "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content\n</p>" +
     "<p>Full results can be viewed <a href=" + interactiveResultsPage + ">here</a></p>"
   }
 
 
   def generateAlertEmailBodyElement(alertList: List[PerformanceResultsObject], averages: PageAverageObject): String = {
-    if(alertList.length > 0) {
+    if(alertList.nonEmpty) {
       val desktopMessageString: String =
         if (alertList.exists(test => test.typeOfTest == "Desktop")) {
           "<h2>Desktop Alerts</h2>" +
             "<p>The following items have been found to either take too long to load or cost too much to view on a desktop browser</p>\n" +
             this.hTMLSimpleTableHeaders + "\n" +
             averages.desktopHTMLResultString + "\n" +
-            (for (test <- alertList if test.typeOfTest == "Desktop") yield test.toHTMLSimpleTableCells()) + this.hTMLTableFooters +
-            this.closeTable +
-            "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content\n \n \n</p>"
+            (for (test <- alertList if test.typeOfTest == "Desktop") yield "<tr>" + test.toHTMLSimpleTableCells() + "</tr>") +
+            this.hTMLTableFooters
         }
         else {
           ""
