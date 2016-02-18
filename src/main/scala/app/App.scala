@@ -231,7 +231,7 @@ object App {
 
   def confirmAlert(initialResult: PerformanceResultsObject, averages: PageAverageObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
     val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-    val testCount: Int = if(initialResult.timeToFirstByte > 700) {9} else {5}
+    val testCount: Int = if(initialResult.timeToFirstByte > 1000) {9} else {5}
     println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
     val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
     AlertConfirmationTestResult
