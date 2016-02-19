@@ -41,6 +41,8 @@ object App {
     val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl)
     var simplifiedResults: String = htmlString.initialisePageForLiveblog + htmlString.initialiseTable
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
+
+    //initialiseemil alerts string - this will be used to generate emails
     var liveBlogAlertMessageBody: String = ""
     var interactiveAlertMessageBody: String = ""
 
@@ -201,7 +203,10 @@ object App {
         println(DateTime.now + " Writing to file: " + interactiveOutputFilename + " complete. \n")
       }
       println("compiling and sending email")
-      if ((liveBlogAlertMessageBody.length > 0) || (interactiveAlertMessageBody.length > 0)) {
+      if ((liveBlogAlertMessageBody != "") || (interactiveAlertMessageBody != "")) {
+        println("liveblog Alert body:\n" + liveBlogAlertMessageBody)
+        println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
+        println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody))
         val emailSuccess = emailer.send(emailAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody))
         if (emailSuccess)
           println(DateTime.now + " Emails sent successfully. \n Job complete")
