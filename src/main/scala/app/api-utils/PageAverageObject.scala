@@ -40,8 +40,8 @@ class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, d
   val mobileSuccessCount = msc
 
   val formattedHTMLResultString: String = resultString
-  lazy val desktopHTMLResultString: String = formattedHTMLResultString.split("</tr>")(0) + "</tr>"
-  lazy val mobileHTMLResultString: String = formattedHTMLResultString.split("</tr>")(1)
+  lazy val desktopHTMLResultString: String = (formattedHTMLResultString.split("</tr>")(0).mkString + "</tr>").tail
+  lazy val mobileHTMLResultString: String = formattedHTMLResultString.split("</tr>")(1).mkString.tail
 
   lazy val desktopTimeFirstPaintInMs80thPercentile: Int = (desktopTimeFirstPaintInMs * 80) / 100
   lazy val desktopTimeDocCompleteInMs80thPercentile: Int = (desktopTimeDocCompleteInMs * 80) / 100
@@ -92,7 +92,7 @@ class LiveBlogDefaultAverages extends PageAverageObject() {
   override val mobileSpeedIndex: Int = 5000
   override val mobileSuccessCount = 1
 
-  override val formattedHTMLResultString: String = "\"<tr bgcolor=\"A9BCF5\">" +
+  override val formattedHTMLResultString: String = "<tr bgcolor=\"A9BCF5\">" +
     "<td>" + DateTime.now + "</td>" +
     "<td>Desktop</td>" +
     "<td> Alerting thresholds determined by past liveblogs we have migrated</td>" +
@@ -102,7 +102,7 @@ class LiveBlogDefaultAverages extends PageAverageObject() {
     "<td>$(US)" + desktopEstUSPostPaidCost + "</td>" +
     "<td>" + desktopSpeedIndex + "</td>" +
     "<td>Predefined standards</td></tr>" +
-    "\"<tr bgcolor=\"A9BCF5\">" +
+    "<tr bgcolor=\"A9BCF5\">" +
     "<td>" + DateTime.now + "</td>" +
     "<td>Mobile</td>" +
     "<td> Yellow indicates within danger zone of threshold. Red indicates threshold has been crossed </td>" +

@@ -1,5 +1,7 @@
 package app.apiutils
 
+import org.joda.time.DateTime
+
 import scala.xml.Elem
 
 
@@ -38,7 +40,7 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   }
 
   def toHTMLSimpleTableCells(): String = {
-    "<th>" + testUrl + " </th><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
+   "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + testUrl + " </th><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + resultStatus + "</td>"
   }
 
   override def toString(): String = {

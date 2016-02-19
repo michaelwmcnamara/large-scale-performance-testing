@@ -33,38 +33,20 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
     //  Define new web-page-test API request and send it the url to test
     //  Add results to string which will eventually become the content of our results file
 
-    if (resultsObject.typeOfTest == "Desktop") {
       if (resultsObject.warningStatus) {
         if (resultsObject.alertStatus) {
           println("row should be red one of the items qualifies")
-          returnString = returnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells() + "</tr>")
+          returnString = "<tr bgcolor=" + alertColor + ">" + resultsObject.toHTMLSimpleTableCells() + "</tr>"
         }
         else {
           println("row should be yellow one of the items qualifies")
-          returnString = returnString.concat("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells() + "</tr>")
+          returnString = "<tr bgcolor=" + warningColor + ">" + resultsObject.toHTMLSimpleTableCells() + "</tr>"
         }
       }
       else {
         println("all fields within size limits")
-        returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Desktop</td>" + resultsObject.toHTMLSimpleTableCells() + "</tr>")
+        returnString = "<tr>" + resultsObject.toHTMLSimpleTableCells() + "</tr>"
       }
-    }
-    else {
-      if (resultsObject.warningStatus) {
-        if (resultsObject.alertStatus) {
-          println("row should be red one of the items qualifies")
-          returnString = returnString.concat("<tr bgcolor=" + alertColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells() + "</tr>")
-        }
-        else {
-          println("row should be yellow one of the items qualifies")
-          returnString = returnString.concat("<tr bgcolor=" + warningColor + "><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells() + "</tr>")
-        }
-      }
-      else {
-        println("no alerts")
-        returnString = returnString.concat("<tr><td>" + DateTime.now + "</td><td>Android/3G</td>" + resultsObject.toHTMLSimpleTableCells() + "</tr>")
-      }
-    }
     println(DateTime.now + " returning results string to main thread")
     println(returnString)
     returnString
@@ -118,6 +100,8 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
 
   def generateAlertEmailBodyElement(alertList: List[PerformanceResultsObject], averages: PageAverageObject): String = {
+    println("*\n \n \n **** \n \n \n averages.desktopHTMLResultString: \n" + averages.desktopHTMLResultString)
+    println("*\n \n \n **** \n \n \n averages.mobileHTMLResultString: \n" + averages.mobileHTMLResultString)
     if(alertList.nonEmpty) {
       val desktopMessageString: String =
         if (alertList.exists(test => test.typeOfTest == "Desktop")) {
@@ -125,7 +109,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
             "<p>The following items have been found to either take too long to load or cost too much to view on a desktop browser</p>\n" +
             this.hTMLSimpleTableHeaders + "\n" +
             averages.desktopHTMLResultString + "\n" +
-            (for (test <- alertList if test.typeOfTest == "Desktop") yield "<tr>" + test.toHTMLSimpleTableCells() + "</tr>") +
+            (for (test <- alertList if test.typeOfTest == "Desktop") yield "<tr>" + test.toHTMLSimpleTableCells() + "</tr>").mkString +
             this.hTMLTableFooters
         }
         else {
@@ -138,8 +122,9 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
             "<p>The following items have been found to either take too long to load or cost too much to view on a mobile device</p>\n" +
             this.hTMLSimpleTableHeaders + "\n" +
             averages.mobileHTMLResultString + "\n" +
-            (for (test <- alertList if test.typeOfTest == "Android/3G") yield test.toHTMLSimpleTableCells()) + this.hTMLTableFooters +
-            this.closeTable +
+            (for (test <- alertList if test.typeOfTest == "Android/3G") yield test.toHTMLSimpleTableCells() + "</tr>").mkString +
+            this.hTMLTableFooters
+
             "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content</p>"
         }
         else {
@@ -156,24 +141,22 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   def generateFullAlertEmailBody(liveBlogReport: String, interactiveReport: String): String = {
 
     val liveBlogElement: String = {
-      if(liveBlogReport.length > 0){
-        generateLiveBlogAlertHeadings() +
+      if(liveBlogReport != ""){
+        generateLiveBlogAlertHeadings() + this.initialiseTable
           liveBlogReport+
         generateLiveBlogAlertFooter()}
       else {
-        "<p> All LiveBlog pages are performing within acceptable bounds.\n</p>" +
-        generateLiveBlogAlertFooter()
+        ""
       }
     }
 
     val interactiveElement: String = {
-      if(interactiveReport.length > 0){
+      if(interactiveReport != ""){
         generateInteractiveAlertHeadings() +
           interactiveReport +
         generateInteractiveAlertFooter()}
       else {
-        "<p> All Interactive pages are performing within acceptable bounds.\n</p>" +
-        generateInteractiveAlertFooter()
+        ""
       }
     }
 
