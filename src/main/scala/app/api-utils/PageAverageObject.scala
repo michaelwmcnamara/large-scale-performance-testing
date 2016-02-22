@@ -40,8 +40,9 @@ class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, d
   val mobileSuccessCount = msc
 
   val formattedHTMLResultString: String = resultString
-  lazy val desktopHTMLResultString: String = (formattedHTMLResultString.split("</tr>")(0).mkString + "</tr>").tail
-  lazy val mobileHTMLResultString: String = formattedHTMLResultString.split("</tr>")(1).mkString.tail
+  lazy val (desktopPart,mobilePart): (String,String) = formattedHTMLResultString.splitAt(formattedHTMLResultString.indexOf("<tr>",4))
+  lazy val desktopHTMLResultString: String = desktopPart
+  lazy val mobileHTMLResultString: String = mobilePart
 
   lazy val desktopTimeFirstPaintInMs80thPercentile: Int = (desktopTimeFirstPaintInMs * 80) / 100
   lazy val desktopTimeDocCompleteInMs80thPercentile: Int = (desktopTimeDocCompleteInMs * 80) / 100
