@@ -250,13 +250,13 @@ object App {
         (resultObject.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost80thPercentile) ||
         (resultObject.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost80thPercentile)) {
         if ((resultObject.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs) ||
-          (resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) ||
-          (resultObject.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost) ||
-          (resultObject.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost)) {
+          (resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded)) {
           println("row should be red one of the items qualifies")
+          if(resultObject.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs) {resultObject.alertDescription = "Time for page load of: " + resultObject.timeDocCompleteInSec + " is greater than the threshold value: " + averages.desktopTimeDocCompleteInSeconds + " "}
+          if(resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "Size of page: " + resultObject.kBInFullyLoaded + " is greater than the threshold value: " + averages.desktopKBInFullyLoaded}
+          println(resultObject.alertDescription)
           resultObject.warningStatus = true
           resultObject.alertStatus = true
-
         }
         else {
           println("row should be yellow one of the items qualifies")
@@ -280,6 +280,18 @@ object App {
           (resultObject.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost) ||
           (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost)) {
           println("warning and alert statuses set to true")
+          if (resultObject.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs) {
+            resultObject.alertDescription = "Time for page load of: " + resultObject.timeDocCompleteInSec + " is greater than the threshold value: " + averages.mobileTimeDocCompleteInSeconds + " "
+          }
+          if (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) {
+            resultObject.alertDescription = resultObject.alertDescription + "Size of page: " + resultObject.kBInFullyLoaded + " is greater than the threshold value: " + averages.mobileKBInFullyLoaded + " "
+          }
+          if (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost) {
+            resultObject.alertDescription = resultObject.alertDescription + "Estimated cost to load page on US postpaid plan: " + resultObject.estUSPostPaidCost + " is greater than the threshold value: " + averages.mobileEstUSPostPaidCost + " "
+          }
+          if (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost) {
+            resultObject.alertDescription = resultObject.alertDescription +  "Estimated cost to load page on US prepaid plan: " + resultObject.estUSPrePaidCost + " is greater than the threshold value: " + averages.mobileEstUSPrePaidCost
+          }
           resultObject.warningStatus = true
           resultObject.alertStatus = true
         }
@@ -295,7 +307,7 @@ object App {
         resultObject.alertStatus = false
       }
     }
-    println("Returning test result with alert flags set")
+    println("Returning test result with alert flags set to relevant values")
     resultObject
   }
 
