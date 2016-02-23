@@ -97,11 +97,11 @@ class EmailOperations(passedUserName: String, passedPassword: String) {
       println("message deets: \n" + message.toString + "\n from: " + message.getFrom.toString + "\n to: " + message.getAllRecipients.toString + "\n Session: " + message.getSession.toString)
       Transport.send(message, message.getAllRecipients, username, password )
       println("Success - Your Email has been sent")
-      false
+      true
     }
     catch {
       case e: MessagingException => println("Message Failed: \n" + e)
-        true
+        false
     }
 
   }

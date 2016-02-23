@@ -239,7 +239,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val testType: String = if((rawResults \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
     val failComment: String = "Test request timed out"
     // set warning status as result may have timed out due to very large page
-    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, true, false)
+    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, true, true)
     failElement
   }
 
