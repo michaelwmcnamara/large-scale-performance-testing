@@ -165,9 +165,11 @@ object App {
         interactiveUrls.foreach(println)
         println("Generating average values for migrated Interactives")
         val averageInteractivesPerformance: PageAverageObject = generatePageAverages(listofLargeInteractives, wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel)
+        println("Average time to docComplete: " + averageInteractivesPerformance.desktopTimeDocCompleteInMs)
+        println("In Sec: " + averageInteractivesPerformance.desktopTimeDocCompleteInSeconds)
         interactiveResults = interactiveResults.concat(averageInteractivesPerformance.toHTMLString)
 
-        val interactiveTestResults: List[PerformanceResultsObject] = articleUrls.flatMap(url => {
+        val interactiveTestResults: List[PerformanceResultsObject] = interactiveUrls.flatMap(url => {
           testUrl(url, wptBaseUrl, wptApiKey, wptLocation, averageInteractivesPerformance)
         })
         val confirmedInteractiveResults = interactiveTestResults.map(x => {
