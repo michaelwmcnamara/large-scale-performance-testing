@@ -329,15 +329,18 @@ object App {
   def setAlertStatus(resultObject: PerformanceResultsObject, averages: PageAverageObject): PerformanceResultsObject ={
     //  Add results to string which will eventually become the content of our results file
     if(resultObject.typeOfTest == "Desktop") {
-      if ((resultObject.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs80thPercentile) ||
+      if ((resultObject.timeFirstPaintInMs >= averages.desktopTimeFirstPaintInMs80thPercentile) ||
+        (resultObject.speedIndex >= averages.desktopSpeedIndex80thPercentile) ||
         (resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded80thPercentile) ||
         (resultObject.estUSPrePaidCost >= averages.desktopEstUSPrePaidCost80thPercentile) ||
         (resultObject.estUSPostPaidCost >= averages.desktopEstUSPostPaidCost80thPercentile)) {
-        if ((resultObject.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs) ||
+        if ((resultObject.timeFirstPaintInMs >= averages.desktopTimeFirstPaintInMs) ||
+          (resultObject.speedIndex >= averages.desktopSpeedIndex) ||
           (resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded)) {
           println("row should be red one of the items qualifies")
-          if(resultObject.timeDocCompleteInMs >= averages.desktopTimeDocCompleteInMs) {resultObject.alertDescription = "Time for page load of: " + resultObject.timeDocCompleteInSec + " is greater than the threshold value: " + averages.desktopTimeDocCompleteInSeconds + " "}
-          if(resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "Size of page: " + resultObject.kBInFullyLoaded + " is greater than the threshold value: " + averages.desktopKBInFullyLoaded}
+          if(resultObject.timeFirstPaintInMs >= averages.desktopTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInSec + "s" + " for text to load and page to become scrollable. Should only take " + averages.desktopTimeFirstPaintInSeconds + "s.</p>"}
+          if(resultObject.speedIndex >= averages.desktopSpeedIndex) {resultObject.alertDescription = "<p>Page takes " + averages.desktopAboveTheFoldCompleteInSec + "To render visible images etc. It should take " + averages.desktopAboveTheFoldCompleteInSec + "s.</P>"}
+          if(resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + " should be less than: " + averages.desktopKBInFullyLoaded + ".</p>"}
           println(resultObject.alertDescription)
           resultObject.warningStatus = true
           resultObject.alertStatus = true
@@ -355,27 +358,18 @@ object App {
       }
     } else {
       //checking if status of mobile test needs an alert
-      if ((resultObject.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs80thPercentile) ||
+      if ((resultObject.timeFirstPaintInMs >= averages.mobileTimeFirstPaintInMs80thPercentile) ||
+        (resultObject.speedIndex >= averages.mobileSpeedIndex80thPercentile) ||
         (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded80thPercentile) ||
         (resultObject.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost80thPercentile) ||
         (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost80thPercentile)) {
-        if ((resultObject.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs) ||
-          (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) ||
-          (resultObject.estUSPrePaidCost >= averages.mobileEstUSPrePaidCost) ||
-          (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost)) {
+        if ((resultObject.timeFirstPaintInMs >= averages.mobileTimeFirstPaintInMs) ||
+          (resultObject.speedIndex >= averages.mobileSpeedIndex) ||
+          (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded)){
           println("warning and alert statuses set to true")
-          if (resultObject.timeDocCompleteInMs >= averages.mobileTimeDocCompleteInMs) {
-            resultObject.alertDescription = "Time for page load of: " + resultObject.timeDocCompleteInSec + " is greater than the threshold value: " + averages.mobileTimeDocCompleteInSeconds + " "
-          }
-          if (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) {
-            resultObject.alertDescription = resultObject.alertDescription + "Size of page: " + resultObject.kBInFullyLoaded + " is greater than the threshold value: " + averages.mobileKBInFullyLoaded + " "
-          }
-          if (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost) {
-            resultObject.alertDescription = resultObject.alertDescription + "Estimated cost to load page on US postpaid plan: " + resultObject.estUSPostPaidCost + " is greater than the threshold value: " + averages.mobileEstUSPostPaidCost + " "
-          }
-          if (resultObject.estUSPostPaidCost >= averages.mobileEstUSPostPaidCost) {
-            resultObject.alertDescription = resultObject.alertDescription +  "Estimated cost to load page on US prepaid plan: " + resultObject.estUSPrePaidCost + " is greater than the threshold value: " + averages.mobileEstUSPrePaidCost
-          }
+          if(resultObject.timeFirstPaintInMs >= averages.mobileTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInSec + "s" + " for text to load and page to become scrollable. Should only take " + averages.mobileTimeFirstPaintInSeconds + "s.</p>"}
+          if(resultObject.speedIndex >= averages.mobileSpeedIndex) {resultObject.alertDescription = "<p>Page takes " + averages.mobileAboveTheFoldCompleteInSec + "To render visible images etc. It should take " + averages.mobileAboveTheFoldCompleteInSec + "s or less.</p>"}
+          if(resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + " should be less than: " + averages.mobileKBInFullyLoaded + ".</p>"}
           resultObject.warningStatus = true
           resultObject.alertStatus = true
         }
