@@ -10,7 +10,7 @@ import org.joda.time.DateTime
 class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, dcflprepaid: Double, dcflpostpaid: Double, dsi: Int, dsc: Int, mtfp: Int, mtdc: Int, msdc: Int, mtfl: Int, msfl: Int, mcflprepaid: Double, mcflpostpaid: Double, msi: Int, msc: Int, resultString: String) {
 
   val desktopTimeFirstPaintInMs: Int = dtfp
-  lazy val desktopTimeFirstPaintInSeconds: Int = desktopTimeFirstPaintInMs/1000
+  lazy val desktopTimeFirstPaintInSeconds: Double = roundAt(2)(desktopTimeFirstPaintInMs/1000)
   val desktopTimeDocCompleteInMs: Int = dtdc
   lazy val desktopTimeDocCompleteInSeconds: Int = desktopTimeDocCompleteInMs/1000
   val desktopKBInDocComplete: Int = dsdc
@@ -22,10 +22,11 @@ class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, d
   val desktopEstUSPrePaidCost: Double = dcflprepaid
   val desktopEstUSPostPaidCost: Double = dcflpostpaid
   val desktopSpeedIndex: Int = dsi
+  lazy val desktopAboveTheFoldCompleteInSec: Double = roundAt(2)(desktopSpeedIndex/1000)
   val desktopSuccessCount = dsc
 
   val mobileTimeFirstPaintInMs: Int = mtfp
-  lazy val mobileTimeFirstPaintInSeconds: Int = mobileTimeFirstPaintInMs/1000
+  lazy val mobileTimeFirstPaintInSeconds: Double = roundAt(2)(mobileTimeFirstPaintInMs/1000)
   val mobileTimeDocCompleteInMs: Int = mtdc
   lazy val mobileTimeDocCompleteInSeconds: Int = mobileTimeDocCompleteInMs/1000
   val mobileKBInDocComplete: Int = msdc
@@ -37,6 +38,7 @@ class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, d
   val mobileEstUSPrePaidCost: Double = mcflprepaid
   val mobileEstUSPostPaidCost: Double = mcflpostpaid
   val mobileSpeedIndex: Int = msi
+  lazy val mobileAboveTheFoldCompleteInSec: Double = roundAt(2)(desktopSpeedIndex/1000)
   val mobileSuccessCount = msc
 
   val formattedHTMLResultString: String = resultString
@@ -97,21 +99,21 @@ class LiveBlogDefaultAverages extends PageAverageObject() {
     "<td>" + DateTime.now + "</td>" +
     "<td>Desktop</td>" +
     "<td> Alerting thresholds determined by past liveblogs we have migrated</td>" +
-    "<td>" + desktopTimeDocCompleteInSeconds + "s</td>" +
+    "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+    "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
     "<td>" + desktopMBInDocComplete + "MB</td>" +
     "<td>$(US)" + desktopEstUSPrePaidCost + "</td>" +
     "<td>$(US)" + desktopEstUSPostPaidCost + "</td>" +
-    "<td>" + desktopSpeedIndex + "</td>" +
     "<td>Predefined standards</td></tr>" +
     "<tr bgcolor=\"A9BCF5\">" +
     "<td>" + DateTime.now + "</td>" +
     "<td>Mobile</td>" +
     "<td> Yellow indicates within danger zone of threshold. Red indicates threshold has been crossed </td>" +
-    "<td>" + mobileTimeDocCompleteInSeconds + "s</td>" +
+    "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+    "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
     "<td>" + mobileMBInDocComplete + "MB</td>" +
     "<td>$(US)" + mobileEstUSPrePaidCost + "</td>" +
     "<td>S(US)" + mobileEstUSPostPaidCost + "</td>" +
-    "<td>" + mobileSpeedIndex + "</td>" +
     "<td>Predefined standards</td></tr>"
 }
 
@@ -140,21 +142,21 @@ class FrontsDefaultAverages extends PageAverageObject() {
     "<td>" + DateTime.now + "</td>" +
     "<td>Desktop</td>" +
     "<td> Alerting thresholds determined by chosen values</td>" +
-    "<td>" + desktopTimeDocCompleteInSeconds + "s</td>" +
+    "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+    "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
     "<td>" + desktopMBInDocComplete + "MB</td>" +
     "<td>$(US)" + desktopEstUSPrePaidCost + "</td>" +
     "<td>$(US)" + desktopEstUSPostPaidCost + "</td>" +
-    "<td>" + desktopSpeedIndex + "</td>" +
     "<td>Predefined standards</td></tr>" +
     "<tr bgcolor=\"A9BCF5\">" +
     "<td>" + DateTime.now + "</td>" +
     "<td>Mobile</td>" +
     "<td> Yellow indicates within danger zone of threshold. Red indicates threshold has been crossed </td>" +
-    "<td>" + mobileTimeDocCompleteInSeconds + "s</td>" +
+    "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+    "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
     "<td>" + mobileMBInDocComplete + "MB</td>" +
     "<td>$(US)" + mobileEstUSPrePaidCost + "</td>" +
     "<td>S(US)" + mobileEstUSPostPaidCost + "</td>" +
-    "<td>" + mobileSpeedIndex + "</td>" +
     "<td>Predefined standards</td></tr>"
 }
 
@@ -193,7 +195,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   //process result objects
   resultsList.foreach(result => {
   if (result(0).resultStatus == "Test Success") {
-    accumulatorDesktopTimeFirstPaint += result(0).timeFirstPaint
+    accumulatorDesktopTimeFirstPaint += result(0).timeFirstPaintInMs
     accumulatorDesktopTimeDocComplete += result(0).timeDocCompleteInMs
     accumulatorDesktopKBInDocComplete += result(0).kBInDocComplete
     accumulatorDesktopTimeFullyLoaded += result(0).timeFullyLoadedInMs
@@ -204,7 +206,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
     accumulatorDesktopSuccessCount += 1
   }
   if (result(1).resultStatus == "Test Success") {
-    accumulatorMobileTimeFirstPaint += result(1).timeFirstPaint
+    accumulatorMobileTimeFirstPaint += result(1).timeFirstPaintInMs
     accumulatorMobileTimeDocComplete += result(1).timeDocCompleteInMs
     accumulatorMobileKBInDoccomplete += result(1).kBInDocComplete
     accumulatorMobileTimeFullyLoaded += result(1).timeFullyLoadedInMs
@@ -240,33 +242,33 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
 
   //add desktop averaages to return string
   if(accumulatorDesktopSuccessCount > 1){
-    accumulatorString = accumulatorString.concat("<td>" + "Average of " + accumulatorDesktopSuccessCount + "pages  with recognised size issues</td>"
-      + "<td>" + desktopTimeDocCompleteInMs + "s</td>"
-      + "<td>" + desktopMBInFullyLoaded + "MB</td>"
-      + "<td> $(US)" + desktopEstUSPrePaidCost + "</td>"
-      + "<td> $(US)" + desktopEstUSPostPaidCost + "</td>"
-      + "<td>" + desktopSpeedIndex + "</td>"
-      + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+    accumulatorString = accumulatorString.concat("<td>" + "Average of " + accumulatorDesktopSuccessCount + "pages  with recognised size issues</td>" +
+      "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+      "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
+      "<td>" + desktopMBInDocComplete + "MB</td>" +
+      "<td>$(US)" + desktopEstUSPrePaidCost + "</td>" +
+      "<td>$(US)" + desktopEstUSPostPaidCost + "</td>" +
+      "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
     )}
   else{
     if (accumulatorDesktopSuccessCount == 1) {
-      accumulatorString = accumulatorString.concat("<td> Results from 1 page with recognised size issues</td>"
-        + "<td>" + desktopTimeDocCompleteInMs + "s</td>"
-        + "<td>" + desktopMBInFullyLoaded + "MB</td>"
-        + "<td> $(US)" + desktopEstUSPrePaidCost + "</td>"
-        + "<td> $(US)" + desktopEstUSPostPaidCost + "</td>"
-        + "<td>" + desktopSpeedIndex + "</td>"
-        + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+      accumulatorString = accumulatorString.concat("<td> Results from 1 page with recognised size issues</td>" +
+        "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
+        "<td>" + desktopMBInDocComplete + "MB</td>" +
+        "<td>$(US)" + desktopEstUSPrePaidCost + "</td>" +
+        "<td>$(US)" + desktopEstUSPostPaidCost + "</td>" +
+        "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
       )
     }
     else {
-      accumulatorString = accumulatorString.concat("<td> Standard values to be used for judging page size</td>"
-        + "<td>" + desktopTimeDocCompleteInMs + "s</td>"
-        + "<td>" + desktopMBInFullyLoaded + "MB</td>"
-        + "<td> $(US)" + desktopEstUSPrePaidCost + "</td>"
-        + "<td> $(US)" + desktopEstUSPostPaidCost + "</td>"
-        + "<td>" + desktopSpeedIndex + "</td>"
-        + "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+      accumulatorString = accumulatorString.concat("<td> Standard values to be used for judging page size</td>" +
+        "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
+        "<td>" + desktopMBInDocComplete + "MB</td>" +
+        "<td>$(US)" + desktopEstUSPrePaidCost + "</td>" +
+        "<td>$(US)" + desktopEstUSPostPaidCost + "</td>" +
+        "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
       )
     }
   }
@@ -274,33 +276,33 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   //add mobile averages to return string
   accumulatorString = accumulatorString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
   if(accumulatorMobileSuccessCount > 1){
-    accumulatorString = accumulatorString.concat("<td>" + "Average of " + accumulatorDesktopSuccessCount + "pages  with recognised size issues</td>"
-      + "<td>" + mobileTimeDocCompleteInMs + "s</td>"
-      + "<td>" + mobileMBInFullyLoaded + "MB</td>"
-      + "<td> $(US)" + mobileEstUSPrePaidCost + "</td>"
-      + "<td> $(US)" + mobileEstUSPostPaidCost + "</td>"
-      + "<td>" + mobileSpeedIndex + "</td>"
-      + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+    accumulatorString = accumulatorString.concat("<td>" + "Average of " + accumulatorDesktopSuccessCount + "pages  with recognised size issues</td>" +
+      "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+      "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
+      "<td>" + mobileMBInDocComplete + "MB</td>" +
+      "<td>$(US)" + mobileEstUSPrePaidCost + "</td>" +
+      "<td>S(US)" + mobileEstUSPostPaidCost + "</td>" +
+      "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
     )}
   else{
     if (accumulatorMobileSuccessCount == 1) {
-      accumulatorString = accumulatorString.concat("<td> Results from 1 page with recognised size issues</td>"
-        + "<td>" + mobileTimeDocCompleteInMs + "s</td>"
-        + "<td>" + mobileMBInFullyLoaded + "MB</td>"
-        + "<td> $(US)" + mobileEstUSPrePaidCost + "</td>"
-        + "<td> $(US)" + mobileEstUSPostPaidCost + "</td>"
-        + "<td>" + mobileSpeedIndex + "</td>"
-        + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+      accumulatorString = accumulatorString.concat("<td> Results from 1 page with recognised size issues</td>" +
+        "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
+        "<td>" + mobileMBInDocComplete + "MB</td>" +
+        "<td>$(US)" + mobileEstUSPrePaidCost + "</td>" +
+        "<td>S(US)" + mobileEstUSPostPaidCost + "</td>" +
+        "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
       )
     }
     else {
-      accumulatorString = accumulatorString.concat("<td> Standard values to be used for judging page size</td>"
-        + "<td>" + mobileTimeDocCompleteInMs + "s</td>"
-        + "<td>" + mobileMBInFullyLoaded + "MB</td>"
-        + "<td> $(US)" + mobileEstUSPrePaidCost + "</td>"
-        + "<td> $(US)" + mobileEstUSPostPaidCost + "</td>"
-        + "<td>" + mobileSpeedIndex + "</td>"
-        + "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+      accumulatorString = accumulatorString.concat("<td> Standard values to be used for judging page size</td>" +
+        "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
+        "<td>" + mobileMBInDocComplete + "MB</td>" +
+        "<td>$(US)" + mobileEstUSPrePaidCost + "</td>" +
+        "<td>S(US)" + mobileEstUSPostPaidCost + "</td>" +
+        "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
       )
     }
   }

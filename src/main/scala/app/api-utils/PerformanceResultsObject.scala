@@ -12,8 +12,8 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   val testUrl: String = url
   val typeOfTest: String = testType
   val timeToFirstByte: Int = tTFB
-  val timeFirstPaint: Int = tFP
-  val timeFirstPaintInSec: Int = timeFirstPaint/1000
+  val timeFirstPaintInMs: Int = tFP
+  val timeFirstPaintInSec: Double = roundAt(2)(timeFirstPaintInMs/1000)
   val timeDocCompleteInMs: Int = tDC
   val timeDocCompleteInSec: Int = timeDocCompleteInMs/1000
   val bytesInDocComplete: Int = bDC
@@ -27,25 +27,28 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   val estUSPrePaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.10)
   val estUSPostPaidCost: Double = roundAt(2)((bytesInFullyLoaded.toDouble/1048576)*0.06)
   val speedIndex: Int = sI
+  val aboveTheFoldCompleteInSec: Double = roundAt(2)(speedIndex/1000) 
   val resultStatus:String = status
   var alertDescription: String = ""
   var warningStatus: Boolean = warning
   var alertStatus: Boolean = alert
 
   def toStringList(): List[String] = {
-    List(testUrl.toString + ", " + timeFirstPaint.toString + "ms", timeDocCompleteInSec.toString + "s", mBInDocComplete + "MB" , timeFullyLoadedInSec.toString + "s", mBInFullyLoaded + "MB", speedIndex.toString, resultStatus)
+    List(testUrl.toString + ", " + timeFirstPaintInMs.toString + "ms", timeDocCompleteInSec.toString + "s", mBInDocComplete + "MB" , timeFullyLoadedInSec.toString + "s", mBInFullyLoaded + "MB", speedIndex.toString, resultStatus)
   }
 
   def toHTMLTableCells(): String = {
-    "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaint.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
+    "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaintInMs.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
   }
 
   def toHTMLSimpleTableCells(): String = {
-   "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + testUrl + " </th><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
+   "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">testUrl</a>" + " </th>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> " + genTestResultString() + "</td>"
   }
 
+  def toHTMLAlertMessageCells(): String = {"<td>" + DateTime.now() + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>" + "<a href=" + testUrl + ">testUrl</a>" + "</td>" + "<td>"+ genTestResultString() +"</td>"}
+
   override def toString(): String = {
-    testUrl + ", " + timeFirstPaint.toString + "ms, " + timeDocCompleteInSec.toString + "s, " + mBInDocComplete + "MB, " + timeFullyLoadedInSec.toString + "s, " + mBInFullyLoaded + "MB, " + speedIndex.toString + ", " + resultStatus
+    testUrl + ", " + timeFirstPaintInMs.toString + "ms, " + timeDocCompleteInSec.toString + "s, " + mBInDocComplete + "MB, " + timeFullyLoadedInSec.toString + "s, " + mBInFullyLoaded + "MB, " + speedIndex.toString + ", " + resultStatus
   }
 
   def genTestResultString(): String = {

@@ -18,7 +18,8 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   val hTMLTitleFronts: String = "<h1>Currrent Performance of today's Fronts</h1>"
   val hTMLJobStarted: String = "<p>Job started at: " + DateTime.now + "\n</p>"
   val hTMLFullTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>MB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>MB transferred at Fully Loaded</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
-  val hTMLSimpleTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>MB transferred</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLSimpleTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLAlertTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Status</th>\n</tr>\n"
   val hTMLTableFooters: String = "</table>"
   val hTMLPageFooterStart: String = "\n<p><i>Job completed at: "
   val hTMLPageFooterEnd: String = "</i></p>\n</body>\n</html>"
@@ -122,9 +123,8 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
         if (alertList.exists(test => test.typeOfTest == "Desktop")) {
           "<h2>Desktop Alerts</h2>" +
             "<p>The following items have been found to either take too long to load or cost too much to view on a desktop browser</p>\n" +
-            this.hTMLSimpleTableHeaders + "\n" +
-            averages.desktopHTMLResultString + "\n" +
-            (for (test <- alertList if test.typeOfTest == "Desktop") yield "<tr>" + test.toHTMLSimpleTableCells() + "</tr>").mkString +
+            this.hTMLAlertTableHeaders + "\n" +
+            (for (test <- alertList if test.typeOfTest == "Desktop") yield "<tr>" + test.toHTMLAlertMessageCells() + "</tr>").mkString +
             this.hTMLTableFooters
         }
         else {
@@ -135,9 +135,8 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
         if (alertList.exists(test => test.typeOfTest == "Android/3G")) {
           "<h2>Mobile Alerts</h2>" +
             "<p>The following items have been found to either take too long to load or cost too much to view on a mobile device</p>\n" +
-            this.hTMLSimpleTableHeaders + "\n" +
-            averages.mobileHTMLResultString + "\n" +
-            (for (test <- alertList if test.typeOfTest == "Android/3G") yield test.toHTMLSimpleTableCells() + "</tr>").mkString +
+            this.hTMLAlertTableHeaders + "\n" +
+            (for (test <- alertList if test.typeOfTest == "Android/3G") yield test.toHTMLAlertMessageCells() + "</tr>").mkString +
             this.hTMLTableFooters
 
             "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content</p>"
@@ -157,7 +156,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
     val liveBlogElement: String = {
       if(liveBlogReport != ""){
-        generateLiveBlogAlertHeadings() + this.initialiseTable +
+        generateLiveBlogAlertHeadings() +
           liveBlogReport+
         generateLiveBlogAlertFooter()}
       else {
@@ -177,7 +176,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
     val frontsElement: String = {
       if(frontsReport != ""){
-        generateFrontsAlertHeadings() + this.initialiseTable +
+        generateFrontsAlertHeadings() +
         frontsReport +
           generateFrontsAlertFooter()}
       else {
