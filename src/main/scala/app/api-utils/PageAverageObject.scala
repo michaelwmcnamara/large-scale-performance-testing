@@ -149,10 +149,10 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   //process result objects
   resultsList.foreach(result => {
   if (result(0).resultStatus == "Test Success") {
-    accumulatorDesktopTimeFirstPaint += result(0).timeFirstPaint / 1000
-    accumulatorDesktopTimeDocComplete += result(0).timeDocCompleteInMs / 1000
+    accumulatorDesktopTimeFirstPaint += result(0).timeFirstPaint
+    accumulatorDesktopTimeDocComplete += result(0).timeDocCompleteInMs
     accumulatorDesktopKBInDocComplete += result(0).kBInDocComplete
-    accumulatorDesktopTimeFullyLoaded += result(0).timeFullyLoadedInMs / 1000
+    accumulatorDesktopTimeFullyLoaded += result(0).timeFullyLoadedInMs
     accumulatorDesktopKBInFullyLoaded += result(0).kBInFullyLoaded
     accumulatorDesktopEstUSPrePaidCost += result(0).estUSPrePaidCost
     accumulatorDesktopEstUSPostPaidCost += result(0).estUSPostPaidCost
@@ -160,38 +160,36 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
     accumulatorDesktopSuccessCount += 1
   }
   if (result(1).resultStatus == "Test Success") {
-    accumulatorMobileTimeFirstPaint += result(1).timeFirstPaint/1000
-    accumulatorMobileTimeDocComplete += result(1).timeDocCompleteInMs/1000
+    accumulatorMobileTimeFirstPaint += result(1).timeFirstPaint
+    accumulatorMobileTimeDocComplete += result(1).timeDocCompleteInMs
     accumulatorMobileKBInDoccomplete += result(1).kBInDocComplete
-    accumulatorMobileTimeFullyLoaded += result(1).timeFullyLoadedInMs/1000
+    accumulatorMobileTimeFullyLoaded += result(1).timeFullyLoadedInMs
     accumulatorMobileKBInFullyLoaded += result(1).kBInFullyLoaded
-    accumulatorMobileEstUSPrePaidCost += result(0).estUSPrePaidCost
-    accumulatorMobileEstUSPostPaidCost += result(0).estUSPostPaidCost
+    accumulatorMobileEstUSPrePaidCost += result(1).estUSPrePaidCost
+    accumulatorMobileEstUSPostPaidCost += result(1).estUSPostPaidCost
     accumulatorMobileSpeedIndex += result(1).speedIndex
     accumulatorMobileSuccessCount += 1
   }
   })
 
-
-
-  override val desktopTimeFirstPaintInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFirstPaint/accumulatorDesktopSuccessCount} else 1 * 1000
-  override val desktopTimeDocCompleteInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeDocComplete/accumulatorDesktopSuccessCount} else 15 * 1000
-  override val desktopKBInDocComplete: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopKBInDocComplete/accumulatorDesktopSuccessCount} else 10 * 1024
-  override val desktopTimeFullyLoadedInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFullyLoaded/accumulatorDesktopSuccessCount} else 20 * 1000
-  override val desktopKBInFullyLoaded: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopKBInFullyLoaded/accumulatorDesktopSuccessCount} else 15 * 1024
-  override val desktopEstUSPrePaidCost: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(2)(accumulatorDesktopEstUSPrePaidCost/accumulatorDesktopSuccessCount)} else 60.00
-  override val desktopEstUSPostPaidCost: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(2)(accumulatorDesktopEstUSPostPaidCost/accumulatorDesktopSuccessCount)} else 50.00
-  override val desktopSpeedIndex: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopSpeedIndex/accumulatorDesktopSuccessCount} else 5000
+  override val desktopTimeFirstPaintInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFirstPaint/accumulatorDesktopSuccessCount} else {1 * 1000}
+  override val desktopTimeDocCompleteInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeDocComplete/accumulatorDesktopSuccessCount} else {15 * 1000}
+  override val desktopKBInDocComplete: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopKBInDocComplete/accumulatorDesktopSuccessCount} else {10 * 1024}
+  override val desktopTimeFullyLoadedInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFullyLoaded/accumulatorDesktopSuccessCount} else {20 * 1000}
+  override val desktopKBInFullyLoaded: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopKBInFullyLoaded/accumulatorDesktopSuccessCount} else {15 * 1024}
+  override val desktopEstUSPrePaidCost: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(2)(accumulatorDesktopEstUSPrePaidCost/accumulatorDesktopSuccessCount)} else {60.00}
+  override val desktopEstUSPostPaidCost: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(2)(accumulatorDesktopEstUSPostPaidCost/accumulatorDesktopSuccessCount)} else {50.00}
+  override val desktopSpeedIndex: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopSpeedIndex/accumulatorDesktopSuccessCount} else {5000}
   override val desktopSuccessCount: Int = accumulatorDesktopSuccessCount
 
-  override val mobileTimeFirstPaintInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFirstPaint/accumulatorMobileSuccessCount} else 1 * 1000
-  override val mobileTimeDocCompleteInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeDocComplete/accumulatorMobileSuccessCount} else 15 * 1000
-  override val mobileKBInDocComplete: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileKBInDoccomplete/accumulatorMobileSuccessCount} else 6 * 1024
-  override val mobileTimeFullyLoadedInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFullyLoaded/accumulatorMobileSuccessCount} else 20 * 1000
-  override val mobileKBInFullyLoaded: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileKBInFullyLoaded/accumulatorMobileSuccessCount} else 6 * 1024
-  override val mobileEstUSPrePaidCost: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(2)(accumulatorMobileEstUSPrePaidCost/accumulatorMobileSuccessCount)} else 0.40
-  override val mobileEstUSPostPaidCost: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(2)(accumulatorMobileEstUSPostPaidCost/accumulatorMobileSuccessCount)} else 0.30
-  override val mobileSpeedIndex: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileSpeedIndex/accumulatorMobileSuccessCount} else 5000
+  override val mobileTimeFirstPaintInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFirstPaint/accumulatorMobileSuccessCount} else {1 * 1000}
+  override val mobileTimeDocCompleteInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeDocComplete/accumulatorMobileSuccessCount} else {15 * 1000}
+  override val mobileKBInDocComplete: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileKBInDoccomplete/accumulatorMobileSuccessCount} else {6 * 1024}
+  override val mobileTimeFullyLoadedInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFullyLoaded/accumulatorMobileSuccessCount} else {20 * 1000}
+  override val mobileKBInFullyLoaded: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileKBInFullyLoaded/accumulatorMobileSuccessCount} else {6 * 1024}
+  override val mobileEstUSPrePaidCost: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(2)(accumulatorMobileEstUSPrePaidCost/accumulatorMobileSuccessCount)} else {0.40}
+  override val mobileEstUSPostPaidCost: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(2)(accumulatorMobileEstUSPostPaidCost/accumulatorMobileSuccessCount)} else {0.30}
+  override val mobileSpeedIndex: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileSpeedIndex/accumulatorMobileSuccessCount} else {5000}
   override val mobileSuccessCount: Int = accumulatorMobileSuccessCount
 
   accumulatorString = accumulatorString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Desktop</td>")
