@@ -227,9 +227,7 @@ object App {
       }
 
     println("Interactive Performance Test Complete")
-    //************************************************************************************************************************************************
-
-
+  
     //  Define new CAPI Query object
     //val interactiveUrlList = new ArticleUrls(contentApiKey)
     //  Request a list of urls from Content API
@@ -285,8 +283,6 @@ object App {
     }
 
     println("Fronts Performance Test Complete")
-    //************************************************************************************************************************************************
-
 
 
       println("compiling and sending email")
@@ -324,7 +320,7 @@ object App {
 
   def confirmAlert(initialResult: PerformanceResultsObject, averages: PageAverageObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
     val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-    val testCount: Int = if(initialResult.timeToFirstByte > 1000) {9} else {5}
+    val testCount: Int = if(initialResult.timeToFirstByte > 1000) {5} else {3}
     println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
     val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
     AlertConfirmationTestResult
