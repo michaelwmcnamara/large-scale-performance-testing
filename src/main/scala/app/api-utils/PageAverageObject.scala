@@ -115,6 +115,50 @@ class LiveBlogDefaultAverages extends PageAverageObject() {
     "<td>Predefined standards</td></tr>"
 }
 
+class FrontsDefaultAverages extends PageAverageObject() {
+  override val desktopTimeFirstPaintInMs: Int = 1 * 1000
+  override val desktopTimeDocCompleteInMs: Int = 15 * 1000
+  override val desktopKBInDocComplete: Int = 10 * 1024
+  override val desktopTimeFullyLoadedInMs: Int = 20 * 1000
+  override val desktopKBInFullyLoaded: Int = 15 * 1024
+  override val desktopEstUSPrePaidCost: Double = 0.60
+  override val desktopEstUSPostPaidCost: Double = 0.50
+  override val desktopSpeedIndex: Int = 5000
+  override val desktopSuccessCount = 1
+
+  override val mobileTimeFirstPaintInMs: Int = 1 * 1000
+  override val mobileTimeDocCompleteInMs: Int = 15 * 1000
+  override val mobileKBInDocComplete: Int = 6 * 1024
+  override val mobileTimeFullyLoadedInMs: Int = 20 * 1000
+  override val mobileKBInFullyLoaded: Int = 6 * 1024
+  override val mobileEstUSPrePaidCost: Double = 0.40
+  override val mobileEstUSPostPaidCost: Double = 0.30
+  override val mobileSpeedIndex: Int = 5000
+  override val mobileSuccessCount = 1
+
+  override val formattedHTMLResultString: String = "<tr bgcolor=\"A9BCF5\">" +
+    "<td>" + DateTime.now + "</td>" +
+    "<td>Desktop</td>" +
+    "<td> Alerting thresholds determined by chosen values</td>" +
+    "<td>" + desktopTimeDocCompleteInSeconds + "s</td>" +
+    "<td>" + desktopMBInDocComplete + "MB</td>" +
+    "<td>$(US)" + desktopEstUSPrePaidCost + "</td>" +
+    "<td>$(US)" + desktopEstUSPostPaidCost + "</td>" +
+    "<td>" + desktopSpeedIndex + "</td>" +
+    "<td>Predefined standards</td></tr>" +
+    "<tr bgcolor=\"A9BCF5\">" +
+    "<td>" + DateTime.now + "</td>" +
+    "<td>Mobile</td>" +
+    "<td> Yellow indicates within danger zone of threshold. Red indicates threshold has been crossed </td>" +
+    "<td>" + mobileTimeDocCompleteInSeconds + "s</td>" +
+    "<td>" + mobileMBInDocComplete + "MB</td>" +
+    "<td>$(US)" + mobileEstUSPrePaidCost + "</td>" +
+    "<td>S(US)" + mobileEstUSPostPaidCost + "</td>" +
+    "<td>" + mobileSpeedIndex + "</td>" +
+    "<td>Predefined standards</td></tr>"
+}
+
+
 class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) extends PageAverageObject{
   var accumulatorDesktopTimeFirstPaint: Int = 0
   var accumulatorDesktopTimeDocComplete: Int = 0

@@ -23,14 +23,17 @@ object App {
     println("Local Testing Flag is set to: " + iamTestingLocally.toString)
 
     //  Define names of s3bucket, configuration and output Files
+    val amazonDomain = "https://s3-eu-west-1.amazonaws.com"
     val s3BucketName = "capi-wpt-querybot"
     val configFileName = "config.conf"
     val outputFileName = "liveBlogPerformanceData.html"
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
     val interactiveOutputFilename = "interactivePerformanceData.html"
+    val frontsOutputFilename = "frontsData.html"
 
-    val liveBlogResultsUrl: String = "https://s3-eu-west-1.amazonaws.com/" + s3BucketName + "/" + simpleOutputFileName
-    val interactiveResultsUrl: String = "https://s3-eu-west-1.amazonaws.com/" + s3BucketName + "/" + interactiveOutputFilename
+    val liveBlogResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + simpleOutputFileName
+    val interactiveResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + interactiveOutputFilename
+    val frontsResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + frontsOutputFilename
 
     //Define colors to be used for average values, warnings and alerts
     val averageColor: String = "\"grey\""
@@ -38,17 +41,37 @@ object App {
     val alertColor = "\"#FF0000\""
 
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
-    val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl)
+    val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
     var simplifiedResults: String = htmlString.initialisePageForLiveblog + htmlString.initialiseTable
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
+    var frontsResults: String = htmlString.initialisePageForFronts + htmlString.initialiseTable
 
     //initialiseemil alerts string - this will be used to generate emails
     var liveBlogAlertMessageBody: String = ""
     var interactiveAlertMessageBody: String = ""
+    var frontsAlertMessageBody: String = ""
 
     //Initialise List of sample items to be used to make alerting levels for different content types
     val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
     val interactiveItemLabel: String = "Interactive"
+
+    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
+      "http://www.theguardian.com/us",
+      "http://www.theguardian.com/au",
+      "http://www.theguardian.com/uk-news",
+      "http://www.theguardian.com/world",
+      "http://www.theguardian.com/politics",
+      "http://www.theguardian.com/uk/sport",
+      "http://www.theguardian.com/football",
+      "http://www.theguardian.com/uk/commentisfree",
+      "http://www.theguardian.com/uk/culture",
+      "http://www.theguardian.com/uk/business",
+      "http://www.theguardian.com/uk/lifeandstyle",
+      "http://www.theguardian.com/fashion",
+      "http://www.theguardian.com/uk/environment",
+      "http://www.theguardian.com/uk/technology",
+      "http://www.theguardian.com/travel")
+    val frontsItemlabel: String = "Front"
 
     //Initialise List of email contacts (todo - this must be put in a file before going onto git)
     val emailAddressList: List[String] = List("michael.mcnamara@guardian.co.uk", "m_w_mcnamara@hotmail.com")
@@ -165,8 +188,6 @@ object App {
         interactiveUrls.foreach(println)
         println("Generating average values for migrated Interactives")
         val averageInteractivesPerformance: PageAverageObject = generatePageAverages(listofLargeInteractives, wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel)
-        println("Average time to docComplete: " + averageInteractivesPerformance.desktopTimeDocCompleteInMs)
-        println("In Sec: " + averageInteractivesPerformance.desktopTimeDocCompleteInSeconds)
         interactiveResults = interactiveResults.concat(averageInteractivesPerformance.toHTMLString)
 
         val interactiveTestResults: List[PerformanceResultsObject] = interactiveUrls.flatMap(url => {
@@ -204,12 +225,77 @@ object App {
         interactiveOutput.close()
         println(DateTime.now + " Writing to file: " + interactiveOutputFilename + " complete. \n")
       }
+
+    println("Interactive Performance Test Complete")
+    //************************************************************************************************************************************************
+
+
+    //  Define new CAPI Query object
+    //val interactiveUrlList = new ArticleUrls(contentApiKey)
+    //  Request a list of urls from Content API
+    //val interactiveUrls: List[String] = interactiveUrlList.getInteractiveUrls
+    //println(DateTime.now + " Closing Interactive Content API query connection")
+    //interactiveUrlList.shutDown
+    if (listofFronts.isEmpty) {
+      println(DateTime.now + " WARNING: No results returned from Content API for Fronts Query")
+      interactiveResults = interactiveResults.concat("<tr><th>No Interactives found to test</th></tr>")
+    }
+    else {
+      // Send each article URL to the webPageTest API and obtain resulting data
+      println("Results from Fronts CAPI calls")
+      listofFronts.foreach(println)
+      println("Generating benchmark metrics for judging fronts")
+      val averageFrontsPerformance: PageAverageObject = new FrontsDefaultAverages
+      frontsResults = interactiveResults.concat(averageFrontsPerformance.toHTMLString)
+
+      val frontsTestResults: List[PerformanceResultsObject] = listofFronts.flatMap(url => {
+        testUrl(url, wptBaseUrl, wptApiKey, wptLocation, averageFrontsPerformance)
+      })
+      val confirmedFrontsResults = frontsTestResults.map(x => {
+        if (x.alertStatus) {
+          println("alert status detected on " + x.testUrl + "\n" + "Retesting to confirm")
+          confirmAlert(x, averageFrontsPerformance, wptBaseUrl, wptApiKey, wptLocation)
+        }
+        else {
+          println("no alert status detected - leaving untouched")
+          x
+        }
+      })
+      //Create a list of alerting pages and write to string
+      val frontsAlertList: List[PerformanceResultsObject] = for (result <- confirmedFrontsResults if result.alertStatus) yield result
+      interactiveAlertMessageBody = htmlString.generateAlertEmailBodyElement(frontsAlertList, averageFrontsPerformance)
+
+      val simplifiedInteractiveResultsList: List[String] = confirmedFrontsResults.map(x => htmlString.generateHTMLRow(x))
+      frontsResults = interactiveResults.concat(simplifiedInteractiveResultsList.mkString)
+      println(DateTime.now + " Results added to accumulator string \n")
+    }
+    frontsResults = interactiveResults.concat(htmlString.closeTable + htmlString.closePage)
+
+    if (!iamTestingLocally) {
+      println(DateTime.now + " Writing the following to S3:\n" + frontsResults + "\n")
+      s3Interface.writeFileToS3(frontsOutputFilename, frontsResults)
+      s3Interface.closeS3Client()
+    }
+    else {
+      val frontsOutput: FileWriter = new FileWriter(frontsOutputFilename)
+      println(DateTime.now + " Writing the following to local file: " + frontsOutputFilename + ":\n" + frontsResults)
+      frontsOutput.write(frontsResults)
+      frontsOutput.close()
+      println(DateTime.now + " Writing to file: " + frontsOutputFilename + " complete. \n")
+    }
+
+    println("Fronts Performance Test Complete")
+    //************************************************************************************************************************************************
+
+
+
       println("compiling and sending email")
-      if ((liveBlogAlertMessageBody != "") || (interactiveAlertMessageBody != "")) {
-        println("liveblog Alert body:\n" + liveBlogAlertMessageBody)
+      if ((liveBlogAlertMessageBody != "") || (interactiveAlertMessageBody != "") || (frontsAlertMessageBody != "")) {
+        println("\n\n ***** \n\n" + "liveblog Alert body:\n" + liveBlogAlertMessageBody)
         println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
-        println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody))
-        val emailSuccess = emailer.send(emailAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody))
+        println("\n\n ***** \n\n" + "fronts Alert Body:\n" + frontsAlertMessageBody)
+        println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody, frontsAlertMessageBody))
+        val emailSuccess = emailer.send(emailAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
         if (emailSuccess)
           println(DateTime.now + " Emails sent successfully. \n Job complete")
         else

@@ -6,7 +6,7 @@ import org.joda.time.DateTime
 /**
  * Created by mmcnamara on 10/02/16.
  */
-class HtmlStringOperations(average: String, warning: String, alert: String, liveBlogResultsUrl: String, interactiveResultsUrl: String) {
+class HtmlStringOperations(average: String, warning: String, alert: String, liveBlogResultsUrl: String, interactiveResultsUrl: String, frontsResultsUrl: String) {
 
   val averageColor = average
   val warningColor = warning
@@ -15,6 +15,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   val hTMLPageHeader: String = "<!DOCTYPE html>\n<html>\n<body>\n"
   val hTMLTitleLiveblog: String = "<h1>Currrent Performance of today's Liveblogs</h1>"
   val hTMLTitleInteractive: String = "<h1>Currrent Performance of today's Interactives</h1>"
+  val hTMLTitleFronts: String = "<h1>Currrent Performance of today's Fronts</h1>"
   val hTMLJobStarted: String = "<p>Job started at: " + DateTime.now + "\n</p>"
   val hTMLFullTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>MB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>MB transferred at Fully Loaded</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
   val hTMLSimpleTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Document Complete</th>\n<th>MB transferred</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
@@ -25,7 +26,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   //  var simplifiedResults: String = hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted + hTMLSimpleTableHeaders
   val liveBlogResultsPage: String = liveBlogResultsUrl
   val interactiveResultsPage: String = interactiveResultsUrl
-
+  val frontsResultsPage: String = frontsResultsUrl
 
 
   def generateHTMLRow(resultsObject: PerformanceResultsObject): String = {
@@ -61,6 +62,10 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
     hTMLPageHeader + hTMLTitleInteractive + hTMLJobStarted
   }
 
+  def initialisePageForFronts: String = {
+    hTMLPageHeader + hTMLTitleFronts + hTMLJobStarted
+  }
+
   def initialiseTable: String = {
     hTMLSimpleTableHeaders
   }
@@ -86,7 +91,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
   def generateLiveBlogAlertFooter(): String = {
     "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content\n</p>" +
-    "<p>Full results can be viewed <a href=" + liveBlogResultsPage + ">here</a></p>"
+    "<p>Full results for LiveBlogs can be viewed <a href=" + liveBlogResultsPage + ">here</a></p>"
   }
 
   def generateInteractiveAlertHeadings(): String = {
@@ -95,8 +100,18 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
   def generateInteractiveAlertFooter(): String = {
     "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content\n</p>" +
-    "<p>Full results can be viewed <a href=" + interactiveResultsPage + ">here</a></p>"
+    "<p>Full results for Interactives can be viewed <a href=" + interactiveResultsPage + ">here</a></p>"
   }
+
+  def generateFrontsAlertHeadings(): String = {
+    "<h2>Fronts Performance Alerts</h2>\n"
+  }
+
+  def generateFrontsAlertFooter(): String = {
+    "<p>All alerts have been confirmed by retesting multiple times. Tests were run without ads so all page weight is due to content\n</p>" +
+      "<p>Full results for Fronts can be viewed <a href=" + frontsResultsPage + ">here</a></p>"
+  }
+
 
 
   def generateAlertEmailBodyElement(alertList: List[PerformanceResultsObject], averages: PageAverageObject): String = {
@@ -138,11 +153,11 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   }
 
 
-  def generateFullAlertEmailBody(liveBlogReport: String, interactiveReport: String): String = {
+  def generateFullAlertEmailBody(liveBlogReport: String, interactiveReport: String, frontsReport: String): String = {
 
     val liveBlogElement: String = {
       if(liveBlogReport != ""){
-        generateLiveBlogAlertHeadings() + this.initialiseTable
+        generateLiveBlogAlertHeadings() + this.initialiseTable +
           liveBlogReport+
         generateLiveBlogAlertFooter()}
       else {
@@ -160,10 +175,22 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
       }
     }
 
+    val frontsElement: String = {
+      if(frontsReport != ""){
+        generateFrontsAlertHeadings() + this.initialiseTable +
+        frontsReport +
+          generateFrontsAlertFooter()}
+      else {
+        ""
+      }
+    }
+
+
     val fullEmailBody: String = {
       generateAlertEmailHeadings +
       liveBlogElement +
       interactiveElement +
+      frontsElement +
       closePage
     }
     fullEmailBody
