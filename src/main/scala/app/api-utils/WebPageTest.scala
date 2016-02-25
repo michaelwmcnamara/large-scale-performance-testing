@@ -89,7 +89,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
     if (((testResults \\ "statusCode").text.toInt == 200) && ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0)  ) {
       println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds\n Refining results")
+      obtainPageRequestDetails(resultUrl)
       refineResults(testResults)
+
     } else {
         if((testResults \\ "statusCode").text.toInt == 200) {
           println(DateTime.now + " Test results show 0 successful runs ")
@@ -225,6 +227,30 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     result
   }
 
+  def obtainPageRequestDetails(webpageTestResultUrl: String):Unit = {
+    val sliceStart: Int = apiBaseUrl.length + "/xmlResult/".length
+    val sliceEnd: Int = webpageTestResultUrl.length - 1
+    val testId: String = webpageTestResultUrl.slice(sliceStart,sliceEnd)
+    val resultDetailsPage: String =  apiBaseUrl + "/result/" + testId + "/1/details/"
+    val request:Request  = new Request.Builder()
+      .url(resultDetailsPage)
+      .get()
+      .build()
+
+    val response: Response = httpClient.newCall(request).execute()
+    val responseString:String = response.body().string()
+//    val responseStringXML: Elem = scala.xml.XML.loadString(response.body.string)
+    val responseStringOuterTableStart: Int = responseString.indexOf("<table id=\"tableDetails\" class=\"details center\">")
+    val responseStringOuterTableEnd: Int = responseString.indexOf("</table>", responseStringOuterTableStart)
+    val outerTableString: String = responseString.slice(responseStringOuterTableStart, responseStringOuterTableEnd)
+    val innerTableStart: Int = outerTableString.indexOf("<tbody>")
+    val innerTableEnd: Int = outerTableString.indexOf("</tbody>")
+    val innerTableString: String = outerTableString.slice(innerTableStart, innerTableEnd)
+    println("\n\n\n Inner Table String: " + innerTableString + "\n\n\n")
+    val tableDataRows: String = innerTableString.slice(innerTableString.indexOf("<tr>"), innerTableString.length)
+    println("\n\n\n Table Data Rows: " + tableDataRows + "\n\n\n")
+    //todo take teh tableDataRows string and make it into a list of objects!!!!
+  }
 
   def failedTestNoSuccessfulRuns(url: String, rawResults: Elem): PerformanceResultsObject = {
     val failIndicator: Int = -1
@@ -244,6 +270,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   }
 
 
+ /* def insertHeaviestElements(resultObject: PerformanceResultsObject, rawResults: Elem): PerformanceResultsObject = {
+  ...
+  }*/
 }
 
 

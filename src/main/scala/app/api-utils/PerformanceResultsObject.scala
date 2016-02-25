@@ -33,6 +33,16 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   var warningStatus: Boolean = warning
   var alertStatus: Boolean = alert
 
+  /*var heavyElementList: List[PageElement] = ()
+
+  def addtoElementList(element: PageElement): Boolean = {
+    if (heavyElementList.length < 5){
+      heavyElementList = heavyElementList :+ element
+      true
+    }
+    else{false}
+  }*/
+
   def toStringList(): List[String] = {
     List(testUrl.toString + ", " + timeFirstPaintInMs.toString + "ms", timeDocCompleteInSec.toString + "s", mBInDocComplete + "MB" , timeFullyLoadedInSec.toString + "s", mBInFullyLoaded + "MB", speedIndex.toString, resultStatus)
   }
