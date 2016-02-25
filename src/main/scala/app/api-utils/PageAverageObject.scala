@@ -75,7 +75,7 @@ class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, d
 
 
 class LiveBlogDefaultAverages extends PageAverageObject() {
-  override val desktopTimeFirstPaintInMs: Int = 1 * 1000
+  override val desktopTimeFirstPaintInMs: Int = 2 * 1000
   override val desktopTimeDocCompleteInMs: Int = 15 * 1000
   override val desktopKBInDocComplete: Int = 10 * 1024
   override val desktopTimeFullyLoadedInMs: Int = 20 * 1000
@@ -85,7 +85,7 @@ class LiveBlogDefaultAverages extends PageAverageObject() {
   override val desktopSpeedIndex: Int = 5000
   override val desktopSuccessCount = 1
 
-  override val mobileTimeFirstPaintInMs: Int = 1 * 1000
+  override val mobileTimeFirstPaintInMs: Int = 2 * 1000
   override val mobileTimeDocCompleteInMs: Int = 15 * 1000
   override val mobileKBInDocComplete: Int = 6 * 1024
   override val mobileTimeFullyLoadedInMs: Int = 20 * 1000
@@ -118,7 +118,7 @@ class LiveBlogDefaultAverages extends PageAverageObject() {
 }
 
 class FrontsDefaultAverages extends PageAverageObject() {
-  override val desktopTimeFirstPaintInMs: Int = 1 * 1000
+  override val desktopTimeFirstPaintInMs: Int = 2 * 1000
   override val desktopTimeDocCompleteInMs: Int = 15 * 1000
   override val desktopKBInDocComplete: Int = 10 * 1024
   override val desktopTimeFullyLoadedInMs: Int = 20 * 1000
@@ -128,7 +128,7 @@ class FrontsDefaultAverages extends PageAverageObject() {
   override val desktopSpeedIndex: Int = 5000
   override val desktopSuccessCount = 1
 
-  override val mobileTimeFirstPaintInMs: Int = 1 * 1000
+  override val mobileTimeFirstPaintInMs: Int = 2 * 1000
   override val mobileTimeDocCompleteInMs: Int = 15 * 1000
   override val mobileKBInDocComplete: Int = 6 * 1024
   override val mobileTimeFullyLoadedInMs: Int = 20 * 1000
@@ -218,7 +218,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   }
   })
 
-  override val desktopTimeFirstPaintInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFirstPaint/accumulatorDesktopSuccessCount} else {1 * 1000}
+  override val desktopTimeFirstPaintInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFirstPaint/accumulatorDesktopSuccessCount} else {2 * 1000}
   override val desktopTimeDocCompleteInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeDocComplete/accumulatorDesktopSuccessCount} else {15 * 1000}
   override val desktopKBInDocComplete: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopKBInDocComplete/accumulatorDesktopSuccessCount} else {10 * 1024}
   override val desktopTimeFullyLoadedInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFullyLoaded/accumulatorDesktopSuccessCount} else {20 * 1000}
@@ -228,7 +228,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   override val desktopSpeedIndex: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopSpeedIndex/accumulatorDesktopSuccessCount} else {5000}
   override val desktopSuccessCount: Int = accumulatorDesktopSuccessCount
 
-  override val mobileTimeFirstPaintInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFirstPaint/accumulatorMobileSuccessCount} else {1 * 1000}
+  override val mobileTimeFirstPaintInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFirstPaint/accumulatorMobileSuccessCount} else {2 * 1000}
   override val mobileTimeDocCompleteInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeDocComplete/accumulatorMobileSuccessCount} else {15 * 1000}
   override val mobileKBInDocComplete: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileKBInDoccomplete/accumulatorMobileSuccessCount} else {6 * 1024}
   override val mobileTimeFullyLoadedInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFullyLoaded/accumulatorMobileSuccessCount} else {20 * 1000}
