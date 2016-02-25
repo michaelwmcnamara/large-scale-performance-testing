@@ -38,14 +38,14 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   }
 
   def toHTMLTableCells(): String = {
-    "<th>" + testUrl + " </th>" + "<td>" + timeFirstPaintInMs.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
+    "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" + "<td>" + timeFirstPaintInMs.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
   }
 
   def toHTMLSimpleTableCells(): String = {
-   "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">testUrl</a>" + " </th>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> " + genTestResultString() + "</td>"
+   "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> " + genTestResultString() + "</td>"
   }
 
-  def toHTMLAlertMessageCells(): String = {"<td>" + DateTime.now() + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>" + "<a href=" + testUrl + ">testUrl</a>" + "</td>" + "<td>"+ genTestResultString() +"</td>"}
+  def toHTMLAlertMessageCells(): String = {"<td>" + DateTime.now() + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>"+ genTestResultString() +"</td>"}
 
   override def toString(): String = {
     testUrl + ", " + timeFirstPaintInMs.toString + "ms, " + timeDocCompleteInSec.toString + "s, " + mBInDocComplete + "MB, " + timeFullyLoadedInSec.toString + "s, " + mBInFullyLoaded + "MB, " + speedIndex.toString + ", " + resultStatus
