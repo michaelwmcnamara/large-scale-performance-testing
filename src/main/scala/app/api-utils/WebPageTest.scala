@@ -250,7 +250,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val tableDataRows: String = innerTableString.slice(innerTableString.indexOf("<tr>"), innerTableString.length)
     println("\n\n\n Table Data Rows: " + tableDataRows + "\n\n\n")
     //todo take teh tableDataRows string and make it into a list of objects!!!!
+    pageElementList: List[PageElement] = generatePageElementList(tableDataRows)
   }
+
 
   def failedTestNoSuccessfulRuns(url: String, rawResults: Elem): PerformanceResultsObject = {
     val failIndicator: Int = -1
