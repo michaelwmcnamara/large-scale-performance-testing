@@ -227,7 +227,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     result
   }
 
-  def obtainPageRequestDetails(webpageTestResultUrl: String):Unit = {
+  def obtainPageRequestDetails(webpageTestResultUrl: String): List[PageElement] = {
     val sliceStart: Int = apiBaseUrl.length + "/xmlResult/".length
     val sliceEnd: Int = webpageTestResultUrl.length - 1
     val testId: String = webpageTestResultUrl.slice(sliceStart,sliceEnd)
@@ -236,7 +236,6 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       .url(resultDetailsPage)
       .get()
       .build()
-
     val response: Response = httpClient.newCall(request).execute()
     val responseString:String = response.body().string()
 //    val responseStringXML: Elem = scala.xml.XML.loadString(response.body.string)
@@ -249,10 +248,27 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("\n\n\n Inner Table String: " + innerTableString + "\n\n\n")
     val tableDataRows: String = innerTableString.slice(innerTableString.indexOf("<tr>"), innerTableString.length)
     println("\n\n\n Table Data Rows: " + tableDataRows + "\n\n\n")
-    //todo take teh tableDataRows string and make it into a list of objects!!!!
-    pageElementList: List[PageElement] = generatePageElementList(tableDataRows)
+    val pageElementList: List[PageElement] = generatePageElementList(tableDataRows)
+    println("\n \n \n \n \n *********************************************************************************************************\n")
+    println( " List of elements \n")
+    println("*********************************************************************************************************\n")
+    println(pageElementList.map(x => x.toString()).mkString)
+    println("\n *********************************************************************************************************\n")
+    pageElementList
   }
 
+
+  def generatePageElementList(htmlTableRows: String): List[PageElement] = {
+ //   val currentRow: String = htmlTableRows
+    var restOfTable: String = htmlTableRows
+    val pageElementList: List[PageElement] = List()
+    while (!restOfTable.isEmpty){
+      val (currentRow, rest): (String, String) = restOfTable.splitAt(restOfTable.indexOf("</tr>")+5)
+      pageElementList :+ new PageElementFromHTMLTableRow(currentRow)
+      restOfTable = rest
+    }
+    pageElementList
+  }
 
   def failedTestNoSuccessfulRuns(url: String, rawResults: Elem): PerformanceResultsObject = {
     val failIndicator: Int = -1
@@ -272,9 +288,6 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   }
 
 
- /* def insertHeaviestElements(resultObject: PerformanceResultsObject, rawResults: Elem): PerformanceResultsObject = {
-  ...
-  }*/
 }
 
 
