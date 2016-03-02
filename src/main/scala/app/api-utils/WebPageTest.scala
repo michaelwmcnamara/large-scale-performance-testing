@@ -89,7 +89,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
     if (((testResults \\ "statusCode").text.toInt == 200) && ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0)  ) {
       println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds\n Refining results")
-      refineResults(testResults)
+      val elementsList: List[PageElementFromHTMLTableRow] = obtainPageRequestDetails(resultUrl)
+      refineResults(testResults, elementsList)
+
     } else {
         if((testResults \\ "statusCode").text.toInt == 200) {
           println(DateTime.now + " Test results show 0 successful runs ")
@@ -101,7 +103,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       }
   }
 
-  def refineResults(rawXMLResult: Elem): PerformanceResultsObject = {
+  def refineResults(rawXMLResult: Elem, elementsList: List[PageElementFromHTMLTableRow]): PerformanceResultsObject = {
     println("parsing the XML results")
     val testUrl: String = (rawXMLResult \\ "response" \ "data" \ "testUrl").text.toString
     val testType: String = if((rawXMLResult \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
@@ -122,9 +124,10 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
     println("Creating PerformanceResultsObject")
     val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false)
-    println("Result time doc complete: " + result.timeDocCompleteInMs)
-    println("Result time bytes fully loaded: " + result.bytesInFullyLoaded)
+    val sortedElementList = sortPageElementList(elementsList)
+    result.takeElementsFromSortedList(sortedElementList)
     println("Result string: " + result.toHTMLSimpleTableCells())
+    println("List of 5 heaviest page Elements: \n" + result.heavyElementList.map(x => x.returnString()).mkString)
     println("Returning PerformanceResultsObject")
     result
   }
@@ -186,7 +189,8 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
     if (((testResults \\ "statusCode").text.toInt == 200) && ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0)  ) {
       println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator+1) * msTimeBetweenPings)/1000 + " seconds\n Refining results")
-      refineMultipleResults(testResults)
+      val elementsList: List[PageElementFromHTMLTableRow] = obtainPageRequestDetails(resultUrl)
+      refineMultipleResults(testResults, elementsList)
     } else {
       if((testResults \\ "statusCode").text.toInt == 200) {
         println(DateTime.now + " Test results show 0 successful runs ")
@@ -198,7 +202,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     }
   }
 
-  def refineMultipleResults(rawXMLResult: Elem): PerformanceResultsObject = {
+  def refineMultipleResults(rawXMLResult: Elem, elementsList: List[PageElementFromHTMLTableRow]): PerformanceResultsObject = {
     println("parsing the XML results")
     val testUrl: String = (rawXMLResult \\ "response" \ "data" \ "testUrl").text.toString
     val testType: String = if((rawXMLResult \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
@@ -218,13 +222,55 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val status: String = "Test Success"
     println("Creating PerformanceResultsObject")
     val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false)
-    println("Result time doc complete: " + result.timeDocCompleteInMs)
-    println("Result time bytes fully loaded: " + result.bytesInFullyLoaded)
+    val sortedElementList = sortPageElementList(elementsList)
+    result.takeElementsFromSortedList(sortedElementList)
     println("Result string: " + result.toHTMLSimpleTableCells())
+    println("List of 5 heaviest page Elements: \n" + result.heavyElementList.map(x => x.returnString()).mkString)
     println("Returning PerformanceResultsObject")
     result
   }
 
+  def obtainPageRequestDetails(webpageTestResultUrl: String): List[PageElementFromHTMLTableRow] = {
+    val sliceStart: Int = apiBaseUrl.length + "/xmlResult/".length
+    val sliceEnd: Int = webpageTestResultUrl.length - 1
+    val testId: String = webpageTestResultUrl.slice(sliceStart,sliceEnd)
+    val resultDetailsPage: String =  apiBaseUrl + "/result/" + testId + "/1/details/"
+    val request:Request  = new Request.Builder()
+      .url(resultDetailsPage)
+      .get()
+      .build()
+    val response: Response = httpClient.newCall(request).execute()
+    val responseString:String = response.body().string()
+    val tableString: String = trimToHTMLTable(responseString)
+    val pageElementList: List[PageElementFromHTMLTableRow] = generatePageElementList(tableString)
+    println("List generated - contains: " + pageElementList.length + " elements.")
+    pageElementList
+  }
+
+  def trimToHTMLTable(pageHTML: String): String = {
+    //    val responseStringXML: Elem = scala.xml.XML.loadString(response.body.string)
+    val responseStringOuterTableStart: Int = pageHTML.indexOf("<table id=\"tableDetails\" class=\"details center\">")
+    val responseStringOuterTableEnd: Int = pageHTML.indexOf("</table>", responseStringOuterTableStart)
+    val outerTableString: String = pageHTML.slice(responseStringOuterTableStart, responseStringOuterTableEnd)
+    val innerTableStart: Int = outerTableString.indexOf("<tbody>")
+    val innerTableEnd: Int = outerTableString.indexOf("</tbody>")
+    val innerTableString: String = outerTableString.slice(innerTableStart, innerTableEnd)
+    val tableDataRows: String = innerTableString.slice(innerTableString.indexOf("<tr>"), innerTableString.length)
+    tableDataRows
+  }
+
+  def generatePageElementList(htmlTableRows: String): List[PageElementFromHTMLTableRow] = {
+    var restOfTable: String = htmlTableRows
+    var pageElementList: List[PageElementFromHTMLTableRow] = List()
+    var counter: Int = 0
+    while (restOfTable.nonEmpty){
+      val (currentRow, rest): (String, String) = restOfTable.splitAt(restOfTable.indexOf("</tr>")+5)
+      pageElementList = pageElementList :+ new PageElementFromHTMLTableRow(currentRow)
+      restOfTable = rest
+      counter += 1
+    }
+    pageElementList
+  }
 
   def failedTestNoSuccessfulRuns(url: String, rawResults: Elem): PerformanceResultsObject = {
     val failIndicator: Int = -1
@@ -243,6 +289,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     failElement
   }
 
+  def sortPageElementList(elementList: List[PageElementFromHTMLTableRow]):List[PageElementFromHTMLTableRow] = {
+    elementList.sortWith(_.bytesDownloaded > _.bytesDownloaded)
+  }
 
 }
 

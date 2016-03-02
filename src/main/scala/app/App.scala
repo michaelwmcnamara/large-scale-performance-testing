@@ -73,7 +73,7 @@ object App {
       "http://www.theguardian.com/travel")
     val frontsItemlabel: String = "Front"
 
-    //Initialise List of email contacts (todo - this must be put in a file before going onto git)
+    //Initialise List of email contacts (todo - this must be put in a file before getting any real folk)
     val emailAddressList: List[String] = List("michael.mcnamara@guardian.co.uk", "m_w_mcnamara@hotmail.com")
 
     //Create new S3 Client
@@ -261,7 +261,7 @@ object App {
       })
       //Create a list of alerting pages and write to string
       val frontsAlertList: List[PerformanceResultsObject] = for (result <- confirmedFrontsResults if result.alertStatus) yield result
-      interactiveAlertMessageBody = htmlString.generateAlertEmailBodyElement(frontsAlertList, averageFrontsPerformance)
+      frontsAlertMessageBody = htmlString.generateAlertEmailBodyElement(frontsAlertList, averageFrontsPerformance)
 
       val simplifiedInteractiveResultsList: List[String] = confirmedFrontsResults.map(x => htmlString.generateHTMLRow(x))
       frontsResults = interactiveResults.concat(simplifiedInteractiveResultsList.mkString)
