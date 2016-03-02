@@ -19,20 +19,6 @@ abstract  class PageElement {
   lazy val sizeInKB: Double = roundAt(2)(bytesDownloaded/1024)
   lazy val sizeInMB: Double = roundAt(2)(bytesDownloaded/(1024 * 1024))
 
-  override def toString():String = {
-  "Resource: " + resource + ", \n" +
-  "Content Type: " + contentType + ", \n" +
-  "Request Start Time: " + requestStart.toString + "ms, \n" +
-  "DNS Look-up Time: " + dnsLookUp + "ms, \n" +
-  "Initial Connection Time: " + initialConnection + "ms, \n" +
-  "SSL Negotiation Time: " + sslNegotiation + "ms, \n" +
-  "Time to First Byte: " + timeToFirstByte + "ms, \n" +
-  "Content Download Time: " + contentDownload + "ms, \n" +
-  "Bytes Downloaded: " + bytesDownloaded + "bytes, \n" +
-  "Error Status Code: " + errorStatusCode + ", \n" +
-  "IP Address: " + iP
-  }
-
   def toHTMLTableRow(): String = {
     "<tr>" +
       "<td>" + resource + "</td>" +
@@ -126,62 +112,81 @@ class PageElementFromHTMLTableRow(htmlTableRow: String) extends PageElement{
   val errorStatusCodeClassname: String = "reqResult"
   val iPClassname: String = "ReqIP"
 
-//  val tableElementString: String = htmlTableRow.substring(htmlTableRow.indexOf("<",2),htmlTableRow.indexOf("</tr>"))
   val cleanString: String = htmlTableRow.replaceAll("<tr>","").replaceAll("</tr>", "").replaceAll(" odd","").replaceAll(" even","").replaceAll("Render", "").replaceAll("Doc","").replaceAll(" warning", "").replaceAll(" error", "")
-  println("\n \n \n  ************  cleanString  **************\n" + cleanString + "\n************************************** \n \n \n")
-
-  println("resource element start index: " + cleanString.indexOf(resourceClassname)+2)
-  println("resource element end index: " + cleanString.indexOf("</td>", cleanString.indexOf(resourceClassname)+2))
 
   val resourceHTMLElement: String = getDataFromHTMLTableElement(cleanString, resourceClassname)
-  println("resourceHtml: " + resourceHTMLElement)
+
   override val resource: String = resourceHTMLElement.substring(resourceHTMLElement.indexOf("http"),resourceHTMLElement.indexOf("\"",resourceHTMLElement.indexOf("http")))
-  println("resource: " + resource)
 
   override val contentType: String = getDataFromHTMLTableElement(cleanString, contentTypeClassname)
 
   val requestStartString: String = getDataFromHTMLTableElement(cleanString, requestStartClassname)
-    //cleanString.substring(cleanString.indexOf(requestStartClassname)+2,cleanString.indexOf("</td>",cleanString.indexOf(requestStartClassname)+2))
-  println(requestStartString)
   override val requestStart: Int = stringToMilliseconds(requestStartString)
 
   val dnsLookUpString: String = getDataFromHTMLTableElement(cleanString, dnsLookupClassname)
-    //cleanString.substring(cleanString.indexOf(dnsLookupClassname)+dnsLookupClassname.length+2,cleanString.indexOf("</td>", cleanString.indexOf(dnsLookupClassname)+dnsLookupClassname.length+2))
   override val dnsLookUp: Int = stringToMilliseconds(dnsLookUpString)
 
   val initialConnectionString: String = getDataFromHTMLTableElement(cleanString, initialConnectionClassname)
-    //cleanString.substring(cleanString.indexOf(initialConnectionClassname)+2,cleanString.indexOf("</td>", cleanString.indexOf(initialConnectionClassname)+2))
   override val initialConnection: Int = stringToMilliseconds(initialConnectionString)
 
   val sslNegotiationString: String = getDataFromHTMLTableElement(cleanString, sslNegotiationClassname)
-    //cleanString.substring(cleanString.indexOf(sslNegotiationClassname)+2,cleanString.indexOf("</td>", cleanString.indexOf(sslNegotiationClassname)+2))
   override val sslNegotiation: Int = stringToMilliseconds(sslNegotiationString)
 
   val timeToFirstByteString: String = getDataFromHTMLTableElement(cleanString, timeToFirstByteClassname)
-    //cleanString.substring(cleanString.indexOf(timeToFirstByteClassname)+2,cleanString.indexOf("</td>", cleanString.indexOf(timeToFirstByteClassname)+2))
   override val timeToFirstByte: Int = stringToMilliseconds(timeToFirstByteString)
 
   val contentDownloadString: String = getDataFromHTMLTableElement(cleanString, contentDownloadClassname)
-  println("ContentDownloadString = " + contentDownloadString)
-    //cleanString.substring(cleanString.indexOf(contentDownloadClassname)+2,cleanString.indexOf("</td>", cleanString.indexOf(contentDownloadClassname)+2))
   override val contentDownload: Int = stringToMilliseconds(contentDownloadString)
 
   val bytesDownloadedString: String = getDataFromHTMLTableElement(cleanString, bytesDownloadedClassname)
-    //cleanString.substring(cleanString.indexOf(bytesDownloadedClassname)+2,cleanString.indexOf("</td>", cleanString.indexOf(bytesDownloadedClassname)+2))
   override val bytesDownloaded: Int = stringToBytes(bytesDownloadedString)
 
   val errorStatusCodeString: String = getDataFromHTMLTableElement(cleanString, errorStatusCodeClassname)
-    //cleanString.substring(cleanString.indexOf(errorStatusCodeClassname)+2,cleanString.indexOf("</td>", cleanString.indexOf(errorStatusCodeClassname)+2))
   override val errorStatusCode: Int = errorStatusCodeString.toInt
 
   override val iP: String = getDataFromHTMLTableElement(cleanString, iPClassname)
-    //cleanString.substring(cleanString.indexOf(iPClassname)+2,cleanString.indexOf("</td>", cleanString.indexOf(iPClassname)+2))
 
   def getDataFromHTMLTableElement(tableRow: String, classname: String): String = {
     val returnString: String = tableRow.substring(tableRow.indexOf(classname)+ classname.length + 2,tableRow.indexOf("</td>", tableRow.indexOf(classname)+ classname.length + 2))
     returnString
   }
+  def returnString():String = {
+    val returnString:String  = "Resource: " + resource + ", \n" +
+      "Content Type: " + contentType + ", \n" +
+      "Request Start Time: " + requestStart.toString + "ms, \n" +
+      "DNS Look-up Time: " + dnsLookUp + "ms, \n" +
+      "Initial Connection Time: " + initialConnection + "ms, \n" +
+      "SSL Negotiation Time: " + sslNegotiation + "ms, \n" +
+      "Time to First Byte: " + timeToFirstByte + "ms, \n" +
+      "Content Download Time: " + contentDownload + "ms, \n" +
+      "Bytes Downloaded: " + bytesDownloaded + "bytes, \n" +
+      "Error Status Code: " + errorStatusCode + ", \n" +
+      "IP Address: " + iP
+    returnString
+  }
 
+  def printElement():Unit = {
+    println("Resource: " + this.resource + ", \n")
+    println("Content Type: " + this.contentType + ", \n")
+    println("Request Start Time: " + this.requestStart.toString + "ms, \n")
+    println("DNS Look-up Time: " + this.dnsLookUp + "ms, \n")
+    println("Initial Connection Time: " + this.initialConnection + "ms, \n")
+    println("SSL Negotiation Time: " + this.sslNegotiation + "ms, \n")
+    println("Time to First Byte: " + this.timeToFirstByte + "ms, \n")
+    println("Content Download Time: " + this.contentDownload + "ms, \n")
+    println("Bytes Downloaded: " + this.bytesDownloaded + "bytes, \n")
+    println("Error Status Code: " + this.errorStatusCode + ", \n")
+    println("IP Address: " + this.iP)
+  }
+
+  def alertHTMLString():String = {
+    val returnString: String = "<tr>" +
+      "<td><a href = \"resource\">resource</a></td>" +
+      "<td>" + contentType + "</td>" +
+      "<td>" + bytesDownloaded + "bytes</td>" +
+      "</tr>"
+    returnString
+  }
 }
 
 

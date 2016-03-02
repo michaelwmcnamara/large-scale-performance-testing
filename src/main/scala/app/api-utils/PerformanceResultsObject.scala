@@ -33,15 +33,30 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   var warningStatus: Boolean = warning
   var alertStatus: Boolean = alert
 
-  var heavyElementList: List[PageElement] = List()
+  var heavyElementList: List[PageElementFromHTMLTableRow] = List()
   var elementListMaxSize: Int = 5
 
-  def addtoElementList(element: PageElement): Boolean = {
+  def addtoElementList(element: PageElementFromHTMLTableRow): Boolean = {
     if (heavyElementList.length < elementListMaxSize){
       heavyElementList = heavyElementList :+ element
       true
     }
     else{false}
+  }
+
+  def takeElementsFromSortedList(elementList: List[PageElementFromHTMLTableRow]): Boolean = {
+    if(elementList.head.bytesDownloaded < elementList.tail.head.bytesDownloaded){
+      println("Error: Attempt to feed an unordered list of page elements to Performance Results Object")
+      false
+    } else {
+      var workingList: List[PageElementFromHTMLTableRow] = elementList
+      var roomInTheList: Boolean = true
+      while(workingList.nonEmpty && roomInTheList) {
+        roomInTheList = addtoElementList(workingList.head)
+        workingList = workingList.tail
+      }
+      true
+    }
   }
 
   def toStringList(): List[String] = {
@@ -56,7 +71,12 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
    "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> " + genTestResultString() + "</td>"
   }
 
-  def toHTMLAlertMessageCells(): String = {"<td>" + DateTime.now() + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>"+ genTestResultString() +"</td>"}
+  def toHTMLAlertMessageCells(): String = {
+    "<td>" + DateTime.now() + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>"+ genTestResultString() +"</td>" +
+    "<tr>List of 5 heaviest elements on page - Recommend reviewing these items </tr>" +
+    "<tr><td>Resource</td><td>Content Type</td><td>Bytes Transferred</td></tr>" +
+      heavyElementList.map(element => element.alertHTMLString()).mkString
+  }
 
   override def toString(): String = {
     testUrl + ", " + timeFirstPaintInMs.toString + "ms, " + timeDocCompleteInSec.toString + "s, " + mBInDocComplete + "MB, " + timeFullyLoadedInSec.toString + "s, " + mBInFullyLoaded + "MB, " + speedIndex.toString + ", " + resultStatus
