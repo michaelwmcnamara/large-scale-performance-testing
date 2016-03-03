@@ -46,7 +46,7 @@ object App {
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
     var frontsResults: String = htmlString.initialisePageForFronts + htmlString.initialiseTable
 
-    //initialiseemil alerts string - this will be used to generate emails
+    //Initialize email alerts string - this will be used to generate emails
     var liveBlogAlertMessageBody: String = ""
     var interactiveAlertMessageBody: String = ""
     var frontsAlertMessageBody: String = ""
@@ -159,7 +159,7 @@ object App {
 
     //write liveblog results
     if (!iamTestingLocally) {
-      println(DateTime.now + " Writing the following to S3:\n" + simplifiedResults + "\n")
+      println(DateTime.now + " Writing liveblog results to S3")
       s3Interface.writeFileToS3(simpleOutputFileName, simplifiedResults)
     }
     else {
@@ -171,7 +171,6 @@ object App {
       }
     }
       println("LiveBlog Performance Test Complete")
-
       //  Define new CAPI Query object
       val interactiveUrlList = new ArticleUrls(contentApiKey)
       //  Request a list of urls from Content API
@@ -194,12 +193,12 @@ object App {
           testUrl(url, wptBaseUrl, wptApiKey, wptLocation, averageInteractivesPerformance)
         })
         val confirmedInteractiveResults = interactiveTestResults.map(x => {
-          if (x.alertStatus) {
-            println("alert status detected on " + x.testUrl + "\n" + "Retesting to confirm")
+          if (x.alertStatus || x.brokenTest) {
+            println("alert status or broken test detected on " + x.testUrl + "\n" + "Retesting to confirm")
             confirmAlert(x, averageInteractivesPerformance, wptBaseUrl, wptApiKey, wptLocation)
           }
           else {
-            println("no alert status detected - leaving untouched")
+            println("test ok and no alert status detected - leaving untouched")
             x
           }
         })
@@ -214,7 +213,7 @@ object App {
       interactiveResults = interactiveResults.concat(htmlString.closeTable + htmlString.closePage)
 
       if (!iamTestingLocally) {
-        println(DateTime.now + " Writing the following to S3:\n" + interactiveResults + "\n")
+        println(DateTime.now + " Writing interactive results to S3")
         s3Interface.writeFileToS3(interactiveOutputFilename, interactiveResults)
         s3Interface.closeS3Client()
       }
@@ -270,27 +269,26 @@ object App {
     frontsResults = interactiveResults.concat(htmlString.closeTable + htmlString.closePage)
 
     if (!iamTestingLocally) {
-      println(DateTime.now + " Writing the following to S3:\n" + frontsResults + "\n")
+      println(DateTime.now + " Writing fronts results to S3")
       s3Interface.writeFileToS3(frontsOutputFilename, frontsResults)
       s3Interface.closeS3Client()
     }
     else {
       val frontsOutput: FileWriter = new FileWriter(frontsOutputFilename)
-      println(DateTime.now + " Writing the following to local file: " + frontsOutputFilename + ":\n" + frontsResults)
+      println(DateTime.now + " Writing results to local file: " + frontsOutputFilename + ":\n" + frontsResults)
       frontsOutput.write(frontsResults)
       frontsOutput.close()
-      println(DateTime.now + " Writing to file: " + frontsOutputFilename + " complete. \n")
+      println(DateTime.now + " Writing results to file: " + frontsOutputFilename + " complete. \n")
     }
 
     println("Fronts Performance Test Complete")
 
-
-      println("compiling and sending email")
-      if ((liveBlogAlertMessageBody != "") || (interactiveAlertMessageBody != "") || (frontsAlertMessageBody != "")) {
+      if (liveBlogAlertMessageBody.nonEmpty || interactiveAlertMessageBody.nonEmpty || frontsAlertMessageBody.nonEmpty) {
         println("\n\n ***** \n\n" + "liveblog Alert body:\n" + liveBlogAlertMessageBody)
         println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
         println("\n\n ***** \n\n" + "fronts Alert Body:\n" + frontsAlertMessageBody)
         println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody, frontsAlertMessageBody))
+        println("compiling and sending email")
         val emailSuccess = emailer.send(emailAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
         if (emailSuccess)
           println(DateTime.now + " Emails sent successfully. \n Job complete")
@@ -340,7 +338,7 @@ object App {
           println("row should be red one of the items qualifies")
           if(resultObject.timeFirstPaintInMs >= averages.desktopTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInSec + "s" + " for text to load and page to become scrollable. Should only take " + averages.desktopTimeFirstPaintInSeconds + "s.</p>"}
           if(resultObject.speedIndex >= averages.desktopSpeedIndex) {resultObject.alertDescription = "<p>Page takes " + averages.desktopAboveTheFoldCompleteInSec + "To render visible images etc. It should take " + averages.desktopAboveTheFoldCompleteInSec + "s.</P>"}
-          if(resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + " should be less than: " + averages.desktopKBInFullyLoaded + ".</p>"}
+          if(resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + "KB. It should be less than: " + averages.desktopKBInFullyLoaded + "KB.</p>"}
           println(resultObject.alertDescription)
           resultObject.warningStatus = true
           resultObject.alertStatus = true
@@ -369,7 +367,7 @@ object App {
           println("warning and alert statuses set to true")
           if(resultObject.timeFirstPaintInMs >= averages.mobileTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInSec + "s" + " for text to load and page to become scrollable. Should only take " + averages.mobileTimeFirstPaintInSeconds + "s.</p>"}
           if(resultObject.speedIndex >= averages.mobileSpeedIndex) {resultObject.alertDescription = "<p>Page takes " + averages.mobileAboveTheFoldCompleteInSec + "To render visible images etc. It should take " + averages.mobileAboveTheFoldCompleteInSec + "s or less.</p>"}
-          if(resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + " should be less than: " + averages.mobileKBInFullyLoaded + ".</p>"}
+          if(resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + "KB. It should be less than: " + averages.mobileKBInFullyLoaded + "KB.</p>"}
           resultObject.warningStatus = true
           resultObject.alertStatus = true
         }

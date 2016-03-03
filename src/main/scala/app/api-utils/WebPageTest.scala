@@ -123,11 +123,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val status: String = "Test Success"
 
     println("Creating PerformanceResultsObject")
-    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false)
-    val sortedElementList = sortPageElementList(elementsList)
-    result.takeElementsFromSortedList(sortedElementList)
-    println("Result string: " + result.toHTMLSimpleTableCells())
-    println("List of 5 heaviest page Elements: \n" + result.heavyElementList.map(x => x.returnString()).mkString)
+    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
     println("Returning PerformanceResultsObject")
     result
   }
@@ -221,11 +217,11 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println ("SpeedIndex = " + speedIndex)
     val status: String = "Test Success"
     println("Creating PerformanceResultsObject")
-    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false)
+    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
     val sortedElementList = sortPageElementList(elementsList)
     result.takeElementsFromSortedList(sortedElementList)
     println("Result string: " + result.toHTMLSimpleTableCells())
-    println("List of 5 heaviest page Elements: \n" + result.heavyElementList.map(x => x.returnString()).mkString)
+    println("List of heaviest page Elements contains " + result.heavyElementList.length + " elements")
     println("Returning PerformanceResultsObject")
     result
   }
@@ -276,7 +272,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val failIndicator: Int = -1
     val testType: String = if((rawResults \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
     val failComment: String = "No successful runs of test"
-    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, false, false)
+    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, false, false, true)
     failElement
   }
 
@@ -285,7 +281,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val testType: String = if((rawResults \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
     val failComment: String = "Test request timed out"
     // set warning status as result may have timed out due to very large page
-    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, true, true)
+    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, true, true, true)
     failElement
   }
 
