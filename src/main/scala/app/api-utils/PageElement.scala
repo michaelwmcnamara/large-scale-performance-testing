@@ -38,7 +38,8 @@ abstract  class PageElement {
   def stringToMilliseconds(time: String): Int ={
     if(!time.contains("-")) {
       if (time.contains("ms")) {
-        time.slice(0, time.indexOf(" ms")).toInt
+        val cleanTime: String = time.replaceAll(",", "")
+        cleanTime.slice(0, time.indexOf(" ms")).toInt
       } else {
         if (time.contains(" s")) {
           (time.slice(0, time.indexOf(" s")).toDouble * 1000).toInt
@@ -56,10 +57,12 @@ abstract  class PageElement {
         if (size.contains("MB")) {
           (size.slice(0, size.indexOf(" MB")).toDouble * 1024 * 1024).toInt
         } else {
-          (size.slice(0, size.indexOf(" KB")).toDouble * 1000).toInt
+          val cleanSize: String = size.replaceAll(",", "")
+          (cleanSize.slice(0, size.indexOf(" KB")).toDouble * 1024).toInt
         }
       } else {
-        size.slice(0, size.indexOf(" ")).toInt
+        val cleanSize = size.replaceAll(",", "")
+        cleanSize.slice(0, size.indexOf(" ")).toInt
       }
     } else {
       0
@@ -181,9 +184,9 @@ class PageElementFromHTMLTableRow(htmlTableRow: String) extends PageElement{
 
   def alertHTMLString():String = {
     val returnString: String = "<tr>" +
-      "<td><a href = \"resource\">resource</a></td>" +
+      "<td><a href = \"resource\">" + resource + "</a></td>" +
       "<td>" + contentType + "</td>" +
-      "<td>" + bytesDownloaded + "bytes</td>" +
+      "<td>" + sizeInKB + "KB</td>" +
       "</tr>"
     returnString
   }

@@ -19,7 +19,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   val hTMLJobStarted: String = "<p>Job started at: " + DateTime.now + "\n</p>"
   val hTMLFullTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>MB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>MB transferred at Fully Loaded</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
   val hTMLSimpleTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Status</th>\n</tr>\n"
-  val hTMLAlertTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLAlertTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Article Url</th>\n<th>Test Type</th>\n<th>Status</th>\n</tr>\n"
   val hTMLTableFooters: String = "</table>"
   val hTMLPageFooterStart: String = "\n<p><i>Job completed at: "
   val hTMLPageFooterEnd: String = "</i></p>\n</body>\n</html>"
@@ -87,7 +87,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   }
 
   def generateLiveBlogAlertHeadings(): String = {
-    "<h2>Live Blob Performance Alerts</h2>\n"
+    "<h2>Live Blog Performance Alerts</h2>\n"
   }
 
   def generateLiveBlogAlertFooter(): String = {
@@ -155,7 +155,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   def generateFullAlertEmailBody(liveBlogReport: String, interactiveReport: String, frontsReport: String): String = {
 
     val liveBlogElement: String = {
-      if(liveBlogReport != ""){
+      if(liveBlogReport.contains("<tr")){
         generateLiveBlogAlertHeadings() +
           liveBlogReport+
         generateLiveBlogAlertFooter()}
@@ -165,7 +165,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
     }
 
     val interactiveElement: String = {
-      if(interactiveReport != ""){
+      if(interactiveReport.contains("<tr")){
         generateInteractiveAlertHeadings() +
           interactiveReport +
         generateInteractiveAlertFooter()}
@@ -175,7 +175,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
     }
 
     val frontsElement: String = {
-      if(frontsReport != ""){
+      if(frontsReport.contains("<tr")){
         generateFrontsAlertHeadings() +
         frontsReport +
           generateFrontsAlertFooter()}

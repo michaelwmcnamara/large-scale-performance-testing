@@ -8,7 +8,7 @@ import scala.xml.Elem
 /**
  * Created by mmcnamara on 10/02/16.
  */
-class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String, warning: Boolean, alert: Boolean) {
+class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String, warning: Boolean, alert: Boolean, failedNeedsRetest: Boolean) {
   val testUrl: String = url
   val typeOfTest: String = testType
   val timeToFirstByte: Int = tTFB
@@ -32,6 +32,7 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   var alertDescription: String = ""
   var warningStatus: Boolean = warning
   var alertStatus: Boolean = alert
+  val brokenTest: Boolean = failedNeedsRetest
 
   var heavyElementList: List[PageElementFromHTMLTableRow] = List()
   var elementListMaxSize: Int = 5
@@ -72,7 +73,7 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   }
 
   def toHTMLAlertMessageCells(): String = {
-    "<td>" + DateTime.now() + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>"+ genTestResultString() +"</td>" +
+    "<a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>"+ genTestResultString() +"</td>" +
     "<tr>List of 5 heaviest elements on page - Recommend reviewing these items </tr>" +
     "<tr><td>Resource</td><td>Content Type</td><td>Bytes Transferred</td></tr>" +
       heavyElementList.map(element => element.alertHTMLString()).mkString
