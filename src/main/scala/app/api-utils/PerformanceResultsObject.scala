@@ -9,6 +9,7 @@ import scala.xml.Elem
  * Created by mmcnamara on 10/02/16.
  */
 class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String, warning: Boolean, alert: Boolean, failedNeedsRetest: Boolean) {
+  val timeOfTest: String = DateTime.now().toString
   val testUrl: String = url
   val typeOfTest: String = testType
   val timeToFirstByte: Int = tTFB
@@ -64,6 +65,10 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
     List(testUrl.toString + ", " + timeFirstPaintInMs.toString + "ms", timeDocCompleteInSec.toString + "s", mBInDocComplete + "MB" , timeFullyLoadedInSec.toString + "s", mBInFullyLoaded + "MB", speedIndex.toString, resultStatus)
   }
 
+  def toCSVString(): String = {
+    testUrl.toString + "," + timeOfTest + "," + resultStatus + "," +  timeFirstPaintInMs.toString + "," + timeDocCompleteInMs + "," + bytesInDocComplete + "," + timeFullyLoadedInMs + "," + bytesInFullyLoaded + "," + speedIndex + "," + heavyElementList.map(element => "," + element.resource + "," + element.contentType + "," + element.bytesDownloaded ).mkString + fillRemainingGapsAndNewline()
+  }
+
   def toHTMLTableCells(): String = {
     "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" + "<td>" + timeFirstPaintInMs.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
   }
@@ -88,6 +93,17 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
     this.alertDescription
     else
       this.resultStatus
+  }
+
+  def fillRemainingGapsAndNewline(): String ={
+    var accumulator: Int = heavyElementList.length
+    var returnString: String = ""
+    while (accumulator < elementListMaxSize-1){
+      returnString = returnString + ","
+      accumulator += 1
+    }
+    returnString = returnString + "\n"
+    returnString
   }
 
   def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s }
