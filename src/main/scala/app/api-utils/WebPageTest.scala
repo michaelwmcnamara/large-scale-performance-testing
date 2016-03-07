@@ -124,6 +124,8 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
     println("Creating PerformanceResultsObject")
     val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
+    val sortedElementList = sortPageElementList(elementsList)
+    result.takeElementsFromSortedList(sortedElementList)
     println("Returning PerformanceResultsObject")
     result
   }
