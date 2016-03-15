@@ -262,11 +262,11 @@ object App {
       val frontsAlertList: List[PerformanceResultsObject] = for (result <- confirmedFrontsResults if result.alertStatus) yield result
       frontsAlertMessageBody = htmlString.generateAlertEmailBodyElement(frontsAlertList, averageFrontsPerformance)
 
-      val simplifiedInteractiveResultsList: List[String] = confirmedFrontsResults.map(x => htmlString.generateHTMLRow(x))
-      frontsResults = interactiveResults.concat(simplifiedInteractiveResultsList.mkString)
+      val simplifiedFrontsResultsList: List[String] = confirmedFrontsResults.map(x => htmlString.generateHTMLRow(x))
+      frontsResults = frontsResults.concat(simplifiedFrontsResultsList.mkString)
       println(DateTime.now + " Results added to accumulator string \n")
     }
-    frontsResults = interactiveResults.concat(htmlString.closeTable + htmlString.closePage)
+    frontsResults = frontsResults.concat(htmlString.closeTable + htmlString.closePage)
 
     if (!iamTestingLocally) {
       println(DateTime.now + " Writing fronts results to S3")
