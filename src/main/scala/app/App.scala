@@ -5,7 +5,7 @@ package app
 import java.io._
 import java.util
 
-import app.api.S3Operations
+import app.api.{WptResultPageListener, S3Operations}
 import app.apiutils._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.DateTime
@@ -17,7 +17,7 @@ object App {
   def main(args: Array[String]) {
     /*  This value stops the forces the config to be read and the output file to be written locally rather than reading and writing from/to S3
     #####################    this should be set to false before merging!!!!################*/
-    val iamTestingLocally = false
+    val iamTestingLocally = true
     /*#####################################################################################*/
     println("Job started at: " + DateTime.now)
     println("Local Testing Flag is set to: " + iamTestingLocally.toString)
@@ -115,21 +115,50 @@ object App {
     val emailer: EmailOperations = new EmailOperations(emailUsername, emailPassword)
 
 
+
+
     //  Define new CAPI Query object
-    val articleUrlList = new ArticleUrls(contentApiKey)
-    val articleUrls: List[String] = articleUrlList.getLiveBlogUrls
-    println(DateTime.now + " Closing Liveblog Content API query connection")
-    articleUrlList.shutDown
+    val capiQuery = new ArticleUrls(contentApiKey)
+    //get all content-type-lists
+    val liveBlogUrls: List[String] = capiQuery.getLiveBlogUrls
+    val interactiveUrls: List[String] = capiQuery.getInteractiveUrls
+    println(DateTime.now + " Closing Content API query connection")
+    capiQuery.shutDown
+
+
+    // send all urls to webpagetest at once to enable parallel testing by test agents
+    val urlsToSend: List[String] = liveBlogUrls ::: interactiveUrls ::: listofFronts
+    println("Combined list of urls: \n" + urlsToSend)
+    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    val resultUrlList:List[(String, String)] = getResultPages(urlsToSend, webpageTest, wptLocation: String)
+
+
+    // createTestElementLists for each item type to listen for test Results
+    val liveBLogListener: List[WptResultPageListener] = liveBlogUrls.flatMap(url => {
+      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "LiveBlog",element._2)
+    })
+    val interactiveListener: List[WptResultPageListener] = interactiveUrls.flatMap(url => {
+      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "Interactive",element._2)
+    })
+    val frontsListener: List[WptResultPageListener] = listofFronts.flatMap(url => {
+      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "Front",element._2)
+    })
+
+
+    // todo:  iterate on the Listener Lists and process results
+
+
+
     // check results returned from CAPI and extract data form liveblogs if there are any
-    if (articleUrls.nonEmpty) {
+    if (liveBlogUrls.nonEmpty) {
       println("Combined results from LiveBLog CAPI calls")
-      articleUrls.foreach(println)
+      liveBlogUrls.foreach(println)
       println("Generating average values for migrated liveblogs")
       val migratedLiveBlogAverages: PageAverageObject = new LiveBlogDefaultAverages
       simplifiedResults = simplifiedResults.concat(migratedLiveBlogAverages.toHTMLString)
       println("Performance testing liveblogs")
       // Send each article URL to the webPageTest API and obtain resulting data
-      val testResults: List[PerformanceResultsObject] = articleUrls.flatMap(url => {
+      val testResults: List[PerformanceResultsObject] = liveBlogUrls.flatMap(url => {
         testUrl(url, wptBaseUrl, wptApiKey, wptLocation, migratedLiveBlogAverages)
       })
       //Confirm alert status by retesting alerting urls
@@ -171,10 +200,15 @@ object App {
       }
     }
       println("LiveBlog Performance Test Complete")
+
+
+
+
+
       //  Define new CAPI Query object
       val interactiveUrlList = new ArticleUrls(contentApiKey)
       //  Request a list of urls from Content API
-      val interactiveUrls: List[String] = interactiveUrlList.getInteractiveUrls
+
       println(DateTime.now + " Closing Interactive Content API query connection")
       interactiveUrlList.shutDown
       if (interactiveUrls.isEmpty) {
@@ -299,6 +333,12 @@ object App {
       }
     }
 
+
+  def getResultPages(urlList: List[String], wpt: WebPageTest, wptLocation: String): List[(String,String)] = {
+    val desktopResults: List[(String, String)] = urlList.map(page => { (page, wpt.sendPage(page)) })
+    val mobileResults: List[(String, String)] = urlList.map(page => { (page, wpt.sendMobile3GPage(page, wptLocation)) })
+    desktopResults ::: mobileResults
+  }
 
   def testUrl(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String, averages: PageAverageObject): Array[PerformanceResultsObject] = {
     //  Define new web-page-test API request and send it the url to test
