@@ -2,10 +2,6 @@ package app.api
 
 import app.apiutils.PerformanceResultsObject
 
--utils
-
-- utils
-
 /**
  * Created by mmcnamara on 15/03/16.
  */

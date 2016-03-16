@@ -9,7 +9,9 @@ import app.api.{WptResultPageListener, S3Operations}
 import app.apiutils._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.DateTime
+import sbt.complete.Completion
 
+import scala.collection.parallel.immutable.ParSeq
 import scala.io.Source
 
 
@@ -39,6 +41,8 @@ object App {
     val averageColor: String = "\"grey\""
     val warningColor: String = "\"#FFFF00\""
     val alertColor = "\"#FF0000\""
+
+
 
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
     val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
@@ -114,9 +118,6 @@ object App {
     //Create Email Handler class
     val emailer: EmailOperations = new EmailOperations(emailUsername, emailPassword)
 
-
-
-
     //  Define new CAPI Query object
     val capiQuery = new ArticleUrls(contentApiKey)
     //get all content-type-lists
@@ -127,22 +128,130 @@ object App {
 
 
     // send all urls to webpagetest at once to enable parallel testing by test agents
-    val urlsToSend: List[String] = liveBlogUrls ::: interactiveUrls ::: listofFronts
+    val urlsToSend: List[String] = (liveBlogUrls ::: interactiveUrls ::: listofFronts).distinct
     println("Combined list of urls: \n" + urlsToSend)
-    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-    val resultUrlList:List[(String, String)] = getResultPages(urlsToSend, webpageTest, wptLocation: String)
+    val webPageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    val resultUrlList: List[(String, String)] = getResultPages(urlsToSend, webPageTest, wptLocation: String)
 
 
-    // createTestElementLists for each item type to listen for test Results
-    val liveBLogListener: List[WptResultPageListener] = liveBlogUrls.flatMap(url => {
-      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "LiveBlog",element._2)
-    })
-    val interactiveListener: List[WptResultPageListener] = interactiveUrls.flatMap(url => {
-      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "Interactive",element._2)
-    })
-    val frontsListener: List[WptResultPageListener] = listofFronts.flatMap(url => {
-      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "Front",element._2)
-    })
+    //listen for liveBlog results
+    var liveBlogTestResults: List[PerformanceResultsObject] = null
+    if (liveBlogUrls.nonEmpty) {
+      println("Generating average values for liveblogs")
+      val liveBlogAverages: PageAverageObject = new LiveBlogDefaultAverages
+      simplifiedResults = simplifiedResults.concat(liveBlogAverages.toHTMLString)
+/*
+      val liveBLogListener: List[WptResultPageListener] = liveBlogUrls.flatMap(url => {
+        for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "LiveBlog", element._2)
+      })
+
+      val liveBlogResultsList: ParSeq[WptResultPageListener] = liveBLogListener.par.map(element => {
+        val wpt = new WebPageTest(wptBaseUrl, wptApiKey)
+        val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.wptResultUrl)
+        newElement.testResults = wpt.getResults(newElement.wptResultUrl)
+        newElement
+      })
+      liveBlogTestResults = liveBlogResultsList.map(element => element.testResults).toList
+      val resultsWithAlerts: List[PerformanceResultsObject] = liveBlogTestResults.map(element => setAlertStatus(element, liveBlogAverages))
+
+      //Confirm alert status by retesting alerting urls
+      val confirmedTestResults = resultsWithAlerts.map(x => {
+        if(x.alertStatus)
+          confirmAlert(x, liveBlogAverages, wptBaseUrl, wptApiKey, wptLocation)
+        else
+          x
+      })
+*/    val liveBlogResultsList = listenForResultPages(liveBlogUrls, resultUrlList, liveBlogAverages, wptBaseUrl, wptApiKey, wptLocation)
+      val liveBlogHTMLResults: List[String] = liveBlogResultsList.map(x => htmlString.generateHTMLRow(x))
+      // write liveblog results to string
+      simplifiedResults = simplifiedResults.concat(liveBlogHTMLResults.mkString)
+      //close off table in HTML string
+      simplifiedResults = simplifiedResults + htmlString.closeTable + htmlString.closePage
+      //write liveblog results to file
+      if (!iamTestingLocally) {
+        println(DateTime.now + " Writing liveblog results to S3")
+        s3Interface.writeFileToS3(simpleOutputFileName, simplifiedResults)
+      }
+      else {
+        val outputWriter = new LocalFileOperations
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(simpleOutputFileName, simplifiedResults)
+        if (writeSuccess != 0) {
+          println("problem writing local outputfile")
+          System exit 1
+        }
+      }
+      println("LiveBlog Performance Test Complete")
+
+    } else {
+      println("CAPI query found no liveblogs")
+    }
+
+    if (interactiveUrls.nonEmpty) {
+      println("Generating average values for interactives")
+      val interactiveAverages: PageAverageObject = generatePageAverages(listofLargeInteractives, wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel)
+      interactiveResults = interactiveResults.concat(interactiveAverages.toHTMLString)
+
+      val interactiveResultsList = listenForResultPages(interactiveUrls, resultUrlList, interactiveAverages, wptBaseUrl, wptApiKey, wptLocation)
+      val interactiveHTMLResults: List[String] = interactiveResultsList.map(x => htmlString.generateHTMLRow(x))
+      // write liveblog results to string
+      interactiveResults = interactiveResults.concat(interactiveHTMLResults.mkString)
+      //close off table in HTML string
+      interactiveResults = interactiveResults + htmlString.closeTable + htmlString.closePage
+      //write liveblog results to file
+      if (!iamTestingLocally) {
+        println(DateTime.now + " Writing liveblog results to S3")
+        s3Interface.writeFileToS3(interactiveOutputFilename, interactiveResults)
+      }
+      else {
+        val outputWriter = new LocalFileOperations
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(interactiveOutputFilename, interactiveResults)
+        if (writeSuccess != 0) {
+          println("problem writing local outputfile")
+          System exit 1
+        }
+      }
+      println("LiveBlog Performance Test Complete")
+
+    } else {
+      println("CAPI query found no liveblogs")
+    }
+
+// todo fronts as above
+
+  /*
+    var interactiveTestResults: List[PerformanceResultsObject] = null
+    if (interactiveUrls.nonEmpty) {
+      val interactiveListener: List[WptResultPageListener] = interactiveUrls.flatMap(url => {
+        for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "Interactive", element._2)
+      })
+      val interactiveResultLists: ParSeq[WptResultPageListener] = interactiveListener.par.map(element => {
+        val wpt = new WebPageTest(wptBaseUrl, wptApiKey)
+        val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.wptResultUrl)
+        newElement.testResults = wpt.getResults(newElement.wptResultUrl)
+        newElement
+      })
+      interactiveTestResults = interactiveResultLists.map(element => element.testResults).toList
+    } else {
+      println("CAPI query found no Interactives")
+    }
+
+    var frontsTestResults: List[PerformanceResultsObject] = null
+    if (listofFronts.nonEmpty) {
+      val frontsListener: List[WptResultPageListener] = listofFronts.flatMap(url => {
+        for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "Front", element._2)
+      })
+      val frontsResultList: ParSeq[WptResultPageListener] = frontsListener.par.map(element => {
+        val wpt = new WebPageTest(wptBaseUrl, wptApiKey)
+        val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.wptResultUrl)
+        newElement.testResults = wpt.getResults(newElement.wptResultUrl)
+        newElement
+      })
+      frontsTestResults = frontsResultList.map(element => element.testResults).toList
+    } else {
+      println("list of Fronts is empty")
+    }
+
+
 
 
     // todo:  iterate on the Listener Lists and process results
@@ -331,13 +440,38 @@ object App {
       } else {
         println("No pages to alert on. Email not sent. \n Job complete")
       }
-    }
+   */ }
 
 
   def getResultPages(urlList: List[String], wpt: WebPageTest, wptLocation: String): List[(String,String)] = {
     val desktopResults: List[(String, String)] = urlList.map(page => { (page, wpt.sendPage(page)) })
     val mobileResults: List[(String, String)] = urlList.map(page => { (page, wpt.sendMobile3GPage(page, wptLocation)) })
     desktopResults ::: mobileResults
+  }
+
+  def listenForResultPages(capiUrls: List[String], resultUrlList: List[(String, String)], averages: PageAverageObject, wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[PerformanceResultsObject] = {
+    val listenerList: List[WptResultPageListener] = capiUrls.flatMap(url => {
+      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "LiveBlog", element._2)
+    })
+
+    val liveBlogResultsList: ParSeq[WptResultPageListener] = listenerList.par.map(element => {
+      val wpt = new WebPageTest(wptBaseUrl, wptApiKey)
+      val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.wptResultUrl)
+      newElement.testResults = wpt.getResults(newElement.wptResultUrl)
+      newElement
+    })
+    val testResults = liveBlogResultsList.map(element => element.testResults).toList
+    val resultsWithAlerts: List[PerformanceResultsObject] = testResults.map(element => setAlertStatus(element, averages))
+
+    //Confirm alert status by retesting alerting urls
+    println("Confirming any items that have an alert")
+    val confirmedTestResults = resultsWithAlerts.map(x => {
+      if(x.alertStatus)
+        confirmAlert(x, averages, wptBaseUrl, wptApiKey, wptLocation)
+      else
+        x
+    })
+    confirmedTestResults
   }
 
   def testUrl(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String, averages: PageAverageObject): Array[PerformanceResultsObject] = {
@@ -428,11 +562,12 @@ object App {
   }
 
     def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
+      val setHighPriority: Boolean = true
       val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
 
       val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
-        val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url)
-        val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation)
+        val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
+        val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
         val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
         combinedResults
       })
