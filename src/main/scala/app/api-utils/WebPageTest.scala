@@ -61,6 +61,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("sending request: " + request.toString)
     val response: Response = httpClient.newCall(request).execute()
     val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
+    println("response received: \n" + responseXML.text)
     val resultPage: String =  (responseXML \\ "xmlUrl").text
     println(resultPage)
     resultPage
@@ -77,6 +78,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("sending request: " + request.toString)
     val response: Response = httpClient.newCall(request).execute()
     val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
+    println("response received: \n" + responseXML.text)
     val resultPage: String =  (responseXML \\ "xmlUrl").text
     println(resultPage)
     resultPage
@@ -94,6 +96,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("sending request: " + request.toString)
     val response: Response = httpClient.newCall(request).execute()
     val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
+    println("response received: \n" + responseXML.text)
     val resultPage: String =  (responseXML \\ "xmlUrl").text
     resultPage
   }
@@ -109,13 +112,14 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("sending request: " + request.toString)
     val response: Response = httpClient.newCall(request).execute()
     val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
+    println("response received: \n" + responseXML.text)
     val resultPage: String =  (responseXML \\ "xmlUrl").text
     resultPage
   }
 
 
   def getResults(resultUrl: String):PerformanceResultsObject = {
-    println("Requesting url:" + resultUrl)
+    println("Requesting result url:" + resultUrl)
     val request: Request = new Request.Builder()
       .url(resultUrl)
       .get()
@@ -125,7 +129,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     var testResults: Elem = scala.xml.XML.loadString(response.body.string)
     var iterator: Int = 0
     val msmaxTime: Int = 6000000
-    val msTimeBetweenPings: Int = 5000
+    val msTimeBetweenPings: Int = 30000
     val maxCount: Int = msmaxTime / msTimeBetweenPings
     while (((testResults \\ "statusCode").text.toInt != 200) && (iterator < maxCount)) {
       println(DateTime.now + " " + (testResults \\ "statusCode").text + " statusCode response - test not ready. " + iterator + " of " + maxCount + " attempts\n")
