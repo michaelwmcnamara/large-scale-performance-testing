@@ -28,6 +28,8 @@ object App {
     val amazonDomain = "https://s3-eu-west-1.amazonaws.com"
     val s3BucketName = "capi-wpt-querybot"
     val configFileName = "config.conf"
+    val emailFileName = "addresses.conf"
+
     val outputFileName = "liveBlogPerformanceData.html"
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
     val interactiveOutputFilename = "interactivePerformanceData.html"
@@ -75,15 +77,15 @@ object App {
       "http://www.theguardian.com/uk/environment",
       "http://www.theguardian.com/uk/technology",
       "http://www.theguardian.com/travel")
-    val frontsItemlabel: String = "Front"
-
-    //Initialise List of email contacts (todo - this must be put in a file before getting any real folk)
-    val emailAddressList: List[String] = List("michael.mcnamara@guardian.co.uk", "m_w_mcnamara@hotmail.com")
 
     //Create new S3 Client
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
-    val s3Interface = new S3Operations(s3BucketName, configFileName)
+    val s3Interface = new S3Operations(s3BucketName, configFileName, emailFileName)
     var configArray: Array[String] = Array("", "", "", "", "", "")
+
+    val emailAddresses: Array[List[String]] = s3Interface.getEmailAddresses
+    val generalAlertsAddressList: List[String] = emailAddresses(0)
+    val interactiveAlertsAddressList: List[String] = emailAddresses(1)
 
     //Get config settings
     println("Extracting configuration values")
@@ -236,7 +238,7 @@ object App {
       println("\n\n ***** \n\n" + "fronts Alert Body:\n" + frontsAlertMessageBody)
       println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody, frontsAlertMessageBody))
       println("compiling and sending email")
-      val emailSuccess = emailer.send(emailAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
+      val emailSuccess = emailer.send(generalAlertsAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
       if (emailSuccess)
         println(DateTime.now + " Emails sent successfully. \n Job complete")
       else
@@ -244,7 +246,6 @@ object App {
     } else {
       println("No pages to alert on. Email not sent. \n Job complete")
     }
-
 
  }
 
