@@ -34,6 +34,7 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   var alertStatus: Boolean = alert
   val brokenTest: Boolean = failedNeedsRetest
 
+  var fullElementList: List[PageElementFromHTMLTableRow] = List()
   var heavyElementList: List[PageElementFromHTMLTableRow] = List()
   var elementListMaxSize: Int = 5
 
@@ -45,12 +46,14 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
     else{false}
   }
 
-  def takeElementsFromSortedList(elementList: List[PageElementFromHTMLTableRow]): Boolean = {
+  def returnFullElementListByWeight(): List[PageElementFromHTMLTableRow] = {fullElementList.sortWith(_.bytesDownloaded > _.bytesDownloaded)}
+
+  def populateHeavyElementList(elementList: List[PageElementFromHTMLTableRow]): Boolean = {
     if(elementList.head.bytesDownloaded < elementList.tail.head.bytesDownloaded){
       println("Error: Attempt to feed an unordered list of page elements to Performance Results Object")
       false
     } else {
-      var workingList: List[PageElementFromHTMLTableRow] = elementList
+      var workingList: List[PageElementFromHTMLTableRow] = for (element <- elementList if element.isMedia()) yield element
       var roomInTheList: Boolean = true
       while(workingList.nonEmpty && roomInTheList) {
         roomInTheList = addtoElementList(workingList.head)
@@ -64,12 +67,16 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
     List(testUrl.toString + ", " + timeFirstPaintInMs.toString + "ms", timeDocCompleteInSec.toString + "s", mBInDocComplete + "MB" , timeFullyLoadedInSec.toString + "s", mBInFullyLoaded + "MB", speedIndex.toString, resultStatus)
   }
 
-  def toHTMLTableCells(): String = {
+  def toFullHTMLTableCells(): String = {
     "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" + "<td>" + timeFirstPaintInMs.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
   }
 
   def toHTMLSimpleTableCells(): String = {
    "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> " + genTestResultString() + "</td>"
+  }
+
+  def toHTMLInteractiveTableCells(): String = {
+    "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "</td>" + "<td> " + genTestResultString() + "</td>"
   }
 
   def toHTMLAlertMessageCells(): String = {

@@ -278,8 +278,9 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val status: String = "Test Success"
     println("Creating PerformanceResultsObject")
     val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
+    result.fullElementList = elementsList
     val sortedElementList = sortPageElementList(elementsList)
-    result.takeElementsFromSortedList(sortedElementList)
+    result.populateHeavyElementList(sortedElementList)
     println("Result string: " + result.toHTMLSimpleTableCells())
     println("List of heaviest page Elements contains " + result.heavyElementList.length + " elements")
     println("Returning PerformanceResultsObject")

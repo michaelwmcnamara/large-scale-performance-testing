@@ -19,6 +19,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   val hTMLJobStarted: String = "<p>Job started at: " + DateTime.now + "\n</p>"
   val hTMLFullTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>MB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>MB transferred at Fully Loaded</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
   val hTMLSimpleTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLInteractiveTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>Status</th>\n</tr>\n"
   val hTMLAlertTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Article Url</th>\n<th>Test Type</th>\n<th>Status</th>\n</tr>\n"
   val hTMLTableFooters: String = "</table>"
   val hTMLPageFooterStart: String = "\n<p><i>Job completed at: "
@@ -55,6 +56,32 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
   }
 
+  def interactiveHTMLRow(resultsObject: PerformanceResultsObject): String = {
+    var returnString: String = ""
+    //  Define new web-page-test API request and send it the url to test
+    //  Add results to string which will eventually become the content of our results file
+
+    if (resultsObject.warningStatus) {
+      if (resultsObject.alertStatus) {
+        println("row should be red one of the items qualifies")
+        returnString = "<tr bgcolor=" + alertColor + ">" + resultsObject.toHTMLInteractiveTableCells() + "</tr>"
+      }
+      else {
+        println("row should be yellow one of the items qualifies")
+        returnString = "<tr bgcolor=" + warningColor + ">" + resultsObject.toHTMLInteractiveTableCells() + "</tr>"
+      }
+    }
+    else {
+      println("all fields within size limits")
+      returnString = "<tr>" + resultsObject.toHTMLInteractiveTableCells() + "</tr>"
+    }
+    println(DateTime.now + " returning results string to main thread")
+    println(returnString)
+    returnString
+
+  }
+
+
   def initialisePageForLiveblog: String = {
     hTMLPageHeader + hTMLTitleLiveblog + hTMLJobStarted
   }
@@ -71,6 +98,10 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
     hTMLSimpleTableHeaders
   }
 
+  def interactiveTable: String = {
+    hTMLSimpleTableHeaders
+  }
+
   def closeTable: String = {
     hTMLTableFooters
   }
@@ -79,10 +110,15 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
     hTMLPageFooterStart + DateTime.now() + hTMLPageFooterEnd
   }
 
-
-  def generateAlertEmailHeadings(): String = {
+  def generalAlertEmailHeadings(): String = {
     val messageString: String = hTMLPageHeader +
-      "<h1>Page performance alerts</h1><p>\nThe following items have been found to either take too long to load or cost too much to view on either a desktop or mobile browser</p>\n"
+      "<h1>Page performance alerts</h1>"
+    messageString
+  }
+
+  def interactiveAlertEmailHeadings(): String = {
+    val messageString: String = hTMLPageHeader +
+      "<h1>Interactive performance alerts</h1>\n"
     messageString
   }
 
@@ -116,8 +152,8 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
 
   def generateAlertEmailBodyElement(alertList: List[PerformanceResultsObject], averages: PageAverageObject): String = {
-    println("*\n \n \n **** \n \n \n averages.desktopHTMLResultString: \n" + averages.desktopHTMLResultString)
-    println("*\n \n \n **** \n \n \n averages.mobileHTMLResultString: \n" + averages.mobileHTMLResultString)
+//    println("*\n \n \n **** \n \n \n averages.desktopHTMLResultString: \n" + averages.desktopHTMLResultString)
+//    println("*\n \n \n **** \n \n \n averages.mobileHTMLResultString: \n" + averages.mobileHTMLResultString)
     if(alertList.nonEmpty) {
       val desktopMessageString: String =
         if (alertList.exists(test => test.typeOfTest == "Desktop")) {
@@ -152,23 +188,13 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   }
 
 
-  def generateFullAlertEmailBody(liveBlogReport: String, interactiveReport: String, frontsReport: String): String = {
+  def generalAlertFullEmailBody(liveBlogReport: String, interactiveReport: String, frontsReport: String): String = {
 
     val liveBlogElement: String = {
       if(liveBlogReport.contains("<tr")){
         generateLiveBlogAlertHeadings() +
           liveBlogReport+
         generateLiveBlogAlertFooter()}
-      else {
-        ""
-      }
-    }
-
-    val interactiveElement: String = {
-      if(interactiveReport.contains("<tr")){
-        generateInteractiveAlertHeadings() +
-          interactiveReport +
-        generateInteractiveAlertFooter()}
       else {
         ""
       }
@@ -186,12 +212,34 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
 
 
     val fullEmailBody: String = {
-      generateAlertEmailHeadings +
+      generalAlertEmailHeadings +
       liveBlogElement +
-      interactiveElement +
       frontsElement +
       closePage
     }
     fullEmailBody
   }
+
+  def interactiveAlertFullEmailBody(interactiveReport: String): String = {
+    
+    val interactiveElement: String = {
+      if(interactiveReport.contains("<tr")){
+        generateInteractiveAlertHeadings() +
+          interactiveReport +
+          generateInteractiveAlertFooter()}
+      else {
+        ""
+      }
+    }
+
+    val fullEmailBody: String = {
+      generalAlertEmailHeadings +
+        interactiveElement +
+        closePage
+    }
+    fullEmailBody
+  }
+
+
+
 }

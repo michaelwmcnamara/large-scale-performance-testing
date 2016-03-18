@@ -48,11 +48,16 @@ object App {
 
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
     val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
-    var simplifiedResults: String = htmlString.initialisePageForLiveblog + htmlString.initialiseTable
+    var liveBlogResults: String = htmlString.initialisePageForLiveblog + htmlString.initialiseTable
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
     var frontsResults: String = htmlString.initialisePageForFronts + htmlString.initialiseTable
 
     //Initialize email alerts string - this will be used to generate emails
+    var liveBlogAlertList: List[PerformanceResultsObject] = List()
+    var interactiveAlertList: List[PerformanceResultsObject] = List()
+    var frontsAlertList: List[PerformanceResultsObject] = List()
+
+
     var liveBlogAlertMessageBody: String = ""
     var interactiveAlertMessageBody: String = ""
     var frontsAlertMessageBody: String = ""
@@ -61,7 +66,7 @@ object App {
     val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
     val interactiveItemLabel: String = "Interactive"
 
-    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
+    val listofFronts: List[String] = List("http://www.theguardian.com/uk"/*,
       "http://www.theguardian.com/us",
       "http://www.theguardian.com/au",
       "http://www.theguardian.com/uk-news",
@@ -76,7 +81,7 @@ object App {
       "http://www.theguardian.com/fashion",
       "http://www.theguardian.com/uk/environment",
       "http://www.theguardian.com/uk/technology",
-      "http://www.theguardian.com/travel")
+      "http://www.theguardian.com/travel"*/)
 
     //Create new S3 Client
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
@@ -138,25 +143,24 @@ object App {
     if (liveBlogUrls.nonEmpty) {
       println("Generating average values for liveblogs")
       val liveBlogAverages: PageAverageObject = new LiveBlogDefaultAverages
-      simplifiedResults = simplifiedResults.concat(liveBlogAverages.toHTMLString)
+      liveBlogResults = liveBlogResults.concat(liveBlogAverages.toHTMLString)
       val liveBlogResultsList = listenForResultPages(liveBlogUrls, resultUrlList, liveBlogAverages, wptBaseUrl, wptApiKey, wptLocation)
       val liveBlogHTMLResults: List[String] = liveBlogResultsList.map(x => htmlString.generateHTMLRow(x))
       // write liveblog results to string
       //Create a list of alerting pages and write to string
-      val liveBlogAlertList: List[PerformanceResultsObject] = for (result <- liveBlogResultsList if result.alertStatus) yield result
+      liveBlogAlertList = for (result <- liveBlogResultsList if result.alertStatus) yield result
       liveBlogAlertMessageBody = htmlString.generateAlertEmailBodyElement(liveBlogAlertList, liveBlogAverages)
 
-      simplifiedResults = simplifiedResults.concat(liveBlogHTMLResults.mkString)
-      //close off table in HTML string
-      simplifiedResults = simplifiedResults + htmlString.closeTable + htmlString.closePage
+      liveBlogResults = liveBlogResults.concat(liveBlogHTMLResults.mkString)
+      liveBlogResults = liveBlogResults + htmlString.closeTable + htmlString.closePage
       //write liveblog results to file
       if (!iamTestingLocally) {
         println(DateTime.now + " Writing liveblog results to S3")
-        s3Interface.writeFileToS3(simpleOutputFileName, simplifiedResults)
+        s3Interface.writeFileToS3(simpleOutputFileName, liveBlogResults)
       }
       else {
         val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(simpleOutputFileName, simplifiedResults)
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(simpleOutputFileName, liveBlogResults)
         if (writeSuccess != 0) {
           println("problem writing local outputfile")
           System exit 1
@@ -174,9 +178,9 @@ object App {
       interactiveResults = interactiveResults.concat(interactiveAverages.toHTMLString)
 
       val interactiveResultsList = listenForResultPages(interactiveUrls, resultUrlList, interactiveAverages, wptBaseUrl, wptApiKey, wptLocation)
-      val interactiveHTMLResults: List[String] = interactiveResultsList.map(x => htmlString.generateHTMLRow(x))
+      val interactiveHTMLResults: List[String] = interactiveResultsList.map(x => htmlString.interactiveHTMLRow(x))
       //generate interactive alert message body
-      val interactiveAlertList: List[PerformanceResultsObject] = for (result <- interactiveResultsList if result.alertStatus) yield result
+      interactiveAlertList = for (result <- interactiveResultsList if result.alertStatus) yield result
       interactiveAlertMessageBody = htmlString.generateAlertEmailBodyElement(interactiveAlertList, interactiveAverages)
       // write interactive results to string
       interactiveResults = interactiveResults.concat(interactiveHTMLResults.mkString)
@@ -208,7 +212,7 @@ object App {
       val frontsResultsList = listenForResultPages(listofFronts, resultUrlList, frontsAverages, wptBaseUrl, wptApiKey, wptLocation)
       val frontsHTMLResults: List[String] = frontsResultsList.map(x => htmlString.generateHTMLRow(x))
       //Create a list of alerting pages and write to string
-      val frontsAlertList: List[PerformanceResultsObject] = for (result <- frontsResultsList if result.alertStatus) yield result
+      frontsAlertList = for (result <- frontsResultsList if result.alertStatus) yield result
       frontsAlertMessageBody = htmlString.generateAlertEmailBodyElement(frontsAlertList, frontsAverages)
       // write fronts results to string
       frontsResults = frontsResults.concat(frontsHTMLResults.mkString)
@@ -232,22 +236,35 @@ object App {
       println("CAPI query found no Fronts")
     }
 
-    if (liveBlogAlertMessageBody.nonEmpty || interactiveAlertMessageBody.nonEmpty || frontsAlertMessageBody.nonEmpty) {
+    if (liveBlogAlertList.nonEmpty || frontsAlertList.nonEmpty) {
       println("\n\n ***** \n\n" + "liveblog Alert body:\n" + liveBlogAlertMessageBody)
       println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
       println("\n\n ***** \n\n" + "fronts Alert Body:\n" + frontsAlertMessageBody)
-      println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody, frontsAlertMessageBody))
+      println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generalAlertFullEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody, frontsAlertMessageBody))
       println("compiling and sending email")
-      val emailSuccess = emailer.send(generalAlertsAddressList, htmlString.generateFullAlertEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
+      val emailSuccess = emailer.send(generalAlertsAddressList, htmlString.generalAlertFullEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
       if (emailSuccess)
-        println(DateTime.now + " Emails sent successfully. \n Job complete")
+        println(DateTime.now + " General Alert Emails sent successfully. ")
       else
-        println(DateTime.now + "ERROR: Job completed, but sending of emails failed")
+        println(DateTime.now + "ERROR: Job completed, but sending of general Alert Emails failed")
     } else {
       println("No pages to alert on. Email not sent. \n Job complete")
     }
 
- }
+    if (interactiveAlertList.nonEmpty) {
+      println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
+      println("\n\n ***** \n\n" + "Full interactive email Body:\n" + htmlString.interactiveAlertFullEmailBody(interactiveAlertMessageBody))
+      println("compiling and sending email")
+      val emailSuccess = emailer.send(interactiveAlertsAddressList, htmlString.interactiveAlertFullEmailBody(interactiveAlertMessageBody))
+      if (emailSuccess)
+        println(DateTime.now + " Interactive Emails sent successfully. \n Job complete")
+      else
+        println(DateTime.now + "ERROR: Job completed, but sending of Interactve Emails failed")
+    } else {
+      println("No pages to alert on. Email not sent. \n Job complete")
+    }
+
+  }
 
 
   def getResultPages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[(String,String)] = {
