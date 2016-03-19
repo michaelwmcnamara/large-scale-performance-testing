@@ -5,11 +5,13 @@ package app
 import java.io._
 import java.util
 
-import app.api.S3Operations
+import app.api.{WptResultPageListener, S3Operations}
 import app.apiutils._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.DateTime
+import sbt.complete.Completion
 
+import scala.collection.parallel.immutable.ParSeq
 import scala.io.Source
 
 
@@ -26,8 +28,8 @@ object App {
     val amazonDomain = "https://s3-eu-west-1.amazonaws.com"
     val s3BucketName = "capi-wpt-querybot"
     val configFileName = "config.conf"
+    val emailFileName = "addresses.conf"
 
-    val articleOutputFileName = "articlePerformanceData.html"
     val outputFileName = "liveBlogPerformanceData.html"
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
     val interactiveOutputFilename = "interactivePerformanceData.html"
@@ -53,13 +55,20 @@ object App {
     val warningColor: String = "\"#FFFF00\""
     val alertColor: String = "\"#FF0000\""
 
+
+
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
-     val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
-    var simplifiedResults: String = htmlString.initialisePageForLiveblog + htmlString.initialiseTable
+    val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
+    var liveBlogResults: String = htmlString.initialisePageForLiveblog + htmlString.initialiseTable
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
     var frontsResults: String = htmlString.initialisePageForFronts + htmlString.initialiseTable
 
     //Initialize email alerts string - this will be used to generate emails
+    var liveBlogAlertList: List[PerformanceResultsObject] = List()
+    var interactiveAlertList: List[PerformanceResultsObject] = List()
+    var frontsAlertList: List[PerformanceResultsObject] = List()
+
+
     var liveBlogAlertMessageBody: String = ""
     var interactiveAlertMessageBody: String = ""
     var frontsAlertMessageBody: String = ""
@@ -68,7 +77,7 @@ object App {
     val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
     val interactiveItemLabel: String = "Interactive"
 
-    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
+    val listofFronts: List[String] = List("http://www.theguardian.com/uk"/*,
       "http://www.theguardian.com/us",
       "http://www.theguardian.com/au",
       "http://www.theguardian.com/uk-news",
@@ -83,11 +92,7 @@ object App {
       "http://www.theguardian.com/fashion",
       "http://www.theguardian.com/uk/environment",
       "http://www.theguardian.com/uk/technology",
-      "http://www.theguardian.com/travel")
-    val frontsItemlabel: String = "Front"
-
-    //Initialise List of email contacts (todo - this must be put in a file before getting any real folk)
-    val emailAddressList: List[String] = List("michael.mcnamara@guardian.co.uk", "m_w_mcnamara@hotmail.com")
+      "http://www.theguardian.com/travel"*/)
 
     // var articleCSVResults: String = ""
     //  var liveBlogCSVResults: String = ""
@@ -98,7 +103,7 @@ object App {
 
     //Create new S3 Client
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
-    val s3Interface = new S3Operations(s3BucketName, configFileName)
+    val s3Interface = new S3Operations(s3BucketName, configFileName, emailFileName)
     var configArray: Array[String] = Array("", "", "", "", "", "")
     //Get config settings
     println("Extracting configuration values")
@@ -133,134 +138,186 @@ object App {
     //Create Email Handler class
     val emailer: EmailOperations = new EmailOperations(emailUsername, emailPassword)
 
-    //Get Articles
-//    articleCSVResults = runAllTestsForContentType("Article", contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
-    val articleResults = runAllTestsForContentType("Article", contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
+    //  Define new CAPI Query object
+    val capiQuery = new ArticleUrls(contentApiKey)
+    //get all content-type-lists
+    val liveBlogUrls: List[String] = capiQuery.getLiveBlogUrls
+    val interactiveUrls: List[String] = capiQuery.getInteractiveUrls
+    println(DateTime.now + " Closing Content API query connection")
+    capiQuery.shutDown
 
-    if (articleResults.isEmpty) {
-      println(DateTime.now + " WARNING: No results returned from Content API for Article Queries")
-    } else {
-      val resultsStringList: List[String] = articleResults.map(x => x.toCSVString())
-      simplifiedResults = simplifiedResults + resultsStringList.mkString
-      println(DateTime.now + " Results added to accumulator string \n")
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing Article results to S3")
-        s3Interface.writeFileToS3(articleCSVName, articleCSVResults)
-//        s3Interface.writeFileToS3(articleCSVName, articleCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(articleCSVName, articleCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
-        }
-      }
-    }
 
-    //Get LiveBlogs
-    liveBlogCSVResults = runAllTestsForContentType("LiveBlog", contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
-    println(DateTime.now + " Results added to accumulator string \n")
-    if (liveBlogCSVResults.isEmpty) {
-      println(DateTime.now + " WARNING: No results returned from Content API for LiveBlog Queries")
-    } else {
+    // send all urls to webpagetest at once to enable parallel testing by test agents
+    val urlsToSend: List[String] = (liveBlogUrls ::: interactiveUrls ::: listofFronts).distinct
+    println("Combined list of urls: \n" + urlsToSend)
+    val resultUrlList: List[(String, String)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation)
+
+
+    if (liveBlogUrls.nonEmpty) {
+      println("Generating average values for liveblogs")
+      val liveBlogAverages: PageAverageObject = new LiveBlogDefaultAverages
+      liveBlogResults = liveBlogResults.concat(liveBlogAverages.toHTMLString)
+      val liveBlogResultsList = listenForResultPages(liveBlogUrls, resultUrlList, liveBlogAverages, wptBaseUrl, wptApiKey, wptLocation)
+      val liveBlogHTMLResults: List[String] = liveBlogResultsList.map(x => htmlString.generateHTMLRow(x))
+      // write liveblog results to string
+      //Create a list of alerting pages and write to string
+      liveBlogAlertList = for (result <- liveBlogResultsList if result.alertStatus) yield result
+      liveBlogAlertMessageBody = htmlString.generateAlertEmailBodyElement(liveBlogAlertList, liveBlogAverages)
+
+      liveBlogResults = liveBlogResults.concat(liveBlogHTMLResults.mkString)
+      liveBlogResults = liveBlogResults + htmlString.closeTable + htmlString.closePage
+      //write liveblog results to file
       if (!iamTestingLocally) {
         println(DateTime.now + " Writing liveblog results to S3")
-        s3Interface.writeFileToS3(liveBlogCSVName, liveBlogCSVResults)
+        s3Interface.writeFileToS3(simpleOutputFileName, liveBlogResults)
       }
       else {
         val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(liveBlogCSVName, liveBlogCSVResults)
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(simpleOutputFileName, liveBlogResults)
         if (writeSuccess != 0) {
           println("problem writing local outputfile")
           System exit 1
         }
       }
+      println("LiveBlog Performance Test Complete")
+
+    } else {
+      println("CAPI query found no liveblogs")
     }
 
-    //Get Interactives
-    interactiveCSVResults = runAllTestsForContentType("Interactive", contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
-    println(DateTime.now + " Results added to accumulator string \n")
-    if (interactiveCSVResults.isEmpty) {
-      println(DateTime.now + " WARNING: No results returned from Content API for Interactive Queries")
-    } else {
+    if (interactiveUrls.nonEmpty) {
+      println("Generating average values for interactives")
+      val interactiveAverages: PageAverageObject = generatePageAverages(listofLargeInteractives, wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel)
+      interactiveResults = interactiveResults.concat(interactiveAverages.toHTMLString)
+
+      val interactiveResultsList = listenForResultPages(interactiveUrls, resultUrlList, interactiveAverages, wptBaseUrl, wptApiKey, wptLocation)
+      val interactiveHTMLResults: List[String] = interactiveResultsList.map(x => htmlString.interactiveHTMLRow(x))
+      //generate interactive alert message body
+      interactiveAlertList = for (result <- interactiveResultsList if result.alertStatus) yield result
+      interactiveAlertMessageBody = htmlString.generateAlertEmailBodyElement(interactiveAlertList, interactiveAverages)
+      // write interactive results to string
+      interactiveResults = interactiveResults.concat(interactiveHTMLResults.mkString)
+      interactiveResults = interactiveResults + htmlString.closeTable + htmlString.closePage
+      //write interactive results to file
       if (!iamTestingLocally) {
-        println(DateTime.now + " Writing Interactive results to S3")
-        s3Interface.writeFileToS3(interactiveCSVName, interactiveCSVResults)
+        println(DateTime.now + " Writing liveblog results to S3")
+        s3Interface.writeFileToS3(interactiveOutputFilename, interactiveResults)
       }
       else {
         val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(interactiveCSVName, interactiveCSVResults)
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(interactiveOutputFilename, interactiveResults)
         if (writeSuccess != 0) {
           println("problem writing local outputfile")
           System exit 1
         }
       }
+      println("Interactive Performance Test Complete")
+
+    } else {
+      println("CAPI query found no interactives")
     }
 
-    //Get Videos
-    videoCSVResults = runAllTestsForContentType("Video", contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
-    println(DateTime.now + " Results added to accumulator string \n")
-    if (videoCSVResults.isEmpty) {
-      println(DateTime.now + " WARNING: No results returned from Content API for Video Queries")
-    } else {
+    if (listofFronts.nonEmpty) {
+      println("Generating average values for fronts")
+      val frontsAverages: PageAverageObject = new FrontsDefaultAverages
+      frontsResults = frontsResults.concat(frontsAverages.toHTMLString)
+
+      val frontsResultsList = listenForResultPages(listofFronts, resultUrlList, frontsAverages, wptBaseUrl, wptApiKey, wptLocation)
+      val frontsHTMLResults: List[String] = frontsResultsList.map(x => htmlString.generateHTMLRow(x))
+      //Create a list of alerting pages and write to string
+      frontsAlertList = for (result <- frontsResultsList if result.alertStatus) yield result
+      frontsAlertMessageBody = htmlString.generateAlertEmailBodyElement(frontsAlertList, frontsAverages)
+      // write fronts results to string
+      frontsResults = frontsResults.concat(frontsHTMLResults.mkString)
+      frontsResults = frontsResults + htmlString.closeTable + htmlString.closePage
+      //write fronts results to file
       if (!iamTestingLocally) {
-        println(DateTime.now + " Writing Video results to S3")
-        s3Interface.writeFileToS3(videoCSVName, videoCSVResults)
+        println(DateTime.now + " Writing liveblog results to S3")
+        s3Interface.writeFileToS3(frontsOutputFilename, frontsResults)
       }
       else {
         val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(videoCSVName, videoCSVResults)
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(frontsOutputFilename, frontsResults)
         if (writeSuccess != 0) {
           println("problem writing local outputfile")
           System exit 1
         }
       }
+      println("Fronts Performance Test Complete")
+
+    } else {
+      println("CAPI query found no Fronts")
     }
 
-    //Get Audio
-    audioCSVResults = runAllTestsForContentType("Audio", contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
-    println(DateTime.now + " Results added to accumulator string \n")
-    if (audioCSVResults.isEmpty) {
-      println(DateTime.now + " WARNING: No results returned from Content API for Audio Queries")
+    if (liveBlogAlertList.nonEmpty || frontsAlertList.nonEmpty) {
+      println("\n\n ***** \n\n" + "liveblog Alert body:\n" + liveBlogAlertMessageBody)
+      println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
+      println("\n\n ***** \n\n" + "fronts Alert Body:\n" + frontsAlertMessageBody)
+      println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generalAlertFullEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody, frontsAlertMessageBody))
+      println("compiling and sending email")
+      val emailSuccess = emailer.send(generalAlertsAddressList, htmlString.generalAlertFullEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
+      if (emailSuccess)
+        println(DateTime.now + " General Alert Emails sent successfully. ")
+      else
+        println(DateTime.now + "ERROR: Job completed, but sending of general Alert Emails failed")
     } else {
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing Audio results to S3")
-        s3Interface.writeFileToS3(audioCSVName, audioCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(audioCSVName, audioCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
-        }
-      }
+      println("No pages to alert on. Email not sent. \n Job complete")
     }
 
-    //Get Fronts
-    frontsCSVResults = runAllTestsForContentType("Front", contentApiKey, wptBaseUrl, wptApiKey, wptLocation)
-    println(DateTime.now + " Results added to accumulator string \n")
-    if (frontsCSVResults.isEmpty) {
-      println(DateTime.now + " WARNING: No results returned from Content API for Fronts Queries")
+    if (interactiveAlertList.nonEmpty) {
+      println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
+      println("\n\n ***** \n\n" + "Full interactive email Body:\n" + htmlString.interactiveAlertFullEmailBody(interactiveAlertMessageBody))
+      println("compiling and sending email")
+      val emailSuccess = emailer.send(interactiveAlertsAddressList, htmlString.interactiveAlertFullEmailBody(interactiveAlertMessageBody))
+      if (emailSuccess)
+        println(DateTime.now + " Interactive Emails sent successfully. \n Job complete")
+      else
+        println(DateTime.now + "ERROR: Job completed, but sending of Interactve Emails failed")
     } else {
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing Fronts results to S3")
-        s3Interface.writeFileToS3(frontsCSVName, frontsCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(frontsCSVName, frontsCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
-        }
-      }
+      println("No pages to alert on. Email not sent. \n Job complete")
     }
 
   }
 
 
+  def getResultPages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[(String,String)] = {
+    val wpt: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    val desktopResults: List[(String, String)] = urlList.map(page => { (page, wpt.sendPage(page)) })
+    val mobileResults: List[(String, String)] = urlList.map(page => { (page, wpt.sendMobile3GPage(page, wptLocation)) })
+    desktopResults ::: mobileResults
+  }
+
+  def listenForResultPages(capiUrls: List[String], resultUrlList: List[(String, String)], averages: PageAverageObject, wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[PerformanceResultsObject] = {
+    println("ListenForResultPages called with: \n\n" +
+      " List of Urls: \n" + capiUrls.mkString +
+      "\n\nList of WebPage Test results: \n" + resultUrlList.mkString +
+      "\n\nList of averages: \n" + averages.toHTMLString + "\n")
+
+    val listenerList: List[WptResultPageListener] = capiUrls.flatMap(url => {
+      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "LiveBlog", element._2)
+    })
+
+    println("Listener List created: \n" + listenerList.map(element => "list element: \n"+ "url: " + element.pageUrl + "\n" + "resulturl" + element.wptResultUrl + "\n"))
+
+    val liveBlogResultsList: ParSeq[WptResultPageListener] = listenerList.par.map(element => {
+      val wpt = new WebPageTest(wptBaseUrl, wptApiKey)
+      val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.wptResultUrl)
+      newElement.testResults = wpt.getResults(newElement.wptResultUrl)
+      newElement
+    })
+    val testResults = liveBlogResultsList.map(element => element.testResults).toList
+    val resultsWithAlerts: List[PerformanceResultsObject] = testResults.map(element => setAlertStatus(element, averages))
+
+    //Confirm alert status by retesting alerting urls
+    println("Confirming any items that have an alert")
+    val confirmedTestResults = resultsWithAlerts.map(x => {
+      if(x.alertStatus)
+        confirmAlert(x, averages, wptBaseUrl, wptApiKey, wptLocation)
+      else
+        x
+    })
+    confirmedTestResults
+  }
 
 def runAllTestsForContentType(contentType:String, contentApiKey:String, wptBaseUrl:String, wptApiKey: String, wptLocation:String):List[PerformanceResultsObject] = {
 //  var resultString: String = "testUrl,timeOfTest,resultStatus,timeFirstPaintInMs,timeDocCompleteInMs,bytesInDocComplete,timeFullyLoadedInMs,bytesInFullyLoaded,speedIndex,element1.resource,element1.contentType,element1.bytesDownloaded,element2.resource,element2.contentType,element2.bytesDownloaded,element3.resource,element3.contentType,element3.bytesDownloaded,element4.resource,element4.contentType,element4.bytesDownloaded,element5.resource,element5.contentType,element5.bytesDownloaded\n"
@@ -372,11 +429,12 @@ def runAllTestsForContentType(contentType:String, contentApiKey:String, wptBaseU
   }
 
     def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
+      val setHighPriority: Boolean = true
       val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
 
       val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
-        val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url)
-        val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation)
+        val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
+        val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
         val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
         combinedResults
       })
