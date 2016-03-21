@@ -41,21 +41,19 @@ object App {
     val interactiveResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + interactiveOutputFilename
     val frontsResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + frontsOutputFilename
 
-    //val articleCSVName = "accumulatedArticlePerformanceData.csv"
-    //val liveBlogCSVName = "accumulatedLiveblogPerformanceData.csv"
-    //val interactiveCSVName = "accumulatedInteractivePerformanceData.csv"
-    //val videoCSVName = "accumulatedVideoPerformanceData"
-    //val audioCSVName = "accumulatedAudioPerformanceData"
-    //val frontsCSVName = "accumulatedFrontsPerformanceData"
+    val articleCSVName = "accumulatedArticlePerformanceData.csv"
+    val liveBlogCSVName = "accumulatedLiveblogPerformanceData.csv"
+    val interactiveCSVName = "accumulatedInteractivePerformanceData.csv"
+    val videoCSVName = "accumulatedVideoPerformanceData"
+    val audioCSVName = "accumulatedAudioPerformanceData"
+    val frontsCSVName = "accumulatedFrontsPerformanceData"
 
-    //    val liveBlogResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + simpleOutputFileName
+
 
     //Define colors to be used for average values, warnings and alerts
     val averageColor: String = "\"grey\""
     val warningColor: String = "\"#FFFF00\""
     val alertColor: String = "\"#FF0000\""
-
-
 
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
     val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
@@ -105,6 +103,11 @@ object App {
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
     val s3Interface = new S3Operations(s3BucketName, configFileName, emailFileName)
     var configArray: Array[String] = Array("", "", "", "", "", "")
+
+    val emailAddresses: Array[List[String]] = s3Interface.getEmailAddresses
+    val generalAlertsAddressList: List[String] = emailAddresses(0)
+    val interactiveAlertsAddressList: List[String] = emailAddresses(1)
+
     //Get config settings
     println("Extracting configuration values")
     if (!iamTestingLocally) {
@@ -319,50 +322,12 @@ object App {
     confirmedTestResults
   }
 
-def runAllTestsForContentType(contentType:String, contentApiKey:String, wptBaseUrl:String, wptApiKey: String, wptLocation:String):List[PerformanceResultsObject] = {
-//  var resultString: String = "testUrl,timeOfTest,resultStatus,timeFirstPaintInMs,timeDocCompleteInMs,bytesInDocComplete,timeFullyLoadedInMs,bytesInFullyLoaded,speedIndex,element1.resource,element1.contentType,element1.bytesDownloaded,element2.resource,element2.contentType,element2.bytesDownloaded,element3.resource,element3.contentType,element3.bytesDownloaded,element4.resource,element4.contentType,element4.bytesDownloaded,element5.resource,element5.contentType,element5.bytesDownloaded\n"
-
-  var resultsObjectList:List[PerformanceResultsObject] = List()
-  val capiHandler = new ArticleUrls(contentApiKey)
-  val urlList: List[String] = capiHandler.getUrlsForContentType(contentType)
-  println(DateTime.now + " Closing Liveblog Content API query connection")
-  capiHandler.shutDown
-  // check results returned from CAPI and extract data form liveblogs if there are any
-  if (urlList.nonEmpty) {
-
-    val testResults: List[PerformanceResultsObject] = urlList.flatMap(url => {
-      val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-      val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url)
-      val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation)
-      Array(webPageDesktopTestResults, webPageMobileTestResults)
-    })
-    //Confirm alert status by retesting alerting urls
-    val confirmedTestResults = testResults.map(x => {
-      if (x.alertStatus || x.brokenTest) {
-        val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-        val testCount: Int = if(x.timeToFirstByte > 1000) {5} else {3}
-        webPageTest.testMultipleTimes(x.testUrl, x.typeOfTest, wptLocation, testCount)
-      }
-      else
-        x
-    })
-    resultsObjectList = confirmedTestResults
-  }
-  else {
-    println(DateTime.now + " WARNING: No results returned from Content API for LiveBlog Queries")
-  }
-    resultsObjectList
-}
-
-
-
-
-  def retestUrl(initialResult: PerformanceResultsObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
+  def confirmAlert(initialResult: PerformanceResultsObject, averages: PageAverageObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
     val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
     val testCount: Int = if(initialResult.timeToFirstByte > 1000) {5} else {3}
     println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
- //   val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
-    webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount)
+    val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
+    AlertConfirmationTestResult
   }
 
   def setAlertStatus(resultObject: PerformanceResultsObject, averages: PageAverageObject): PerformanceResultsObject ={
@@ -377,8 +342,8 @@ def runAllTestsForContentType(contentType:String, contentApiKey:String, wptBaseU
           (resultObject.speedIndex >= averages.desktopSpeedIndex) ||
           (resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded)) {
           println("row should be red one of the items qualifies")
-          if(resultObject.timeFirstPaintInMs >= averages.desktopTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInMs + "ms" + " for text to load and page to become scrollable. Should only take " + averages.desktopTimeFirstPaintInMs + "ms.</p>"}
-          if(resultObject.speedIndex >= averages.desktopSpeedIndex) {resultObject.alertDescription = resultObject.alertDescription + "<p>Page takes " + resultObject.aboveTheFoldCompleteInSec + " s to render visible images etc. It should take " + averages.desktopAboveTheFoldCompleteInSec + "s.</P>"}
+          if(resultObject.timeFirstPaintInMs >= averages.desktopTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInSec + "s" + " for text to load and page to become scrollable. Should only take " + averages.desktopTimeFirstPaintInSeconds + "s.</p>"}
+          if(resultObject.speedIndex >= averages.desktopSpeedIndex) {resultObject.alertDescription = "<p>Page takes " + averages.desktopAboveTheFoldCompleteInSec + "To render visible images etc. It should take " + averages.desktopAboveTheFoldCompleteInSec + "s.</P>"}
           if(resultObject.kBInFullyLoaded >= averages.desktopKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + "KB. It should be less than: " + averages.desktopKBInFullyLoaded + "KB.</p>"}
           println(resultObject.alertDescription)
           resultObject.warningStatus = true
@@ -406,8 +371,8 @@ def runAllTestsForContentType(contentType:String, contentApiKey:String, wptBaseU
           (resultObject.speedIndex >= averages.mobileSpeedIndex) ||
           (resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded)){
           println("warning and alert statuses set to true")
-          if(resultObject.timeFirstPaintInMs >= averages.mobileTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInMs + "ms" + " for text to load and page to become scrollable. Should only take " + averages.mobileTimeFirstPaintInMs + "ms.</p>"}
-          if(resultObject.speedIndex >= averages.mobileSpeedIndex) {resultObject.alertDescription = resultObject.alertDescription + "<p>Page takes " + resultObject.aboveTheFoldCompleteInSec + "s To render visible images etc. It should take " + averages.mobileAboveTheFoldCompleteInSec + "s or less.</p>"}
+          if(resultObject.timeFirstPaintInMs >= averages.mobileTimeFirstPaintInMs) {resultObject.alertDescription = "<p>Page takes " + resultObject.timeFirstPaintInSec + "s" + " for text to load and page to become scrollable. Should only take " + averages.mobileTimeFirstPaintInSeconds + "s.</p>"}
+          if(resultObject.speedIndex >= averages.mobileSpeedIndex) {resultObject.alertDescription = "<p>Page takes " + averages.mobileAboveTheFoldCompleteInSec + "To render visible images etc. It should take " + averages.mobileAboveTheFoldCompleteInSec + "s or less.</p>"}
           if(resultObject.kBInFullyLoaded >= averages.mobileKBInFullyLoaded) {resultObject.alertDescription = resultObject.alertDescription +  "<p>Page is too heavy. Size is: " + resultObject.kBInFullyLoaded + "KB. It should be less than: " + averages.mobileKBInFullyLoaded + "KB.</p>"}
           resultObject.warningStatus = true
           resultObject.alertStatus = true
@@ -428,20 +393,30 @@ def runAllTestsForContentType(contentType:String, contentApiKey:String, wptBaseU
     resultObject
   }
 
-    def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
-      val setHighPriority: Boolean = true
-      val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+  def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
+    val setHighPriority: Boolean = true
+    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
 
-      val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
-        val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
-        val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
-        val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
-        combinedResults
-      })
+    val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
+      val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
+      val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
+      val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
+      combinedResults
+    })
 
-      val pageAverages: PageAverageObject = new GeneratedPageAverages(resultsList)
-      pageAverages
-    }
+    val pageAverages: PageAverageObject = new GeneratedPageAverages(resultsList)
+    pageAverages
+  }
+  
+
+  def retestUrl(initialResult: PerformanceResultsObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
+    val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    val testCount: Int = if(initialResult.timeToFirstByte > 1000) {5} else {3}
+    println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
+ //   val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
+    webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount)
+  }
+
 
 }
 
