@@ -33,18 +33,27 @@ object App {
     val outputFileName = "liveBlogPerformanceData.html"
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
     val interactiveOutputFilename = "interactivePerformanceData.html"
+    val videoOutputFilename =  "videoPerformanceData.html"
+    val audioOutputFilename = "audioPerformanceData.html"
     val frontsOutputFilename = "frontsData.html"
 
     val liveBlogResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + simpleOutputFileName
     val interactiveResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + interactiveOutputFilename
     val frontsResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + frontsOutputFilename
 
+    val articleCSVName = "accumulatedArticlePerformanceData.csv"
+    val liveBlogCSVName = "accumulatedLiveblogPerformanceData.csv"
+    val interactiveCSVName = "accumulatedInteractivePerformanceData.csv"
+    val videoCSVName = "accumulatedVideoPerformanceData"
+    val audioCSVName = "accumulatedAudioPerformanceData"
+    val frontsCSVName = "accumulatedFrontsPerformanceData"
+
+
+
     //Define colors to be used for average values, warnings and alerts
     val averageColor: String = "\"grey\""
     val warningColor: String = "\"#FFFF00\""
-    val alertColor = "\"#FF0000\""
-
-
+    val alertColor: String = "\"#FF0000\""
 
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
     val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
@@ -82,6 +91,13 @@ object App {
       "http://www.theguardian.com/uk/environment",
       "http://www.theguardian.com/uk/technology",
       "http://www.theguardian.com/travel"*/)
+
+    // var articleCSVResults: String = ""
+    //  var liveBlogCSVResults: String = ""
+    // var interactiveCSVResults: String = ""
+    //  var videoCSVResults: String = ""
+    //  var audioCSVResults: String = ""
+    //  var frontsCSVResults: String = ""
 
     //Create new S3 Client
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
@@ -306,22 +322,6 @@ object App {
     confirmedTestResults
   }
 
-  def testUrl(url: String, wptBaseUrl: String, wptApiKey: String, wptLocation: String, averages: PageAverageObject): Array[PerformanceResultsObject] = {
-    //  Define new web-page-test API request and send it the url to test
-    println(DateTime.now + " creating new WebPageTest object with this base URL: " + wptBaseUrl)
-    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-    println(DateTime.now + " calling methods to test url: " + url + " on desktop")
-    val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url)
-    println(DateTime.now + " calling methods to test url: " + url + " on emulated 3G mobile")
-    val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation)
-    //  Add results to string which will eventually become the content of our results file
-    val desktopTestWithAlertsSet: PerformanceResultsObject = setAlertStatus(webPageDesktopTestResults,averages)
-    val mobileTestWithAlertsSet: PerformanceResultsObject = setAlertStatus(webPageMobileTestResults,averages)
-    println("Returning desktop and mobile results")
-    Array(desktopTestWithAlertsSet, mobileTestWithAlertsSet)
-  }
-
-
   def confirmAlert(initialResult: PerformanceResultsObject, averages: PageAverageObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
     val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
     val testCount: Int = if(initialResult.timeToFirstByte > 1000) {5} else {3}
@@ -393,20 +393,30 @@ object App {
     resultObject
   }
 
-    def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
-      val setHighPriority: Boolean = true
-      val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+  def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
+    val setHighPriority: Boolean = true
+    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
 
-      val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
-        val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
-        val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
-        val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
-        combinedResults
-      })
+    val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
+      val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
+      val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
+      val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
+      combinedResults
+    })
 
-      val pageAverages: PageAverageObject = new GeneratedPageAverages(resultsList)
-      pageAverages
-    }
+    val pageAverages: PageAverageObject = new GeneratedPageAverages(resultsList)
+    pageAverages
+  }
+  
+
+  def retestUrl(initialResult: PerformanceResultsObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
+    val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+    val testCount: Int = if(initialResult.timeToFirstByte > 1000) {5} else {3}
+    println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
+ //   val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
+    webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount)
+  }
+
 
 }
 
