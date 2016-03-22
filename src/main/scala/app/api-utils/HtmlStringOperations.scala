@@ -12,15 +12,15 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   val warningColor = warning
   val alertColor = alert
 
-  val hTMLPageHeader: String = "<!DOCTYPE html>\n<html>\n<body>\n"
+  val hTMLPageHeader: String = "<!DOCTYPE html>\n<html>\n<head>\n  <link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\" integrity=\"sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7\" crossorigin=\"anonymous\">\n</head>\n<body>\n"
   val hTMLTitleLiveblog: String = "<h1>Currrent Performance of today's Liveblogs</h1>"
   val hTMLTitleInteractive: String = "<h1>Currrent Performance of today's Interactives</h1>"
   val hTMLTitleFronts: String = "<h1>Currrent Performance of today's Fronts</h1>"
   val hTMLJobStarted: String = "<p>Job started at: " + DateTime.now + "\n</p>"
-  val hTMLFullTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>MB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>MB transferred at Fully Loaded</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
-  val hTMLSimpleTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Status</th>\n</tr>\n"
-  val hTMLInteractiveTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>Status</th>\n</tr>\n"
-  val hTMLAlertTableHeaders: String = "<table border=\"1\">\n<tr bgcolor=" + averageColor + ">\n<th>Article Url</th>\n<th>Test Type</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLFullTableHeaders: String = "<class=\"table table-striped\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to First Paint</th>\n<th>Time to Document Complete</th>\n<th>MB transferred at Document Complete</th>\n<th>Time to Fully Loaded</th>\n<th>MB transferred at Fully Loaded</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Speed Index</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLSimpleTableHeaders: String = "<class=\"table table-striped\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>US Prepaid Cost $US0.097 per MB</th>\n<th>US Postpaid Cost $US0.065 per MB</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLInteractiveTableHeaders: String = "<class=\"table table-striped\">\n<tr>\n<th>Time Last Tested</th>\n<th>Test Type</th>\n<th>Article Url</th>\n<th>Time to Page Scrollable</th>\n<th>Time to rendering above the fold complete </th>\n<th>MB transferred</th>\n<th>Status</th>\n</tr>\n"
+  val hTMLAlertTableHeaders: String = "<class=\"table table-striped\">\n<tr style=\"background-color:" + averageColor + ";\">\n<th>Article Url</th>\n<th>Test Type</th>\n<th>Status</th>\n</tr>\n"
   val hTMLTableFooters: String = "</table>"
   val hTMLPageFooterStart: String = "\n<p><i>Job completed at: "
   val hTMLPageFooterEnd: String = "</i></p>\n</body>\n</html>"
@@ -39,11 +39,11 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
       if (resultsObject.warningStatus) {
         if (resultsObject.alertStatus) {
           println("row should be red one of the items qualifies")
-          returnString = "<tr bgcolor=" + alertColor + ">" + resultsObject.toHTMLSimpleTableCells() + "</tr>"
+          returnString = "<tr style=\"background-color:" + alertColor + ";\">" + resultsObject.toHTMLSimpleTableCells() + "</tr>"
         }
         else {
           println("row should be yellow one of the items qualifies")
-          returnString = "<tr bgcolor=" + warningColor + ">" + resultsObject.toHTMLSimpleTableCells() + "</tr>"
+          returnString = "<tr style=\"background-color:" + warningColor + ";\">" + resultsObject.toHTMLSimpleTableCells() + "</tr>"
         }
       }
       else {
@@ -64,11 +64,11 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
     if (resultsObject.warningStatus) {
       if (resultsObject.alertStatus) {
         println("row should be red one of the items qualifies")
-        returnString = "<tr bgcolor=" + alertColor + ">" + resultsObject.toHTMLInteractiveTableCells() + "</tr>"
+        returnString = "<tr style=\"background-color:" + alertColor + ";\">" + resultsObject.toHTMLInteractiveTableCells() + "</tr>"
       }
       else {
         println("row should be yellow one of the items qualifies")
-        returnString = "<tr bgcolor=" + warningColor + ">" + resultsObject.toHTMLInteractiveTableCells() + "</tr>"
+        returnString = "<tr style=\"background-color:" + warningColor + ";\">" + resultsObject.toHTMLInteractiveTableCells() + "</tr>"
       }
     }
     else {

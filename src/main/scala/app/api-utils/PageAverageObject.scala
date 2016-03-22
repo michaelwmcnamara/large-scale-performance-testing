@@ -74,7 +74,7 @@ class PageAverageObject(dtfp: Int, dtdc: Int, dsdc: Int, dtfl: Int, dsfl: Int, d
 }
 
 
-class LiveBlogDefaultAverages extends PageAverageObject() {
+class LiveBlogDefaultAverages(averageColor: String) extends PageAverageObject {
   override val desktopTimeFirstPaintInMs: Int = 2 * 1000
   override val desktopTimeDocCompleteInMs: Int = 15 * 1000
   override val desktopKBInDocComplete: Double = 10 * 1024
@@ -95,7 +95,7 @@ class LiveBlogDefaultAverages extends PageAverageObject() {
   override val mobileSpeedIndex: Int = 5000
   override val mobileSuccessCount = 1
 
-  override val formattedHTMLResultString: String = "<tr bgcolor=\"A9BCF5\">" +
+  override val formattedHTMLResultString: String = "<tr style=\"background-color:" + averageColor + ";\">" +
     "<td>" + DateTime.now + "</td>" +
     "<td>Desktop</td>" +
     "<td> Alerting thresholds determined by past liveblogs we have migrated</td>" +
@@ -161,7 +161,7 @@ class FrontsDefaultAverages extends PageAverageObject() {
 }
 
 
-class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) extends PageAverageObject{
+class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]], averageColor: String) extends PageAverageObject{
   var accumulatorDesktopTimeFirstPaint: Int = 0
   var accumulatorDesktopTimeDocComplete: Int = 0
   var accumulatorDesktopKBInDocComplete: Double = 0
@@ -238,7 +238,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   override val mobileSpeedIndex: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileSpeedIndex/accumulatorMobileSuccessCount} else {5000}
   override val mobileSuccessCount: Int = accumulatorMobileSuccessCount
 
-  accumulatorString = accumulatorString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Desktop</td>")
+  accumulatorString = accumulatorString.concat("<tr style=\"background-color:" + averageColor + ";\"><td>" + DateTime.now + "</td><td>Desktop</td>")
 
   //add desktop averaages to return string
   if(accumulatorDesktopSuccessCount > 1){
@@ -274,7 +274,7 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]]) 
   }
   
   //add mobile averages to return string
-  accumulatorString = accumulatorString.concat("<tr bgcolor=\"#A9BCF5\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
+  accumulatorString = accumulatorString.concat("<tr style=\"background-color:" + averageColor + ";\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
   if(accumulatorMobileSuccessCount > 1){
     accumulatorString = accumulatorString.concat("<td>" + "Average of " + accumulatorDesktopSuccessCount + "pages  with recognised size issues</td>" +
       "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
