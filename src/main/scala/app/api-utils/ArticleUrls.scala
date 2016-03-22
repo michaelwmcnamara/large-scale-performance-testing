@@ -52,7 +52,7 @@ class ArticleUrls(key: String) {
       .showTags("all")
       .page(1)
       .pageSize(20)
-      .orderBy("oldest")
+      .orderBy("newest")
       .contentType("liveblog")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
@@ -78,7 +78,7 @@ class ArticleUrls(key: String) {
       .showTags("all")
       .page(1)
       .pageSize(20)
-      .orderBy("oldest")
+      .orderBy("newest")
       .tag("tone/minutebyminute")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
@@ -106,7 +106,7 @@ class ArticleUrls(key: String) {
       .showTags("all")
       .page(1)
       .pageSize(20)
-      .orderBy("oldest")
+      .orderBy("newest")
       .contentType("interactive")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
@@ -133,7 +133,7 @@ class ArticleUrls(key: String) {
       .showTags("all")
       .page(1)
       .pageSize(20)
-      .orderBy("oldest")
+      .orderBy("newest")
       .contentType("video")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
@@ -160,7 +160,7 @@ class ArticleUrls(key: String) {
       .showTags("all")
       .page(1)
       .pageSize(20)
-      .orderBy("oldest")
+      .orderBy("newest")
       .contentType("audio")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
@@ -188,7 +188,7 @@ class ArticleUrls(key: String) {
       .showTags("all")
       .page(1)
       .pageSize(20)
-      .orderBy("oldest")
+      .orderBy("newest")
       .contentType("article")
     println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
 
