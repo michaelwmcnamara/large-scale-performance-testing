@@ -180,7 +180,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
     val trimmedElementList = trimToEditorialElements(elementsList)
     val sortedElementList = sortPageElementList(trimmedElementList)
-    result.takeElementsFromSortedList(sortedElementList)
+    result.populateHeavyElementList(sortedElementList)
     println("Returning PerformanceResultsObject")
     result
   }
