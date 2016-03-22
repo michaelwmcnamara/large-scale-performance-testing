@@ -158,7 +158,7 @@ object App {
 
     if (liveBlogUrls.nonEmpty) {
       println("Generating average values for liveblogs")
-      val liveBlogAverages: PageAverageObject = new LiveBlogDefaultAverages
+      val liveBlogAverages: PageAverageObject = new LiveBlogDefaultAverages(averageColor)
       liveBlogResults = liveBlogResults.concat(liveBlogAverages.toHTMLString)
       val liveBlogResultsList = listenForResultPages(liveBlogUrls, resultUrlList, liveBlogAverages, wptBaseUrl, wptApiKey, wptLocation)
       val liveBlogHTMLResults: List[String] = liveBlogResultsList.map(x => htmlString.generateHTMLRow(x))
@@ -190,7 +190,7 @@ object App {
 
     if (interactiveUrls.nonEmpty) {
       println("Generating average values for interactives")
-      val interactiveAverages: PageAverageObject = generatePageAverages(listofLargeInteractives, wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel)
+      val interactiveAverages: PageAverageObject = generatePageAverages(listofLargeInteractives, wptBaseUrl, wptApiKey, wptLocation, interactiveItemLabel, averageColor)
       interactiveResults = interactiveResults.concat(interactiveAverages.toHTMLString)
 
       val interactiveResultsList = listenForResultPages(interactiveUrls, resultUrlList, interactiveAverages, wptBaseUrl, wptApiKey, wptLocation)
@@ -393,7 +393,7 @@ object App {
     resultObject
   }
 
-  def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String): PageAverageObject = {
+  def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String, averageColor: String): PageAverageObject = {
     val setHighPriority: Boolean = true
     val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
 
@@ -404,7 +404,7 @@ object App {
       combinedResults
     })
 
-    val pageAverages: PageAverageObject = new GeneratedPageAverages(resultsList)
+    val pageAverages: PageAverageObject = new GeneratedPageAverages(resultsList, averageColor)
     pageAverages
   }
   
