@@ -73,19 +73,19 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   }
 
   def toFullHTMLTableCells(): String = {
-    "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" + "<td>" + timeFirstPaintInMs.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
+    "<td>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </td>" + "<td>" + timeFirstPaintInMs.toString + "ms </td><td>" +  timeDocCompleteInSec.toString + "s </td><td>" + mBInDocComplete + "MB </td><td>" + timeFullyLoadedInSec.toString + "s </td><td>" + mBInFullyLoaded + "MB </td><td> $(US)" + estUSPrePaidCost + "</td><td> $(US)" + estUSPrePaidCost + "</td><td>" + speedIndex.toString + " </td><td> " + genTestResultString() + "</td>"
   }
 
   def toHTMLSimpleTableCells(): String = {
-   "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" +" <td>" + timeFirstPaintInMs.toString + "ms </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> " + genTestResultString() + "</td>"
+   "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<td>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </td>" +" <td>" + timeFirstPaintInMs.toString + "ms </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> $(US)" + estUSPrePaidCost + "</td>" + "<td> " + genTestResultString() + "</td>"
   }
 
   def toHTMLInteractiveTableCells(): String = {
-    "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<th>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </th>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "</td>" + "<td> " + genTestResultString() + "</td>"
+    "<td>"+DateTime.now+"</td>"+"<td>"+typeOfTest+"</td>"+ "<td>" + "<a href=" + testUrl + ">" + testUrl + "</a>" + " </td>" +" <td>" + timeFirstPaintInSec.toString + "s </td>" + "<td>" + aboveTheFoldCompleteInSec.toString + "s </td>" + "<td>" + mBInFullyLoaded + "MB </td>" + "</td>" + "<td> " + genTestResultString() + "</td>"
   }
 
   def toHTMLAlertMessageCells(): String = {
-    "<a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>"+ genTestResultString() +"</td>" +
+    "<td><a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>"+ genTestResultString() +"</td>" +
     "<tr>List of 5 heaviest elements on page - Recommend reviewing these items </tr>" +
     "<tr><td>Resource</td><td>Content Type</td><td>Bytes Transferred</td></tr>" +
       heavyElementList.map(element => element.alertHTMLString()).mkString
