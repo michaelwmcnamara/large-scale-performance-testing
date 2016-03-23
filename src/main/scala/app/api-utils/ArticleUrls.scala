@@ -16,7 +16,7 @@ class ArticleUrls(key: String) {
   def getUrlsForContentType(contentType: String): List[String] = {
      contentType match {
       case("Article") => getArticleUrls
-      case ("LiveBlog") =>  getLiveBlogUrls
+      case ("LiveBlog") =>  getMinByMinUrls
       case ("Interactive") => getInteractiveUrls
       case ("Video") => getVideoUrls
       case ("Audio") => getAudioUrls
@@ -28,41 +28,9 @@ class ArticleUrls(key: String) {
     }
   }
 
-  def getLiveBlogUrls: List[String] = {
-    println("Running Capi Queries")
-    val resultString: List[String] = getContentTypeLiveBlogUrls ++ getMinByMinUrls
-    resultString.distinct
-  }
-
   def shutDown = {
     println("Closing connection to Content API")
     contentApiClient.shutdown()
-  }
-  def getContentTypeLiveBlogUrls: List[String] = {
-    println("Creating CAPI query")
-    val until = DateTime.now
-    val from = until.minusHours(24)
-
-    val liveBlogSearchQuery = new SearchQuery()
-      .fromDate(from)
-      .toDate(until)
-      .showBlocks("all")
-      .showElements("all")
-      .showFields("all")
-      .showTags("all")
-      .page(1)
-      .pageSize(20)
-      .orderBy("newest")
-      .contentType("liveblog")
-    println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
-
-    val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
-    val returnedResponse = Await.result(apiResponse, (20, SECONDS))
-    println("CAPI has returned response")
-    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-      println("liveBlog result: " + result.webUrl)
-        result.webUrl }
-    liveBlogUrlString
   }
 
   def getMinByMinUrls: List[String] = {
@@ -221,6 +189,34 @@ class ArticleUrls(key: String) {
       "http://www.theguardian.com/travel")
     listofFronts
   }
+
+  /*def getContentTypeFronts: List[String] = {
+    println("Creating CAPI query")
+    val until = DateTime.now
+    val from = until.minusHours(24)
+
+    val FrontsSearchQuery = new SearchQuery()
+      .fromDate(from)
+      .toDate(until)
+      .showBlocks("all")
+      .showElements("all")
+      .showFields("all")
+      .showTags("all")
+      .page(1)
+      .pageSize(20)
+      .orderBy("newest")
+      .contentType("front")
+    println("Sending query to CAPI: \n" + FrontsSearchQuery.toString)
+
+    val apiResponse = contentApiClient.getResponse(FrontsSearchQuery)
+    val returnedResponse = Await.result(apiResponse, (20, SECONDS))
+    println("CAPI has returned response")
+    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
+      println("liveBlog result: " + result.webUrl)
+      result.webUrl }
+    liveBlogUrlString
+  }
+*/
 
 }
 
