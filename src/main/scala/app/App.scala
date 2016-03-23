@@ -72,7 +72,12 @@ object App {
     var frontsAlertMessageBody: String = ""
 
     //Initialise List of sample items to be used to make alerting levels for different content types
-    val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted")
+    val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted",
+      "http://www.theguardian.com/world/ng-interactive/2015/nov/14/paris-attacks-what-we-know-so-far",
+      "http://www.theguardian.com/society/ng-interactive/2015/sep/02/unaffordable-country-where-can-you-afford-to-buy-a-house",
+    "http://www.theguardian.com/us-news/ng-interactive/2015/sep/21/building-the-atom-bomb-the-full-story-of-the-nevada-test-site",
+      "http://www.theguardian.com/us-news/2016/feb/04/san-francisco-then-and-now-super-bowl-50")
+
     val interactiveItemLabel: String = "Interactive"
 
     val listofFronts: List[String] = List("http://www.theguardian.com/uk",
