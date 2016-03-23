@@ -160,7 +160,6 @@ class FrontsDefaultAverages extends PageAverageObject() {
     "<td>Predefined standards</td></tr>"
 }
 
-
 class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]], averageColor: String) extends PageAverageObject{
   var accumulatorDesktopTimeFirstPaint: Int = 0
   var accumulatorDesktopTimeDocComplete: Int = 0
@@ -309,3 +308,142 @@ class GeneratedPageAverages(resultsList: List[Array[PerformanceResultsObject]], 
 
   override val formattedHTMLResultString: String = accumulatorString
 }
+
+
+class GeneratedInteractiveAverages(resultsList: List[Array[PerformanceResultsObject]], averageColor: String) extends PageAverageObject {
+  var accumulatorDesktopTimeFirstPaint: Int = 0
+  var accumulatorDesktopTimeDocComplete: Int = 0
+  var accumulatorDesktopKBInDocComplete: Double = 0
+  var accumulatorDesktopTimeFullyLoaded: Int = 0
+  var accumulatorDesktopKBInFullyLoaded: Double = 0
+  var accumulatorDesktopEstUSPrePaidCost: Double = 0
+  var accumulatorDesktopEstUSPostPaidCost: Double = 0
+  var accumulatorDesktopSpeedIndex: Int = 0
+  var accumulatorDesktopSuccessCount = 0
+
+  var accumulatorMobileTimeFirstPaint: Int = 0
+  var accumulatorMobileTimeDocComplete: Int = 0
+  var accumulatorMobileKBInDoccomplete: Double = 0
+  var accumulatorMobileTimeFullyLoaded: Int = 0
+  var accumulatorMobileKBInFullyLoaded: Double = 0
+  var accumulatorMobileEstUSPrePaidCost: Double = 0
+  var accumulatorMobileEstUSPostPaidCost: Double = 0
+  var accumulatorMobileSpeedIndex: Int = 0
+  var accumulatorMobileSuccessCount = 0
+
+  var accumulatorString: String = ""
+
+  val multipleLiveBlogs:String = "liveblogs that were migrated due to size"
+  val singleLiveBlog: String = "Example of a liveblog migrated due to size"
+  val noLiveBlogs: String = "All tests of migrated liveblogs failed"
+
+  val multipleInteractives:String = "interactives with known size or performance issues"
+  val singleInteractive: String = "Example of an interactive with known size or performance issues"
+  val noInteractives: String = "All tests of interactives with size or performance issues have failed"
+
+  //process result objects
+  resultsList.foreach(result => {
+    if (result(0).resultStatus == "Test Success") {
+      accumulatorDesktopTimeFirstPaint += result(0).timeFirstPaintInMs
+      accumulatorDesktopTimeDocComplete += result(0).timeDocCompleteInMs
+      accumulatorDesktopKBInDocComplete += result(0).kBInDocComplete
+      accumulatorDesktopTimeFullyLoaded += result(0).timeFullyLoadedInMs
+      accumulatorDesktopKBInFullyLoaded += result(0).kBInFullyLoaded
+      accumulatorDesktopEstUSPrePaidCost += result(0).estUSPrePaidCost
+      accumulatorDesktopEstUSPostPaidCost += result(0).estUSPostPaidCost
+      accumulatorDesktopSpeedIndex += result(0).speedIndex
+      accumulatorDesktopSuccessCount += 1
+    }
+    if (result(1).resultStatus == "Test Success") {
+      accumulatorMobileTimeFirstPaint += result(1).timeFirstPaintInMs
+      accumulatorMobileTimeDocComplete += result(1).timeDocCompleteInMs
+      accumulatorMobileKBInDoccomplete += result(1).kBInDocComplete
+      accumulatorMobileTimeFullyLoaded += result(1).timeFullyLoadedInMs
+      accumulatorMobileKBInFullyLoaded += result(1).kBInFullyLoaded
+      accumulatorMobileEstUSPrePaidCost += result(1).estUSPrePaidCost
+      accumulatorMobileEstUSPostPaidCost += result(1).estUSPostPaidCost
+      accumulatorMobileSpeedIndex += result(1).speedIndex
+      accumulatorMobileSuccessCount += 1
+    }
+  })
+
+  override val desktopTimeFirstPaintInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFirstPaint/accumulatorDesktopSuccessCount} else {2 * 1000}
+  override val desktopTimeDocCompleteInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeDocComplete/accumulatorDesktopSuccessCount} else {15 * 1000}
+  override val desktopKBInDocComplete: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(3)(accumulatorDesktopKBInDocComplete/accumulatorDesktopSuccessCount)} else {10 * 1024}
+  override val desktopTimeFullyLoadedInMs: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopTimeFullyLoaded/accumulatorDesktopSuccessCount} else {20 * 1000}
+  override val desktopKBInFullyLoaded: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(3)(accumulatorDesktopKBInFullyLoaded/accumulatorDesktopSuccessCount)} else {15 * 1024}
+  override val desktopEstUSPrePaidCost: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(2)(accumulatorDesktopEstUSPrePaidCost/accumulatorDesktopSuccessCount)} else {60.00}
+  override val desktopEstUSPostPaidCost: Double = if (accumulatorDesktopSuccessCount > 0) {roundAt(2)(accumulatorDesktopEstUSPostPaidCost/accumulatorDesktopSuccessCount)} else {50.00}
+  override val desktopSpeedIndex: Int = if (accumulatorDesktopSuccessCount > 0) {accumulatorDesktopSpeedIndex/accumulatorDesktopSuccessCount} else {5000}
+  override val desktopSuccessCount: Int = accumulatorDesktopSuccessCount
+
+  override val mobileTimeFirstPaintInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFirstPaint/accumulatorMobileSuccessCount} else {2 * 1000}
+  override val mobileTimeDocCompleteInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeDocComplete/accumulatorMobileSuccessCount} else {15 * 1000}
+  override val mobileKBInDocComplete: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(3)(accumulatorMobileKBInDoccomplete/accumulatorMobileSuccessCount)} else {6 * 1024}
+  override val mobileTimeFullyLoadedInMs: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileTimeFullyLoaded/accumulatorMobileSuccessCount} else {20 * 1000}
+  override val mobileKBInFullyLoaded: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(3)(accumulatorMobileKBInFullyLoaded/accumulatorMobileSuccessCount)} else {6 * 1024}
+  override val mobileEstUSPrePaidCost: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(2)(accumulatorMobileEstUSPrePaidCost/accumulatorMobileSuccessCount)} else {0.40}
+  override val mobileEstUSPostPaidCost: Double = if (accumulatorMobileSuccessCount > 0) {roundAt(2)(accumulatorMobileEstUSPostPaidCost/accumulatorMobileSuccessCount)} else {0.30}
+  override val mobileSpeedIndex: Int = if (accumulatorMobileSuccessCount > 0) {accumulatorMobileSpeedIndex/accumulatorMobileSuccessCount} else {5000}
+  override val mobileSuccessCount: Int = accumulatorMobileSuccessCount
+
+  accumulatorString = accumulatorString.concat("<tr style=\"background-color:" + averageColor + ";\"><td>" + DateTime.now + "</td><td>Desktop</td>")
+
+  //add desktop averaages to return string
+  if(accumulatorDesktopSuccessCount > 1){
+    accumulatorString = accumulatorString.concat("<td>" + "Average of " + accumulatorDesktopSuccessCount + "pages  with recognised size issues</td>" +
+      "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+      "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
+      "<td>" + desktopMBInDocComplete + "MB</td>" +
+      "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+    )}
+  else{
+    if (accumulatorDesktopSuccessCount == 1) {
+      accumulatorString = accumulatorString.concat("<td> Results from 1 page with recognised size issues</td>" +
+        "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
+        "<td>" + desktopMBInDocComplete + "MB</td>" +
+        "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+      )
+    }
+    else {
+      accumulatorString = accumulatorString.concat("<td> Standard values to be used for judging page size</td>" +
+        "<td>" + desktopTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + desktopAboveTheFoldCompleteInSec + "s</td>" +
+        "<td>" + desktopMBInDocComplete + "MB</td>" +
+        "<td>" + desktopSuccessCount + " urls Tested Successfully</td></tr>"
+      )
+    }
+  }
+
+  //add mobile averages to return string
+  accumulatorString = accumulatorString.concat("<tr style=\"background-color:" + averageColor + ";\"><td>" + DateTime.now + "</td><td>Android/3G</td>")
+  if(accumulatorMobileSuccessCount > 1){
+    accumulatorString = accumulatorString.concat("<td>" + "Average of " + accumulatorDesktopSuccessCount + "pages  with recognised size issues</td>" +
+      "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+      "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
+      "<td>" + mobileMBInDocComplete + "MB</td>" +
+      "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+    )}
+  else{
+    if (accumulatorMobileSuccessCount == 1) {
+      accumulatorString = accumulatorString.concat("<td> Results from 1 page with recognised size issues</td>" +
+        "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
+        "<td>" + mobileMBInDocComplete + "MB</td>" +
+        "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+      )
+    }
+    else {
+      accumulatorString = accumulatorString.concat("<td> Standard values to be used for judging page size</td>" +
+        "<td>" + mobileTimeFirstPaintInSeconds + "s</td>" +
+        "<td>" + mobileAboveTheFoldCompleteInSec + "</td>" +
+        "<td>" + mobileMBInDocComplete + "MB</td>" +
+        "<td>" + mobileSuccessCount + " urls Tested Successfully</td></tr>"
+      )
+    }
+  }
+
+  override val formattedHTMLResultString: String = accumulatorString
+}
+

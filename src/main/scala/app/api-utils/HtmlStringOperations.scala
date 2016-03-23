@@ -99,7 +99,7 @@ class HtmlStringOperations(average: String, warning: String, alert: String, live
   }
 
   def interactiveTable: String = {
-    hTMLSimpleTableHeaders
+    hTMLInteractiveTableHeaders
   }
 
   def closeTable: String = {
