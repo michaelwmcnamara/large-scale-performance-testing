@@ -85,7 +85,17 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   }
 
   def toHTMLAlertMessageCells(): String = {
-    "<td><a href=" + testUrl + ">" + testUrl + "</a>" + "</td>" + "<td>" + typeOfTest + "</td>" + "<td>"+ genTestResultString() +"</td>" +
+    //Email
+    //tags with inline styles for email
+    val pEmailTag: String = "<p style=\"-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: border-box;orphans: 3;widows: 3;margin: 0 0 10px;\">"
+    val tableNormalRowEmailTag: String = "<tr style=\"background-color: ;-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: border-box;page-break-inside: avoid;\" #d9edf7\";\">"
+    val tableNormalCellEmailTag: String = "<td style=\"-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: border-box;padding: 0;background-color: #fff!important;\">"
+
+    val aHrefEmailStyle: String = "style=\"-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: border-box;background-color: transparent;color: #337ab7;text-decoration: underline;\""
+
+
+
+    tableNormalCellEmailTag + "<a href=" + testUrl + aHrefEmailStyle + ">" + testUrl + "</a>" + "</td>" + tableNormalCellEmailTag + typeOfTest + "</td>" + tableNormalCellEmailTag + genTestResultString() +"</td>" +
     "<tr>List of 5 heaviest elements on page - Recommend reviewing these items </tr>" +
     "<tr><td>Resource</td><td>Content Type</td><td>Bytes Transferred</td></tr>" +
       heavyElementList.map(element => element.alertHTMLString()).mkString
