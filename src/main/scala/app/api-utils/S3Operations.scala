@@ -54,7 +54,7 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
   }
 
   def getEmailAddresses: Array[List[String]] = {
-    println(DateTime.now + " retrieving config from S3 bucket: " + bucket)
+    println(DateTime.now + " retrieving email file from S3 bucket: " + bucket)
 
     println("Obtaining list of emails: " + emailFileName + " from S3")
     val s3Object = s3Client.getObject(new GetObjectRequest(bucket, emailFileName))
@@ -85,6 +85,62 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
 
   }
 
+  def getUrls(fileName: String): List[String] = {
+    println(DateTime.now + " retrieving url file from S3 bucket: " + bucket)
+
+    println("Obtaining list of urls: " + fileName + " from S3")
+    val s3Object = s3Client.getObject(new GetObjectRequest(bucket, fileName))
+    val objectData = s3Object.getObjectContent
+
+    println("Converting to string")
+    val configString = scala.io.Source.fromInputStream(objectData).mkString
+
+    println("calling parseString on ConfigFactory object")
+    val conf = ConfigFactory.parseString(configString)
+    println("conf: \n" + conf)
+
+    println("returning config object")
+    val interactives = conf.getStringList("sample.large.interactives").toList
+    if (interactives.nonEmpty){
+      println(DateTime.now + " Config retrieval successful. \n You have retrieved the following users\n" + interactives)
+      interactives
+    }
+    else {
+      println(DateTime.now + " ERROR: Problem retrieving config file - one or more parameters not retrieved")
+      s3Client.shutdown()
+      val emptyList: List[String] = List()
+      emptyList
+    }
+
+  }
+
+/*  def getliveBlogList(fileName: String): List[String] = {
+    println(DateTime.now + " retrieving url file from S3 bucket: " + bucket)
+
+    println("Obtaining list of urls: " + fileName + " from S3")
+    val s3Object = s3Client.getObject(new GetObjectRequest(bucket, fileName))
+    val objectData = s3Object.getObjectContent
+
+    println("Converting to string")
+    val configString = scala.io.Source.fromInputStream(objectData).mkString
+
+    println("calling parseString on ConfigFactory object")
+    val conf = ConfigFactory.parseString(configString)
+    println("conf: \n" + conf)
+
+    println("returning config object")
+    val interactives = conf.getStringList("sample.large.interactives").toList
+    if (interactives.nonEmpty){
+      println(DateTime.now + " Config retrieval successful. \n You have retrieved the following users\n" + interactives)
+      interactives
+    }
+    else {
+      println(DateTime.now + " ERROR: Problem retrieving config file - one or more parameters not retrieved")
+      s3Client.shutdown()
+      List()
+    }
+
+  }*/
 
   def writeFileToS3(fileName:String, outputString: String): Unit ={
     println(DateTime.now + " Writing the following to S3:\n" + outputString + "\n")

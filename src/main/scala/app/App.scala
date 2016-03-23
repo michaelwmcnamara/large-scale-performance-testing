@@ -29,6 +29,7 @@ object App {
     val s3BucketName = "capi-wpt-querybot"
     val configFileName = "config.conf"
     val emailFileName = "addresses.conf"
+    val interactiveSampleFileName = "interactivesamples.conf"
 
     val outputFileName = "liveBlogPerformanceData.html"
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
@@ -70,32 +71,9 @@ object App {
     var liveBlogAlertMessageBody: String = ""
     var interactiveAlertMessageBody: String = ""
     var frontsAlertMessageBody: String = ""
-
-    //Initialise List of sample items to be used to make alerting levels for different content types
-    val listofLargeInteractives: List[String] = List("http://www.theguardian.com/us-news/2015/sep/01/moving-targets-police-shootings-vehicles-the-counted",
-      "http://www.theguardian.com/world/ng-interactive/2015/nov/14/paris-attacks-what-we-know-so-far",
-      "http://www.theguardian.com/society/ng-interactive/2015/sep/02/unaffordable-country-where-can-you-afford-to-buy-a-house",
-    "http://www.theguardian.com/us-news/ng-interactive/2015/sep/21/building-the-atom-bomb-the-full-story-of-the-nevada-test-site",
-      "http://www.theguardian.com/us-news/2016/feb/04/san-francisco-then-and-now-super-bowl-50")
-
+    
     val interactiveItemLabel: String = "Interactive"
 
-    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
-      "http://www.theguardian.com/us",
-      "http://www.theguardian.com/au",
-      "http://www.theguardian.com/uk-news",
-      "http://www.theguardian.com/world",
-      "http://www.theguardian.com/politics",
-      "http://www.theguardian.com/uk/sport",
-      "http://www.theguardian.com/football",
-      "http://www.theguardian.com/uk/commentisfree",
-      "http://www.theguardian.com/uk/culture",
-      "http://www.theguardian.com/uk/business",
-      "http://www.theguardian.com/uk/lifeandstyle",
-      "http://www.theguardian.com/fashion",
-      "http://www.theguardian.com/uk/environment",
-      "http://www.theguardian.com/uk/technology",
-      "http://www.theguardian.com/travel")
 
     // var articleCSVResults: String = ""
     //  var liveBlogCSVResults: String = ""
@@ -108,10 +86,6 @@ object App {
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
     val s3Interface = new S3Operations(s3BucketName, configFileName, emailFileName)
     var configArray: Array[String] = Array("", "", "", "", "", "")
-
-    val emailAddresses: Array[List[String]] = s3Interface.getEmailAddresses
-    val generalAlertsAddressList: List[String] = emailAddresses(0)
-    val interactiveAlertsAddressList: List[String] = emailAddresses(1)
 
     //Get config settings
     println("Extracting configuration values")
@@ -143,6 +117,15 @@ object App {
     val emailUsername: String = configArray(4)
     val emailPassword: String = configArray(5)
 
+    //obtain list of email addresses for alerting
+    val emailAddresses: Array[List[String]] = s3Interface.getEmailAddresses
+    val generalAlertsAddressList: List[String] = emailAddresses(0)
+    val interactiveAlertsAddressList: List[String] = emailAddresses(1)
+
+    //obtain list of interactive samples to determine average size
+    val listofLargeInteractives: List[String] = s3Interface.getUrls(interactiveSampleFileName)
+
+
     //Create Email Handler class
     val emailer: EmailOperations = new EmailOperations(emailUsername, emailPassword)
 
@@ -151,6 +134,7 @@ object App {
     //get all content-type-lists
     val liveBlogUrls: List[String] = capiQuery.getLiveBlogUrls
     val interactiveUrls: List[String] = capiQuery.getInteractiveUrls
+    val listofFronts: List[String] = capiQuery.getFrontsUrls
     println(DateTime.now + " Closing Content API query connection")
     capiQuery.shutDown
 
