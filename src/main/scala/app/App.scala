@@ -253,9 +253,10 @@ object App {
     }
 
     if (liveBlogAlertList.nonEmpty || frontsAlertList.nonEmpty) {
+      println("\n\n liveBlogAlertList contains: " + liveBlogAlertList.length + " pages")
+      println("\n\n frontsAlertList contains: " + frontsAlertList.length + " pages")
       println("\n\n ***** \n\n" + "liveblog Alert body:\n" + liveBlogAlertMessageBody)
-      println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
-      println("\n\n ***** \n\n" + "fronts Alert Body:\n" + frontsAlertMessageBody)
+       println("\n\n ***** \n\n" + "fronts Alert Body:\n" + frontsAlertMessageBody)
       println("\n\n ***** \n\n" + "Full email Body:\n" + htmlString.generalAlertFullEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody, frontsAlertMessageBody))
       println("compiling and sending email")
       val emailSuccess = emailer.send(generalAlertsAddressList, htmlString.generalAlertFullEmailBody(liveBlogAlertMessageBody, interactiveAlertMessageBody,  frontsAlertMessageBody))
@@ -268,6 +269,7 @@ object App {
     }
 
     if (interactiveAlertList.nonEmpty) {
+      println("\n\n interactiveAlertList contains: " + interactiveAlertList.length + " pages")
       println("\n\n ***** \n\n" + "interactive Alert Body:\n" + interactiveAlertMessageBody)
       println("\n\n ***** \n\n" + "Full interactive email Body:\n" + htmlString.interactiveAlertFullEmailBody(interactiveAlertMessageBody))
       println("compiling and sending email")
