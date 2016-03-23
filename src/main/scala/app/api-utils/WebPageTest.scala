@@ -27,7 +27,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       println("Results returned")
       testResults
     }else {
-      val resultPage: String = sendPage(gnmPageUrl)
+      val resultPage: String = sendPageNoAds(gnmPageUrl)
       println("Accessing results at: " + resultPage)
       val testResults: PerformanceResultsObject = getResults(resultPage)
       println("Results returned")
@@ -43,14 +43,31 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       val testResults: PerformanceResultsObject = getResults(resultPage)
       testResults
     }else {
-      val resultPage: String = sendMobile3GPage(gnmPageUrl, wptLocation)
+      val resultPage: String = sendMobile3GPageNoAds(gnmPageUrl, wptLocation)
       println("Accessing results at: " + resultPage)
       val testResults: PerformanceResultsObject = getResults(resultPage)
       testResults
     }
   }
 
-  def sendPage(gnmPageUrl:String): String = {
+  def sendPageAds(gnmPageUrl:String): String = {
+    println("Forming desktop webpage test query")
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&script =navigate  " + gnmPageUrl
+    val request: Request = new Request.Builder()
+      .url(getUrl)
+      .get()
+      .build()
+
+    println("sending request: " + request.toString)
+    val response: Response = httpClient.newCall(request).execute()
+    val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
+    println("response received: \n" + responseXML.text)
+    val resultPage: String =  (responseXML \\ "xmlUrl").text
+    println(resultPage)
+    resultPage
+  }
+
+  def sendPageNoAds(gnmPageUrl:String): String = {
     println("Forming desktop webpage test query")
     val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&script =navigate  " + gnmPageUrl + "#noads"
     val request: Request = new Request.Builder()
@@ -84,8 +101,23 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     resultPage
   }
 
+  def sendMobile3GPageAds(gnmPageUrl:String, wptLocation: String): String = {
+    println("Forming mobile 3G webpage test query")
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&script =navigate  " + gnmPageUrl
+    val request: Request = new Request.Builder()
+      .url(getUrl)
+      .get()
+      .build()
 
-  def sendMobile3GPage(gnmPageUrl:String, wptLocation: String): String = {
+    println("sending request: " + request.toString)
+    val response: Response = httpClient.newCall(request).execute()
+    val responseXML: Elem = scala.xml.XML.loadString(response.body.string)
+    println("response received: \n" + responseXML.text)
+    val resultPage: String =  (responseXML \\ "xmlUrl").text
+    resultPage
+  }
+
+  def sendMobile3GPageNoAds(gnmPageUrl:String, wptLocation: String): String = {
     println("Forming mobile 3G webpage test query")
     val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&script =navigate  " + gnmPageUrl + "#noads"
     val request: Request = new Request.Builder()
@@ -160,6 +192,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   def refineResults(rawXMLResult: Elem, elementsList: List[PageElementFromHTMLTableRow]): PerformanceResultsObject = {
     println("parsing the XML results")
     val testUrl: String = (rawXMLResult \\ "response" \ "data" \ "testUrl").text.toString
+    lazy val adsDisplayed: Boolean = !testUrl.contains("#noads")
     val testType: String = if((rawXMLResult \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
     val timeToFirstByte: Int = (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "TTFB").text.toInt
     val firstPaint: Int = (rawXMLResult \\ "response" \ "data" \ "run" \ "firstView" \ "results" \ "firstPaint").text.toInt
@@ -177,7 +210,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     val status: String = "Test Success"
 
     println("Creating PerformanceResultsObject")
-    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
+    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, adsDisplayed, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
     val trimmedElementList = trimToEditorialElements(elementsList)
     val sortedElementList = sortPageElementList(trimmedElementList)
     result.populateHeavyElementList(sortedElementList)
@@ -265,6 +298,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println("parsing the XML results")
     val testUrl: String = (rawXMLResult \\ "response" \ "data" \ "testUrl").text.toString
     val testType: String = if((rawXMLResult \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
+    lazy val adsDisplayed: Boolean = !testUrl.contains("#noads")
     val timeToFirstByte: Int = (rawXMLResult \\ "response" \ "data" \ "median" \ "firstView" \ "TTFB").text.toInt
     val firstPaint: Int = (rawXMLResult \\ "response" \ "data" \ "median" \ "firstView" \ "firstPaint").text.toInt
     println ("firstPaint = " + firstPaint)
@@ -280,7 +314,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     println ("SpeedIndex = " + speedIndex)
     val status: String = "Test Success"
     println("Creating PerformanceResultsObject")
-    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
+    val result: PerformanceResultsObject = new PerformanceResultsObject(testUrl, testType, adsDisplayed, timeToFirstByte, firstPaint, docTime, bytesInDoc, fullyLoadedTime, totalbytesIn, speedIndex, status, false, false, false)
     result.fullElementList = elementsList
     val sortedElementList = sortPageElementList(elementsList)
     result.populateHeavyElementList(sortedElementList)
@@ -340,17 +374,19 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   def failedTestNoSuccessfulRuns(url: String, rawResults: Elem): PerformanceResultsObject = {
     val failIndicator: Int = -1
     val testType: String = if((rawResults \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
+    lazy val adsDisplayed: Boolean = !url.contains("#noads")
     val failComment: String = "No successful runs of test"
-    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, false, false, true)
+    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, adsDisplayed ,failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, false, false, true)
     failElement
   }
 
   def failedTestTimeout(url: String, rawResults: Elem): PerformanceResultsObject = {
     val failIndicator: Int = -1
     val testType: String = if((rawResults \\ "response" \ "data" \ "from").text.toString.contains("Emulated Nexus 5")){"Android/3G"}else{"Desktop"}
+    lazy val adsDisplayed: Boolean = !url.contains("#noads")
     val failComment: String = "Test request timed out"
     // set warning status as result may have timed out due to very large page
-    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, true, true, true)
+    val failElement: PerformanceResultsObject = new PerformanceResultsObject(url, testType, adsDisplayed ,failIndicator, failIndicator,failIndicator,failIndicator,failIndicator,failIndicator,failIndicator, failComment, true, true, true)
     failElement
   }
 

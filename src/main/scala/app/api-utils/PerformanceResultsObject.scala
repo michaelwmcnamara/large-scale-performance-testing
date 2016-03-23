@@ -8,10 +8,11 @@ import scala.xml.Elem
 /**
  * Created by mmcnamara on 10/02/16.
  */
-class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String, warning: Boolean, alert: Boolean, failedNeedsRetest: Boolean) {
+class PerformanceResultsObject(url:String, testType: String, ads:Boolean, tTFB: Int, tFP:Int, tDC: Int, bDC: Int, tFL: Int, bFL: Int, sI: Int, status: String, warning: Boolean, alert: Boolean, failedNeedsRetest: Boolean) {
   val timeOfTest: String = DateTime.now().toString
   val testUrl: String = url
   val typeOfTest: String = testType
+  val adsDisplayed: Boolean = ads
   val timeToFirstByte: Int = tTFB
   val timeFirstPaintInMs: Int = tFP
   val timeFirstPaintInSec: Double = roundAt(3)(timeFirstPaintInMs/1000)
@@ -69,7 +70,7 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
   }
 
   def toCSVString(): String = {
-    testUrl.toString + "," + timeOfTest + "," + resultStatus + "," +  timeFirstPaintInMs.toString + "," + timeDocCompleteInMs + "," + bytesInDocComplete + "," + timeFullyLoadedInMs + "," + bytesInFullyLoaded + "," + speedIndex + "," + heavyElementList.map(element => "," + element.resource + "," + element.contentType + "," + element.bytesDownloaded ).mkString + fillRemainingGapsAndNewline()
+    testUrl.toString + "," + timeOfTest + "," + typeOfTest + "," + adsDisplayed + "," + resultStatus + "," +  timeFirstPaintInMs.toString + "," + timeDocCompleteInMs + "," + bytesInDocComplete + "," + timeFullyLoadedInMs + "," + bytesInFullyLoaded + "," + speedIndex + "," + heavyElementList.map(element => "," + element.resource + "," + element.contentType + "," + element.bytesDownloaded ).mkString + fillRemainingGapsAndNewline()
   }
 
   def toFullHTMLTableCells(): String = {
@@ -96,8 +97,8 @@ class PerformanceResultsObject(url:String, testType: String, tTFB: Int, tFP:Int,
 
 
     tableNormalCellEmailTag + "<a href=" + testUrl + aHrefEmailStyle + ">" + testUrl + "</a>" + "</td>" + tableNormalCellEmailTag + typeOfTest + "</td>" + tableNormalCellEmailTag + genTestResultString() +"</td>" +
-    "<tr>List of 5 heaviest elements on page - Recommend reviewing these items </tr>" +
-    "<tr><td>Resource</td><td>Content Type</td><td>Bytes Transferred</td></tr>" +
+    tableNormalRowEmailTag +"List of 5 heaviest elements on page - Recommend reviewing these items </tr>" +
+      tableNormalRowEmailTag + tableNormalCellEmailTag + "Resource" + "</td>" + tableNormalCellEmailTag + "Content Type" + "</td>" + "<td>" + "Bytes Transferred" + "</td>" + "</tr>" +
       heavyElementList.map(element => element.alertHTMLString()).mkString
   }
 
