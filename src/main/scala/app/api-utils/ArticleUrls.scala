@@ -170,11 +170,38 @@ class ArticleUrls(key: String) {
     liveBlogUrlString
   }
 
+
   def getFrontsUrls: List[String] = {
     val listofFronts: List[String] = List("http://www.theguardian.com/uk",
       "http://www.theguardian.com/us",
       "http://www.theguardian.com/au",
+      "http://www.theguardian.com/international",
       "http://www.theguardian.com/uk-news",
+      "http://www.theguardian.com/world",
+      "http://www.theguardian.com/politics",
+      "http://www.theguardian.com/uk/sport",
+      "http://www.theguardian.com/football",
+      "http://www.theguardian.com/uk/commentisfree",
+      "http://www.theguardian.com/uk/culture",
+      "http://www.theguardian.com/uk/business",
+      "http://www.theguardian.com/uk/lifeandstyle",
+      "http://www.theguardian.com/fashion",
+      "http://www.theguardian.com/uk/environment",
+      "http://www.theguardian.com/uk/technology",
+      "http://www.theguardian.com/travel")
+    listofFronts
+  }
+
+  def getNetworkFrontUrls: List[String] = {
+    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
+      "http://www.theguardian.com/us",
+      "http://www.theguardian.com/au",
+      "http://www.theguardian.com/international")
+    listofFronts
+  }
+
+  def getSectionFrontsUrls: List[String] = {
+    val listofFronts: List[String] = List("http://www.theguardian.com/uk-news",
       "http://www.theguardian.com/world",
       "http://www.theguardian.com/politics",
       "http://www.theguardian.com/uk/sport",

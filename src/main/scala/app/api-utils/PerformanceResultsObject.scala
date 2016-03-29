@@ -12,7 +12,7 @@ class PerformanceResultsObject(url:String, testType: String, ads:Boolean, tTFB: 
   val timeOfTest: String = DateTime.now().toString
   val testUrl: String = url
   val typeOfTest: String = testType
-  val adsDisplayed: Boolean = ads
+  var adsDisplayed: Boolean = ads
   val timeToFirstByte: Int = tTFB
   val timeFirstPaintInMs: Int = tFP
   val timeFirstPaintInSec: Double = roundAt(3)(timeFirstPaintInMs.toDouble/1000)
