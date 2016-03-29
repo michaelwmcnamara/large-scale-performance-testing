@@ -162,7 +162,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     var iterator: Int = 0
     val msmaxTime: Int = 16000000
     val msTimeBetweenPings: Int = 30000
-    val maxCount: Int = msmaxTime / msTimeBetweenPings
+    val maxCount: Int = roundAt(0)(msmaxTime.toDouble / msTimeBetweenPings).toInt
     while (((testResults \\ "statusCode").text.toInt != 200) && (iterator < maxCount)) {
       println(DateTime.now + " " + (testResults \\ "statusCode").text + " statusCode response - test not ready. " + iterator + " of " + maxCount + " attempts\n")
       Thread.sleep(msTimeBetweenPings)
@@ -176,7 +176,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       response = httpClient.newCall(request).execute()
       testResults = scala.xml.XML.loadString(response.body.string)
       if ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0) {
-        println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator + 1) * msTimeBetweenPings) / 1000 + " seconds\n Refining results")
+        println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator + 1) * msTimeBetweenPings).toDouble / 1000 + " seconds\n Refining results")
         val elementsList: List[PageElementFromHTMLTableRow] = obtainPageRequestDetails(resultUrl)
         refineResults(testResults, elementsList)
       } else {
@@ -184,7 +184,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
         failedTestNoSuccessfulRuns(resultUrl, testResults)
       }
     } else {
-      println(DateTime.now + " Test timed out after " + ((iterator + 1) * msTimeBetweenPings) / 1000 + " seconds")
+      println(DateTime.now + " Test timed out after " + ((iterator + 1) * msTimeBetweenPings).toDouble / 1000 + " seconds")
       failedTestTimeout(resultUrl, testResults)
     }
   }
@@ -267,7 +267,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
     var iterator: Int = 0
     val msmaxTime: Int = 1200000
     val msTimeBetweenPings: Int = 30000
-    val maxCount: Int = msmaxTime / msTimeBetweenPings
+    val maxCount: Int = roundAt(0)(msmaxTime.toDouble / msTimeBetweenPings).toInt
     while (((testResults \\ "statusCode").text.toInt != 200) && (iterator < maxCount)) {
       println(DateTime.now + " " + (testResults \\ "statusCode").text + " statusCode response - test not ready. " + iterator + " of " + maxCount + " attempts\n")
       Thread.sleep(msTimeBetweenPings)
@@ -281,7 +281,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
       response = httpClient.newCall(request).execute()
       testResults = scala.xml.XML.loadString(response.body.string)
       if ((testResults \\ "response" \ "data" \ "successfulFVRuns").text.toInt > 0) {
-        println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator + 1) * msTimeBetweenPings) / 1000 + " seconds\n Refining results")
+        println("\n" + DateTime.now + " statusCode == 200: Page ready after " + ((iterator + 1) * msTimeBetweenPings).toDouble / 1000 + " seconds\n Refining results")
         val elementsList: List[PageElementFromHTMLTableRow] = obtainPageRequestDetails(resultUrl)
         refineMultipleResults(testResults, elementsList)
       } else {
@@ -289,7 +289,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
         failedTestNoSuccessfulRuns(resultUrl, testResults)
       }
     } else {
-      println(DateTime.now + " Test timed out after " + ((iterator + 1) * msTimeBetweenPings) / 1000 + " seconds")
+      println(DateTime.now + " Test timed out after " + ((iterator + 1) * msTimeBetweenPings).toDouble / 1000 + " seconds")
       failedTestTimeout(resultUrl, testResults)
     }
   }
@@ -393,6 +393,8 @@ class WebPageTest(baseUrl: String, passedKey: String) {
   def sortPageElementList(elementList: List[PageElementFromHTMLTableRow]):List[PageElementFromHTMLTableRow] = {
     elementList.sortWith(_.bytesDownloaded > _.bytesDownloaded)
   }
+
+  def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s }
 
 }
 
