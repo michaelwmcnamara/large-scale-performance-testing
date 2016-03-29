@@ -142,12 +142,13 @@ object App {
 
     // send all urls to webpagetest at once to enable parallel testing by test agents
     val urlsToSend: List[String] = (articleUrls ::: liveBlogUrls ::: interactiveUrls ::: listofFronts).distinct
+    //val urlsToSend: List[String] = (articleUrls).distinct
     println("Combined list of urls: \n" + urlsToSend)
-    val resultUrlList: List[(String, String)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation)
+    val resultUrlList: List[(String, String, Boolean)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation)
 
     if (articleUrls.nonEmpty) {
       println("Generating average values for articles")
-      val articleResultsList = listenForResultPages(articleUrls, resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val articleResultsList = listenForResultPages(articleUrls, "article", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
       val articleCSVList: List[String] = articleResultsList.map(x => x.toCSVString())
       // write article results to string
       articleCSVResults = articleCSVResults.concat(articleCSVList.mkString)
@@ -173,7 +174,7 @@ object App {
 
     if (liveBlogUrls.nonEmpty) {
       println("Generating average values for liveblogs")
-      val liveBlogResultsList = listenForResultPages(liveBlogUrls, resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val liveBlogResultsList = listenForResultPages(liveBlogUrls, "liveblog",resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
       val liveBlogCSVList: List[String] = liveBlogResultsList.map(x => x.toCSVString())
       // write liveblog results to string
       liveBlogCSVResults = liveBlogCSVResults.concat(liveBlogCSVList.mkString)
@@ -198,7 +199,7 @@ object App {
 
     if (interactiveUrls.nonEmpty) {
       println("Generating average values for interactives")
-      val interactiveResultsList = listenForResultPages(interactiveUrls, resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val interactiveResultsList = listenForResultPages(interactiveUrls, "interactive", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
       val interactiveCSVList: List[String] = interactiveResultsList.map(x => x.toCSVString())
       // write interactive results to string
       interactiveCSVResults = interactiveCSVResults.concat(interactiveCSVList.mkString)
@@ -223,7 +224,7 @@ object App {
 
     if (listofFronts.nonEmpty) {
       println("Generating average values for liveblogs")
-      val frontsResultsList = listenForResultPages(listofFronts, resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val frontsResultsList = listenForResultPages(listofFronts, "front",resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
       val frontsCSVList: List[String] = frontsResultsList.map(x => x.toCSVString())
       // write fronts results to string
       frontsCSVResults = frontsCSVResults.concat(frontsCSVList.mkString)
@@ -252,30 +253,33 @@ object App {
   }
 
 
-  def getResultPages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[(String,String)] = {
+  def getResultPages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[(String,String, Boolean)] = {
     val wpt: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
-    val desktopResultsAds: List[(String, String)] = urlList.map(page => { (page, wpt.sendPageAds(page)) })
-    val desktopResultsNoAds: List[(String, String)] = urlList.map(page => { (page, wpt.sendPageNoAds(page)) })
-    val mobileResultsAds: List[(String, String)] = urlList.map(page => { (page, wpt.sendMobile3GPageAds(page, wptLocation)) })
-    val mobileResultsNoAds: List[(String, String)] = urlList.map(page => { (page, wpt.sendMobile3GPageNoAds(page, wptLocation)) })
+    val ads: Boolean = true
+    val noAds: Boolean = false
+    val desktopResultsAds: List[(String, String, Boolean)] = urlList.map(page => { (page, wpt.sendPageAds(page), ads) })
+    val desktopResultsNoAds: List[(String, String, Boolean)] = urlList.map(page => { (page, wpt.sendPageNoAds(page), noAds) })
+    val mobileResultsAds: List[(String, String, Boolean)] = urlList.map(page => { (page, wpt.sendMobile3GPageAds(page, wptLocation), ads) })
+    val mobileResultsNoAds: List[(String, String, Boolean)] = urlList.map(page => { (page, wpt.sendMobile3GPageNoAds(page, wptLocation), noAds) })
     desktopResultsAds ::: desktopResultsNoAds ::: mobileResultsAds ::: mobileResultsNoAds
   }
 
-  def listenForResultPages(capiUrls: List[String], resultUrlList: List[(String, String)], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[PerformanceResultsObject] = {
+  def listenForResultPages(capiUrls: List[String], contentType: String, resultUrlList: List[(String, String, Boolean)], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[PerformanceResultsObject] = {
     println("ListenForResultPages called with: \n\n" +
       " List of Urls: \n" + capiUrls.mkString +
       "\n\nList of WebPage Test results: \n" + resultUrlList.mkString)
 
     val listenerList: List[WptResultPageListener] = capiUrls.flatMap(url => {
-      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, "LiveBlog", element._2)
+      for (element <- resultUrlList if element._1 == url) yield new WptResultPageListener(element._1, contentType, element._3, element._2)
     })
 
     println("Listener List created: \n" + listenerList.map(element => "list element: \n"+ "url: " + element.pageUrl + "\n" + "resulturl" + element.wptResultUrl + "\n"))
 
     val liveBlogResultsList: ParSeq[WptResultPageListener] = listenerList.par.map(element => {
       val wpt = new WebPageTest(wptBaseUrl, wptApiKey)
-      val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.wptResultUrl)
+      val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.ads, element.wptResultUrl)
       newElement.testResults = wpt.getResults(newElement.wptResultUrl)
+      newElement.testResults.adsDisplayed = newElement.ads
       newElement
     })
     val testResults: List[PerformanceResultsObject] = liveBlogResultsList.map(element => element.testResults).toList

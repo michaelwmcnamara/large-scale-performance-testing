@@ -52,7 +52,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendPageAds(gnmPageUrl:String): String = {
     println("Forming desktop webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&script =navigate  " + gnmPageUrl
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
@@ -69,7 +69,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendPageNoAds(gnmPageUrl:String): String = {
     println("Forming desktop webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&script =navigate  " + gnmPageUrl + "#noads"
+    val getUrl: String = apiBaseUrl + "/runtest.php?" + "&f=" + wptResponseFormat + "&k=" + apiKey + "&url=" + gnmPageUrl + "#noads"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
@@ -103,7 +103,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendMobile3GPageAds(gnmPageUrl:String, wptLocation: String): String = {
     println("Forming mobile 3G webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&script =navigate  " + gnmPageUrl
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
@@ -119,7 +119,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendMobile3GPageNoAds(gnmPageUrl:String, wptLocation: String): String = {
     println("Forming mobile 3G webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&script =navigate  " + gnmPageUrl + "#noads"
+    val getUrl: String = apiBaseUrl + "/runtest.php?" + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&url=" + gnmPageUrl + "#noads"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
@@ -135,7 +135,7 @@ class WebPageTest(baseUrl: String, passedKey: String) {
 
   def sendHighPriorityMobile3GPage(gnmPageUrl:String, wptLocation: String): String = {
     println("Forming mobile 3G webpage test query")
-    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&priority=1" + "&script =navigate  " + gnmPageUrl + "#noads"
+    val getUrl: String = apiBaseUrl + "/runtest.php?url=" + gnmPageUrl + "&f=" + wptResponseFormat + "&k=" + apiKey + "&mobile=1&mobileDevice=Nexus5&location=" + wptLocation + ":Chrome.3G" + "&priority=1"
     val request: Request = new Request.Builder()
       .url(getUrl)
       .get()
