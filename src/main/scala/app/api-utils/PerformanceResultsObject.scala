@@ -70,7 +70,7 @@ class PerformanceResultsObject(url:String, testType: String, ads:Boolean, tTFB: 
   }
 
   def toCSVString(): String = {
-    testUrl.toString + "," + timeOfTest + "," + typeOfTest + "," + adsDisplayed + "," + resultStatus + "," +  timeFirstPaintInMs.toString + "," + timeDocCompleteInMs + "," + bytesInDocComplete + "," + timeFullyLoadedInMs + "," + bytesInFullyLoaded + "," + speedIndex + "," + genTestResultString() + "," + heavyElementList.map(element => "," + element.resource + "," + element.contentType + "," + element.bytesDownloaded ).mkString + fillRemainingGapsAndNewline()
+    testUrl.toString + "," + timeOfTest + "," + typeOfTest + "," + adsDisplayed + "," + resultStatus + "," +  timeFirstPaintInMs.toString + "," + timeDocCompleteInMs + "," + bytesInDocComplete + "," + timeFullyLoadedInMs + "," + bytesInFullyLoaded + "," + speedIndex + "," + heavyElementList.map(element => "," + element.resource + "," + element.contentType + "," + element.bytesDownloaded ).mkString + fillRemainingGapsAndNewline()
   }
 
   def toFullHTMLTableCells(): String = {
