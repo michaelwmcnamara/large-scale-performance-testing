@@ -75,7 +75,7 @@ object App {
     
     val interactiveItemLabel: String = "Interactive"
 */
-    val csvHeaders: String = "Url, Time of Test, Type of Test, Ads Displayed, Result Status, Time to First Paint (ms), Time to Doc Complete (ms), Bytes In Doc Complete (ms), timeFullyLoaded (ms), Bytes In Fully Loaded (ms), Speed Index (ms), Element1 - Resource, Element1 - ContentType, Element1 - Bytes Downloaded,  Element2 - Resource, Element2 - ContentType, Element2 - Bytes Downloaded,  Element3 - Resource, Element3 - ContentType, Element3 - Bytes Downloaded,  Element4 - Resource, Element4 - ContentType, Element4 - Bytes Downloaded,  Element5 - Resource, Element5 - ContentType, Element5 - Bytes Downloaded"
+    val csvHeaders: String = "Url, Time of Test, Type of Test, Ads Displayed, Result Status, Time to First Paint (ms), Time to Doc Complete (ms), Bytes In Doc Complete (ms), timeFullyLoaded (ms), Bytes In Fully Loaded (ms), Speed Index (ms), Full Results, Element1 - Resource, Element1 - ContentType, Element1 - Bytes Downloaded,  Element2 - Resource, Element2 - ContentType, Element2 - Bytes Downloaded,  Element3 - Resource, Element3 - ContentType, Element3 - Bytes Downloaded,  Element4 - Resource, Element4 - ContentType, Element4 - Bytes Downloaded,  Element5 - Resource, Element5 - ContentType, Element5 - Bytes Downloaded"
     val summaryHeaders: String = "Content Type, Ads Displayed, Avg Time to First Paint (ms), Avg Time to Doc Complete (ms), Avg Bytes In Doc Complete (ms), Avg timeFullyLoaded (ms), Avg Bytes In Fully Loaded (ms), Avg Speed Index (ms)"
     var articleCSVResults: String = csvHeaders
     var liveBlogCSVResults: String = csvHeaders
