@@ -35,7 +35,7 @@ class ArticleUrls(key: String) {
 
   def getMinByMinUrls: List[String] = {
     val until = DateTime.now
-    val from = until.minusHours(96)
+    val from = until.minusDays(7)
 
     val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)
@@ -63,7 +63,7 @@ class ArticleUrls(key: String) {
 
   def getInteractiveUrls: List[String] = {
     val until = DateTime.now
-    val from = until.minusHours(96)
+    val from = until.minusDays(30)
 
     val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)
@@ -90,7 +90,7 @@ class ArticleUrls(key: String) {
 
   def getVideoUrls: List[String] = {
     val until = DateTime.now
-    val from = until.minusHours(96)
+    val from = until.minusDays(7)
 
     val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)
@@ -117,7 +117,7 @@ class ArticleUrls(key: String) {
 
   def getAudioUrls: List[String] = {
     val until = DateTime.now
-    val from = until.minusHours(96)
+    val from = until.minusDays(7)
 
     val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)
@@ -145,7 +145,7 @@ class ArticleUrls(key: String) {
 
   def getArticleUrls: List[String] = {
     val until = DateTime.now
-    val from = until.minusHours(96)
+    val from = until.minusDays(2)
 
     val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)

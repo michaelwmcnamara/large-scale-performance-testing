@@ -5,7 +5,7 @@ package app
 import java.io._
 import java.util
 
-import app.api.{WptResultPageListener, S3Operations}
+import app.api.{ResultsSummary, WptResultPageListener, S3Operations}
 import app.apiutils._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.DateTime
@@ -42,12 +42,13 @@ object App {
     val interactiveResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + interactiveOutputFilename
     val frontsResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + frontsOutputFilename
 */
-    val articleCSVName = "accumulatedArticlePerformanceData.csv"
-    val liveBlogCSVName = "accumulatedLiveblogPerformanceData.csv"
-    val interactiveCSVName = "accumulatedInteractivePerformanceData.csv"
-    val videoCSVName = "accumulatedVideoPerformanceData"
-    val audioCSVName = "accumulatedAudioPerformanceData"
-    val frontsCSVName = "accumulatedFrontsPerformanceData"
+    val articleCSVName = "accumulatedarticleperformancedata.csv"
+    val liveBlogCSVName = "accumulatedliveblogperformancedata.csv"
+    val interactiveCSVName = "accumulatedinteractiveperformancedata.csv"
+    val videoCSVName = "accumulatedvideoperformancedata.csv"
+    val audioCSVName = "accumulatedaudioperformancedata.csv"
+    val frontsCSVName = "accumulatedfrontsperformancedata.csv"
+    val summaryCSVFilename = "summaryofaccumulatedperformancedata.csv"
 
 
 
@@ -74,13 +75,23 @@ object App {
     
     val interactiveItemLabel: String = "Interactive"
 */
-     val csvHeaders: String = "Url, Time of Test, Type of Test, Ads Displayed, Result Status, Time to First Paint (ms), Time to Doc Complete (ms), Bytes In Doc Complete (ms), timeFullyLoaded (ms), Bytes In Fully Loaded (ms), Speed Index (ms), Element1 - Resource, Element1 - ContentType, Element1 - Bytes Downloaded,  Element2 - Resource, Element2 - ContentType, Element2 - Bytes Downloaded,  Element3 - Resource, Element3 - ContentType, Element3 - Bytes Downloaded,  Element4 - Resource, Element4 - ContentType, Element4 - Bytes Downloaded,  Element5 - Resource, Element5 - ContentType, Element5 - Bytes Downloaded"
-     var articleCSVResults: String = csvHeaders
-      var liveBlogCSVResults: String = csvHeaders
-     var interactiveCSVResults: String = csvHeaders
-      var videoCSVResults: String = csvHeaders
-      var audioCSVResults: String = csvHeaders
-      var frontsCSVResults: String = csvHeaders
+    val csvHeaders: String = "Url, Time of Test, Type of Test, Ads Displayed, Result Status, Time to First Paint (ms), Time to Doc Complete (ms), Bytes In Doc Complete (ms), timeFullyLoaded (ms), Bytes In Fully Loaded (ms), Speed Index (ms), Full Results, Element1 - Resource, Element1 - ContentType, Element1 - Bytes Downloaded,  Element2 - Resource, Element2 - ContentType, Element2 - Bytes Downloaded,  Element3 - Resource, Element3 - ContentType, Element3 - Bytes Downloaded,  Element4 - Resource, Element4 - ContentType, Element4 - Bytes Downloaded,  Element5 - Resource, Element5 - ContentType, Element5 - Bytes Downloaded"
+    val summaryHeaders: String = "Content Type, Ads Displayed, Avg Time to First Paint (ms), Avg Time to Doc Complete (ms), Avg Bytes In Doc Complete (ms), Avg timeFullyLoaded (ms), Avg Bytes In Fully Loaded (ms), Avg Speed Index (ms)"
+    var articleCSVResults: String = csvHeaders
+    var liveBlogCSVResults: String = csvHeaders
+    var interactiveCSVResults: String = csvHeaders
+    var videoCSVResults: String = csvHeaders
+    var audioCSVResults: String = csvHeaders
+    var frontsCSVResults: String = csvHeaders
+
+    var fullsummaryCSVResults: String = ""
+    var articleSummaryCSV: String = ""
+    var liveBlogSummaryCSV: String = ""
+    var interactiveSummaryCSV: String = ""
+    var videoSummaryCSV: String = ""
+    var audioSummaryCSV: String = ""
+    var frontsSummaryCSV: String = ""
+
 
     //Create new S3 Client
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
@@ -135,13 +146,15 @@ object App {
     val articleUrls: List[String] = capiQuery.getArticleUrls
     val liveBlogUrls: List[String] = capiQuery.getMinByMinUrls
     val interactiveUrls: List[String] = capiQuery.getInteractiveUrls
-    val listofFronts: List[String] = capiQuery.getFrontsUrls
+    val videoUrls: List[String] = capiQuery.getVideoUrls
+    val audioUrls: List[String] = capiQuery.getAudioUrls
+    val frontsUrls: List[String] = capiQuery.getFrontsUrls
     println(DateTime.now + " Closing Content API query connection")
     capiQuery.shutDown
 
 
     // send all urls to webpagetest at once to enable parallel testing by test agents
-    val urlsToSend: List[String] = (articleUrls ::: liveBlogUrls ::: interactiveUrls ::: listofFronts).distinct
+    val urlsToSend: List[String] = (articleUrls ::: liveBlogUrls ::: interactiveUrls ::: frontsUrls).distinct
     //val urlsToSend: List[String] = (articleUrls).distinct
     println("Combined list of urls: \n" + urlsToSend)
     val resultUrlList: List[(String, String, Boolean)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation)
@@ -150,6 +163,8 @@ object App {
       println("Generating average values for articles")
       val articleResultsList = listenForResultPages(articleUrls, "article", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
       val articleCSVList: List[String] = articleResultsList.map(x => x.toCSVString())
+      val articleAverageResults = new ResultsSummary(articleResultsList)
+      articleSummaryCSV = articleAverageResults.generateCSVResultsTable("Article")
       // write article results to string
       articleCSVResults = articleCSVResults.concat(articleCSVList.mkString)
       //write article results to file
@@ -176,8 +191,10 @@ object App {
       println("Generating average values for liveblogs")
       val liveBlogResultsList = listenForResultPages(liveBlogUrls, "liveblog",resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
       val liveBlogCSVList: List[String] = liveBlogResultsList.map(x => x.toCSVString())
-      // write liveblog results to string
       liveBlogCSVResults = liveBlogCSVResults.concat(liveBlogCSVList.mkString)
+      val liveBlogAverageResults = new ResultsSummary(liveBlogResultsList)
+      liveBlogSummaryCSV = liveBlogAverageResults.generateCSVResultsTable("LiveBlog")
+
       //write liveblog results to file
       if (!iamTestingLocally) {
         println(DateTime.now + " Writing liveblog results to S3")
@@ -203,9 +220,12 @@ object App {
       val interactiveCSVList: List[String] = interactiveResultsList.map(x => x.toCSVString())
       // write interactive results to string
       interactiveCSVResults = interactiveCSVResults.concat(interactiveCSVList.mkString)
-      //write liveblog results to file
+      val interactiveAverageResults = new ResultsSummary(interactiveResultsList)
+      interactiveSummaryCSV = interactiveAverageResults.generateCSVResultsTable("Interactive")
+
+      //write interactive results to file
       if (!iamTestingLocally) {
-        println(DateTime.now + " Writing liveblog results to S3")
+        println(DateTime.now + " Writing interactive results to S3")
         s3Interface.writeFileToS3(interactiveCSVName, interactiveCSVResults)
       }
       else {
@@ -222,12 +242,70 @@ object App {
       println("CAPI query found no interactives")
     }
 
-    if (listofFronts.nonEmpty) {
+    if (videoUrls.nonEmpty) {
+      println("Generating average values for videos")
+      val videoResultsList = listenForResultPages(videoUrls, "video", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val videoCSVList: List[String] = videoResultsList.map(x => x.toCSVString())
+      // write video results to string
+      videoCSVResults = videoCSVResults.concat(videoCSVList.mkString)
+      val videoAverageResults = new ResultsSummary(videoResultsList)
+      videoSummaryCSV = videoAverageResults.generateCSVResultsTable("Video")
+
+      //write video results to file
+      if (!iamTestingLocally) {
+        println(DateTime.now + " Writing video results to S3")
+        s3Interface.writeFileToS3(videoCSVName, videoCSVResults)
+      }
+      else {
+        val outputWriter = new LocalFileOperations
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(videoCSVName, videoCSVResults)
+        if (writeSuccess != 0) {
+          println("problem writing local outputfile")
+          System exit 1
+        }
+      }
+      println("video Performance Test Complete")
+
+    } else {
+      println("CAPI query found no video")
+    }
+
+    if (audioUrls.nonEmpty) {
+      println("Generating average values for audio pages")
+      val audioResultsList = listenForResultPages(audioUrls, "audio", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val audioCSVList: List[String] = audioResultsList.map(x => x.toCSVString())
+      // write audio results to string
+      audioCSVResults = audioCSVResults.concat(audioCSVList.mkString)
+      val audioAverageResults = new ResultsSummary(audioResultsList)
+      audioSummaryCSV = audioAverageResults.generateCSVResultsTable("Audio")
+
+      //write audio results to file
+      if (!iamTestingLocally) {
+        println(DateTime.now + " Writing audio results to S3")
+        s3Interface.writeFileToS3(audioCSVName, audioCSVResults)
+      }
+      else {
+        val outputWriter = new LocalFileOperations
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(audioCSVName, audioCSVResults)
+        if (writeSuccess != 0) {
+          println("problem writing local outputfile")
+          System exit 1
+        }
+      }
+      println("audio Performance Test Complete")
+
+    } else {
+      println("CAPI query found no audio")
+    }
+
+    if (frontsUrls.nonEmpty) {
       println("Generating average values for liveblogs")
-      val frontsResultsList = listenForResultPages(listofFronts, "front",resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val frontsResultsList = listenForResultPages(frontsUrls, "front",resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
       val frontsCSVList: List[String] = frontsResultsList.map(x => x.toCSVString())
       // write fronts results to string
       frontsCSVResults = frontsCSVResults.concat(frontsCSVList.mkString)
+      val frontsAverageResults = new ResultsSummary(frontsResultsList)
+      frontsSummaryCSV = frontsAverageResults.generateCSVResultsTable("Front")
       //write fronts results to file
       if (!iamTestingLocally) {
         println(DateTime.now + " Writing liveblog results to S3")
@@ -247,7 +325,21 @@ object App {
       println("CAPI query found no fronts")
     }
 
-      println("Job complete")
+    fullsummaryCSVResults = articleSummaryCSV + liveBlogSummaryCSV + interactiveSummaryCSV + frontsSummaryCSV
+    if (!iamTestingLocally) {
+      println(DateTime.now + " Writing liveblog results to S3")
+      s3Interface.writeFileToS3(summaryCSVFilename, fullsummaryCSVResults)
+    }
+    else {
+      val outputWriter = new LocalFileOperations
+      val writeSuccess: Int = outputWriter.writeLocalResultFile(summaryCSVFilename, fullsummaryCSVResults)
+      if (writeSuccess != 0) {
+        println("problem writing local outputfile")
+        System exit 1
+      }
+    }
+
+    println("Job complete")
 
 
   }
@@ -368,20 +460,79 @@ object App {
     resultObject
   }
 
-  def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String, averageColor: String): PageAverageObject = {
-    val setHighPriority: Boolean = true
-    val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+  def getAverageResults(resultsList: List[PerformanceResultsObject]) = {
 
-    val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
-      val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
-      val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
-      val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
-      combinedResults
-    })
 
-    val pageAverages: PageAverageObject = new GeneratedInteractiveAverages(resultsList, averageColor)
-    pageAverages
+    val desktopAdsResultsList = for (element <- resultsList if element.typeOfTest.contains("Desktop") && !element.brokenTest && element.adsDisplayed) yield element
+    val mobileAdsResultsList = for (element <- resultsList if element.typeOfTest.contains("Android") && !element.brokenTest && element.adsDisplayed) yield element
+    val desktopNoAdsResultsList = for (element <- resultsList if element.typeOfTest.contains("Desktop") && !element.brokenTest && !element.adsDisplayed) yield element
+    val mobileNoAdsResultsList = for (element <- resultsList if element.typeOfTest.contains("Android") && !element.brokenTest && !element.adsDisplayed) yield element
+
+
+    val desktopAdsTimeToFirstByte: Int = desktopAdsResultsList.toSeq.map(_.timeToFirstByte).sum
+    val desktopAdsResultArray = Array(
+      (desktopAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/desktopAdsResultsList.length).toInt,
+      (desktopAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/desktopAdsResultsList.length).toInt)
+
+  val desktopNoAdsResultArray = Array(
+    (desktopNoAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/desktopNoAdsResultsList.length).toInt,
+    (desktopNoAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/desktopNoAdsResultsList.length).toInt)
+
+    val mobileAdsResultArray = Array(
+      (mobileAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/mobileAdsResultsList.length).toInt,
+      (mobileAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/mobileAdsResultsList.length).toInt)
+
+    val mobileNoAdsResultArray = Array(
+      (mobileNoAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/mobileNoAdsResultsList.length).toInt,
+      (mobileNoAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/mobileNoAdsResultsList.length).toInt)
+
+
   }
+
+
+
+/*def generatePageAverages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, itemtype: String, averageColor: String): PageAverageObject = {
+  val setHighPriority: Boolean = true
+  val webpageTest: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+
+  val resultsList: List[Array[PerformanceResultsObject]] = urlList.map(url => {
+    val webPageDesktopTestResults: PerformanceResultsObject = webpageTest.desktopChromeCableTest(url, setHighPriority)
+    val webPageMobileTestResults: PerformanceResultsObject = webpageTest.mobileChrome3GTest(url, wptLocation, setHighPriority)
+    val combinedResults = Array(webPageDesktopTestResults, webPageMobileTestResults)
+    combinedResults
+  })
+
+  val pageAverages: PageAverageObject = new GeneratedInteractiveAverages(resultsList, averageColor)
+  pageAverages
+}*/
   
 
   def retestUrl(initialResult: PerformanceResultsObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
