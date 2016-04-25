@@ -97,14 +97,17 @@ object App {
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
     val s3Interface = new S3Operations(s3BucketName, configFileName, emailFileName)
     var configArray: Array[String] = Array("", "", "", "", "", "")
+    var urlFragments: List[String] = List()
 
     //Get config settings
     println("Extracting configuration values")
     if (!iamTestingLocally) {
-      println(DateTime.now + " retrieving config from S3 bucket: " + s3BucketName)
-      configArray = s3Interface.getConfig
+     println(DateTime.now + " retrieving config from S3 bucket: " + s3BucketName)
+      val returnTuple = s3Interface.getConfig
+      configArray = Array(returnTuple._1,returnTuple._2,returnTuple._3,returnTuple._4,returnTuple._5,returnTuple._6,returnTuple._7)
+      urlFragments = returnTuple._8
     }
-    else {
+     else {
       println(DateTime.now + " retrieving local config file: " + configFileName)
       val configReader = new LocalFileOperations
       configArray = configReader.readInConfig(configFileName)
