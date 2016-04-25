@@ -153,7 +153,7 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
 
   }*/
 
-  def getResultsFileFromS3(fileName:String): List[PerformanceResultsObject] = {
+  /*def getResultsFileFromS3(fileName:String): List[PerformanceResultsObject] = {
 
     if (doesFileExist(fileName)) {
       val s3Response = s3Client.getObject(new GetObjectRequest(s3BucketName, fileName))
@@ -181,7 +181,7 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
       val emptyList: List[PerformanceResultsObject] = List()
       emptyList
     }
-  }
+  }*/
 
   def writeFileToS3(fileName:String, outputString: String): Unit ={
     println(DateTime.now + " Writing the following to S3:\n" + outputString + "\n")
