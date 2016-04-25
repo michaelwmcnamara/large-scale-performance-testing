@@ -10,7 +10,7 @@ import scala.xml.Elem
 /**
  * Created by mmcnamara on 14/12/15.
  */
-class WebPageTest(baseUrl: String, passedKey: String) {
+class WebPageTest(baseUrl: String, passedKey: String, urlfragments: List[String] = List("")) {
 
   val apiBaseUrl:String = baseUrl
   val apiKey:String = passedKey
