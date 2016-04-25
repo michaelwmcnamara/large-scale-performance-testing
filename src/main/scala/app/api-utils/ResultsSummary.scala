@@ -13,51 +13,55 @@ class ResultsSummary(resultsList: List[PerformanceResultsObject]) {
   val desktopNoAdsResultsList = for (element <- resultsList if element.typeOfTest.contains("Desktop") && !element.brokenTest && !element.adsDisplayed) yield element
   val mobileNoAdsResultsList = for (element <- resultsList if element.typeOfTest.contains("Android") && !element.brokenTest && !element.adsDisplayed) yield element
 
+  println("\ndesktopAdsResultsList Length = " + desktopAdsResultsList.length + "\n")
+  println("\nmobileAdsResultsList Length = " + mobileAdsResultsList.length + "\n")
+  println("\ndesktopNoAdsResultsList Length = " + desktopNoAdsResultsList.length + "\n")
+  println("\nmobileNoAdsResultsList Length = " + mobileNoAdsResultsList.length + "\n")
 
   val desktopAdsTimeToFirstByte: Int = desktopAdsResultsList.toSeq.map(_.timeToFirstByte).sum
   val desktopAdsResultArray = Array(
-    (desktopAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/desktopAdsResultsList.length).toInt,
-    (desktopAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/desktopAdsResultsList.length).toInt)
+    (desktopAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/desktopAdsResultsList.length.toDouble),
+    (desktopAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/desktopAdsResultsList.length.toDouble))
 
   val desktopNoAdsResultArray = Array(
-    (desktopNoAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/desktopNoAdsResultsList.length).toInt,
-    (desktopNoAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/desktopNoAdsResultsList.length).toInt)
+    (desktopNoAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/desktopNoAdsResultsList.length.toDouble),
+    (desktopNoAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/desktopNoAdsResultsList.length.toDouble))
 
   val mobileAdsResultArray = Array(
-    (mobileAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/mobileAdsResultsList.length).toInt,
-    (mobileAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/mobileAdsResultsList.length).toInt)
+    (mobileAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/mobileAdsResultsList.length.toDouble),
+    (mobileAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/mobileAdsResultsList.length.toDouble))
 
   val mobileNoAdsResultArray = Array(
-    (mobileNoAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/mobileNoAdsResultsList.length).toInt,
-    (mobileNoAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/mobileNoAdsResultsList.length).toInt)
+    (mobileNoAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/mobileNoAdsResultsList.length.toDouble),
+    (mobileNoAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/mobileNoAdsResultsList.length.toDouble),
+    (mobileNoAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/mobileNoAdsResultsList.length.toDouble),
+    (mobileNoAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/mobileNoAdsResultsList.length.toDouble),
+    (mobileNoAdsResultsList.toSeq.map(_.timeFullyLoadedInMs).sum.toDouble/mobileNoAdsResultsList.length.toDouble),
+    (mobileNoAdsResultsList.toSeq.map(_.bytesInFullyLoaded).sum.toDouble/mobileNoAdsResultsList.length.toDouble),
+    (mobileNoAdsResultsList.toSeq.map(_.estUSPrePaidCost).sum/mobileNoAdsResultsList.length.toDouble),
+    (mobileNoAdsResultsList.toSeq.map(_.estUSPostPaidCost).sum/mobileNoAdsResultsList.length.toDouble),
+    mobileNoAdsResultsList.toSeq.map(_.speedIndex).sum.toDouble/mobileNoAdsResultsList.length.toDouble)
 
 
   val diffDesktopAdsVNoAds = Array(
@@ -86,7 +90,7 @@ class ResultsSummary(resultsList: List[PerformanceResultsObject]) {
   def generateCSVResultsTable(contentType: String): String = {
     val summaryHeaders: String = "Content Type, Ads Displayed, Avg Time to First Paint (ms), Avg Time to Doc Complete (ms), Avg Bytes In Doc Complete (ms), Avg timeFullyLoaded (ms), Avg Bytes In Fully Loaded (ms), Avg Speed Index (ms)\n"
     val desktopAdsRow: String = contentType + "," +
-      "Ads Displayed" + "," +
+      "Desktop Ads Displayed" + "," +
       desktopAdsResultArray(0) + "," +
       desktopAdsResultArray(1) + "," +
       desktopAdsResultArray(2) + "," +
@@ -98,7 +102,7 @@ class ResultsSummary(resultsList: List[PerformanceResultsObject]) {
       desktopAdsResultArray(8) + "\n"
 
     val desktopNoAdsRow: String = contentType + "," +
-      "No Ads" + "," +
+      "Desktop No Ads" + "," +
       desktopNoAdsResultArray(0) + "," +
       desktopNoAdsResultArray(1) + "," +
       desktopNoAdsResultArray(2) + "," +
@@ -110,7 +114,7 @@ class ResultsSummary(resultsList: List[PerformanceResultsObject]) {
       desktopNoAdsResultArray(8) + "\n"
 
     val mobileAdsRow: String = contentType + "," +
-      "Ads Displayed" + "," +
+      "Mobile Ads Displayed" + "," +
       mobileAdsResultArray(0) + "," +
       mobileAdsResultArray(1) + "," +
       mobileAdsResultArray(2) + "," +
@@ -122,7 +126,7 @@ class ResultsSummary(resultsList: List[PerformanceResultsObject]) {
       mobileAdsResultArray(8) + "\n"
 
     val mobileNoAdsRow: String = contentType + "," +
-      "No Ads" + "," +
+      "Mobile No Ads" + "," +
       mobileNoAdsResultArray(0) + "," +
       mobileNoAdsResultArray(1) + "," +
       mobileNoAdsResultArray(2) + "," +

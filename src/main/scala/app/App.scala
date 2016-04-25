@@ -92,6 +92,13 @@ object App {
     var audioSummaryCSV: String = ""
     var frontsSummaryCSV: String = ""
 
+    var articleSummaryList: List[PerformanceResultsObject] = List()
+    var liveBlogSummaryList: List[PerformanceResultsObject] = List()
+    var interactiveummaryList: List[PerformanceResultsObject] = List()
+    var videoSummaryList: List[PerformanceResultsObject] = List()
+    var audioSummaryList: List[PerformanceResultsObject] = List()
+    var frontsSummaryList: List[PerformanceResultsObject] = List()
+
 
     //Create new S3 Client
     println("defining new S3 Client (this is done regardless but only used if 'iamTestingLocally' flag is set to false)")
@@ -160,11 +167,12 @@ object App {
     val urlsToSend: List[String] = (articleUrls ::: liveBlogUrls ::: interactiveUrls ::: frontsUrls).distinct
     //val urlsToSend: List[String] = (articleUrls).distinct
     println("Combined list of urls: \n" + urlsToSend)
-    val resultUrlList: List[(String, String, Boolean)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation)
+    val resultUrlList: List[(String, String, Boolean)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
 
     if (articleUrls.nonEmpty) {
       println("Generating average values for articles")
-      val articleResultsList = listenForResultPages(articleUrls, "article", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val articleResultsList = listenForResultPages(articleUrls, "article", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+      articleSummaryList = articleResultsList
       val articleCSVList: List[String] = articleResultsList.map(x => x.toCSVString())
       val articleAverageResults = new ResultsSummary(articleResultsList)
       articleSummaryCSV = articleAverageResults.generateCSVResultsTable("Article")
@@ -192,7 +200,8 @@ object App {
 
     if (liveBlogUrls.nonEmpty) {
       println("Generating average values for liveblogs")
-      val liveBlogResultsList = listenForResultPages(liveBlogUrls, "liveblog",resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val liveBlogResultsList = listenForResultPages(liveBlogUrls, "liveblog",resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+      liveBlogSummaryList = liveBlogResultsList
       val liveBlogCSVList: List[String] = liveBlogResultsList.map(x => x.toCSVString())
       liveBlogCSVResults = liveBlogCSVResults.concat(liveBlogCSVList.mkString)
       val liveBlogAverageResults = new ResultsSummary(liveBlogResultsList)
@@ -219,7 +228,8 @@ object App {
 
     if (interactiveUrls.nonEmpty) {
       println("Generating average values for interactives")
-      val interactiveResultsList = listenForResultPages(interactiveUrls, "interactive", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val interactiveResultsList = listenForResultPages(interactiveUrls, "interactive", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+      interactiveummaryList = interactiveResultsList
       val interactiveCSVList: List[String] = interactiveResultsList.map(x => x.toCSVString())
       // write interactive results to string
       interactiveCSVResults = interactiveCSVResults.concat(interactiveCSVList.mkString)
@@ -247,7 +257,8 @@ object App {
 
     if (videoUrls.nonEmpty) {
       println("Generating average values for videos")
-      val videoResultsList = listenForResultPages(videoUrls, "video", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val videoResultsList = listenForResultPages(videoUrls, "video", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+      videoSummaryList = videoResultsList
       val videoCSVList: List[String] = videoResultsList.map(x => x.toCSVString())
       // write video results to string
       videoCSVResults = videoCSVResults.concat(videoCSVList.mkString)
@@ -275,7 +286,8 @@ object App {
 
     if (audioUrls.nonEmpty) {
       println("Generating average values for audio pages")
-      val audioResultsList = listenForResultPages(audioUrls, "audio", resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val audioResultsList = listenForResultPages(audioUrls, "audio", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+      audioSummaryList = audioResultsList
       val audioCSVList: List[String] = audioResultsList.map(x => x.toCSVString())
       // write audio results to string
       audioCSVResults = audioCSVResults.concat(audioCSVList.mkString)
@@ -303,7 +315,8 @@ object App {
 
     if (frontsUrls.nonEmpty) {
       println("Generating average values for liveblogs")
-      val frontsResultsList = listenForResultPages(frontsUrls, "front",resultUrlList, wptBaseUrl, wptApiKey, wptLocation)
+      val frontsResultsList = listenForResultPages(frontsUrls, "front",resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+      frontsSummaryList = frontsResultsList
       val frontsCSVList: List[String] = frontsResultsList.map(x => x.toCSVString())
       // write fronts results to string
       frontsCSVResults = frontsCSVResults.concat(frontsCSVList.mkString)
@@ -328,6 +341,7 @@ object App {
       println("CAPI query found no fronts")
     }
 
+    val fullSummaryLists: List[List[PerformanceResultsObject]] = List(articleSummaryList, liveBlogSummaryList, interactiveummaryList, videoSummaryList, audioSummaryList, frontsSummaryList)
     fullsummaryCSVResults = articleSummaryCSV + liveBlogSummaryCSV + interactiveSummaryCSV + frontsSummaryCSV
     if (!iamTestingLocally) {
       println(DateTime.now + " Writing liveblog results to S3")
@@ -348,8 +362,8 @@ object App {
   }
 
 
-  def getResultPages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[(String,String, Boolean)] = {
-    val wpt: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+  def getResultPages(urlList: List[String], wptBaseUrl: String, wptApiKey: String, wptLocation: String, fragments: List[String]): List[(String,String, Boolean)] = {
+    val wpt: WebPageTest = new WebPageTest(wptBaseUrl, wptApiKey, fragments)
     val ads: Boolean = true
     val noAds: Boolean = false
     val desktopResultsAds: List[(String, String, Boolean)] = urlList.map(page => { (page, wpt.sendPageAds(page), ads) })
@@ -359,7 +373,7 @@ object App {
     desktopResultsAds ::: desktopResultsNoAds ::: mobileResultsAds ::: mobileResultsNoAds
   }
 
-  def listenForResultPages(capiUrls: List[String], contentType: String, resultUrlList: List[(String, String, Boolean)], wptBaseUrl: String, wptApiKey: String, wptLocation: String): List[PerformanceResultsObject] = {
+  def listenForResultPages(capiUrls: List[String], contentType: String, resultUrlList: List[(String, String, Boolean)], wptBaseUrl: String, wptApiKey: String, wptLocation: String, fragments: List[String]): List[PerformanceResultsObject] = {
     println("ListenForResultPages called with: \n\n" +
       " List of Urls: \n" + capiUrls.mkString +
       "\n\nList of WebPage Test results: \n" + resultUrlList.mkString)
@@ -371,7 +385,7 @@ object App {
     println("Listener List created: \n" + listenerList.map(element => "list element: \n"+ "url: " + element.pageUrl + "\n" + "resulturl" + element.wptResultUrl + "\n"))
 
     val liveBlogResultsList: ParSeq[WptResultPageListener] = listenerList.par.map(element => {
-      val wpt = new WebPageTest(wptBaseUrl, wptApiKey)
+      val wpt = new WebPageTest(wptBaseUrl, wptApiKey, fragments)
       val newElement = new WptResultPageListener(element.pageUrl, element.pageType, element.ads, element.wptResultUrl)
       newElement.testResults = wpt.getResults(newElement.wptResultUrl)
       newElement.testResults.adsDisplayed = newElement.ads
@@ -392,11 +406,11 @@ object App {
     testResults
   }
 
-  def confirmAlert(initialResult: PerformanceResultsObject, averages: PageAverageObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
-    val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+  def confirmAlert(initialResult: PerformanceResultsObject, averages: PageAverageObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String, fragments: List[String]): PerformanceResultsObject ={
+    val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey, fragments)
     val testCount: Int = if(initialResult.timeToFirstByte > 1000) {5} else {3}
     println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
-    val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
+    val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount, initialResult.adsDisplayed), averages)
     AlertConfirmationTestResult
   }
 
@@ -538,8 +552,8 @@ object App {
 }*/
   
 
-  def retestUrl(initialResult: PerformanceResultsObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String): PerformanceResultsObject ={
-    val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey)
+  def retestUrl(initialResult: PerformanceResultsObject,wptBaseUrl: String, wptApiKey: String, wptLocation: String, fragments: List[String]): PerformanceResultsObject ={
+    val webPageTest = new WebPageTest(wptBaseUrl, wptApiKey, fragments)
     val testCount: Int = if(initialResult.timeToFirstByte > 1000) {5} else {3}
     println("TTFB for " + initialResult.testUrl + "\n therefore setting test count of: " + testCount)
  //   val AlertConfirmationTestResult: PerformanceResultsObject = setAlertStatus(webPageTest.testMultipleTimes(initialResult.testUrl, initialResult.typeOfTest, wptLocation, testCount), averages)
