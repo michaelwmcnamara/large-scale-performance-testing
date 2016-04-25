@@ -35,7 +35,7 @@ class ArticleUrls(key: String) {
 
   def getMinByMinUrls: List[String] = {
     val until = DateTime.now
-    val from = until.minusDays(7)
+    val from = until.minusDays(15)
 
     val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)
