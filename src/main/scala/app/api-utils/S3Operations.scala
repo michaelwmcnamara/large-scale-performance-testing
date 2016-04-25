@@ -1,13 +1,15 @@
 package app.api
 
-import java.io.{FileOutputStream, OutputStreamWriter, Writer, File}
+import java.io._
 
+import app.apiutils.PerformanceResultsObject
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model._
 import com.typesafe.config.{ConfigFactory, Config}
 import scala.collection.JavaConversions._
 import org.joda.time.DateTime
 
+import scala.io.Source
 
 
 /**
@@ -20,7 +22,15 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
   val emailFileName = emailFile
 
 
-  def getConfig: Array[String] = {
+  def doesFileExist(fileKeyName: String): Boolean = {
+    try {
+      s3Client.getObjectMetadata(bucket, fileKeyName); true
+    } catch {
+      case ex: Exception => println("File: " + fileKeyName + " was not present \n"); false
+    }
+  }
+
+  def getConfig: (String, String, String, String, String, String, String, List[String]) = {
     println(DateTime.now + " retrieving config from S3 bucket: " + bucket)
 
     println("Obtaining configfile: " + configFileName + " from S3")
@@ -40,15 +50,16 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
     val wptLocation = conf.getString("wpt.location")
     val emailUsername = conf.getString("email.username")
     val emailPassword = conf.getString("email.password")
-    if ((contentApiKey.length > 0) && (wptBaseUrl.length > 0) && (wptApiKey.length > 0)){
+    val visualsFeedUrl = conf.getString("visuals.page.list")
+    val pageFragments: List[String] = conf.getStringList("page.fragments").toList
+    if ((contentApiKey.length > 0) && (wptBaseUrl.length > 0) && (wptApiKey.length > 0) && (wptLocation.length > 0) && (emailUsername.length > 0) && (emailPassword.length > 0) && (visualsFeedUrl.length > 0)){
       println(DateTime.now + " Config retrieval successful. \n You are using the following webpagetest instance: " + wptBaseUrl)
-      val returnArray = Array(contentApiKey, wptBaseUrl, wptApiKey, wptLocation, emailUsername, emailPassword)
-      returnArray
+      (contentApiKey, wptBaseUrl, wptApiKey, wptLocation, emailUsername, emailPassword, visualsFeedUrl, pageFragments)
     }
     else {
       println(DateTime.now + " ERROR: Problem retrieving config file - one or more parameters not retrieved")
       s3Client.shutdown()
-      Array()
+      ("", "", "", "", "", "", "", List())
     }
 
   }
@@ -142,6 +153,36 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
 
   }*/
 
+  def getResultsFileFromS3(fileName:String): List[PerformanceResultsObject] = {
+
+    if (doesFileExist(fileName)) {
+      val s3Response = s3Client.getObject(new GetObjectRequest(s3BucketName, fileName))
+      val objectData = s3Response.getObjectContent
+      val myData = scala.io.Source.fromInputStream(objectData).getLines()
+      val resultsIterator = for (line <- myData) yield {
+        val data: Array[String] = line.split(",")
+        new PerformanceResultsObject(data(1),
+          data(2),
+          data(3),
+          data(4).toInt,
+          data(5).toInt,
+          data(6).toInt,
+          data(7).toInt,
+          data(8).toInt,
+          data(9).toInt,
+          data(10).toInt,
+          data(11),
+          data(12).toBoolean,
+          data(13).toBoolean,
+          data(14).toBoolean)
+      }
+      resultsIterator.toList
+    } else {
+      val emptyList: List[PerformanceResultsObject] = List()
+      emptyList
+    }
+  }
+
   def writeFileToS3(fileName:String, outputString: String): Unit ={
     println(DateTime.now + " Writing the following to S3:\n" + outputString + "\n")
     s3Client.putObject(new PutObjectRequest(s3BucketName, fileName, createOutputFile(fileName, outputString)))
@@ -161,6 +202,8 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
     println("returning File object")
     file
   }
+
+
 
   def closeS3Client(): Unit = s3Client.shutdown()
 
