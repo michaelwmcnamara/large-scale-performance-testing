@@ -33,11 +33,37 @@ class ArticleUrls(key: String) {
     contentApiClient.shutdown()
   }
 
-  def getMinByMinUrls: List[String] = {
+  def getArticles: List[(Option[ContentFields], String)] = {
     val until = DateTime.now
-    val from = until.minusDays(15)
+    val from = until.minusHours(48)
 
-    val liveBlogSearchQuery = new SearchQuery()
+    val searchQuery = new SearchQuery()
+      .fromDate(from)
+      .toDate(until)
+      .showElements("all")
+      .showFields("all")
+      .showTags("all")
+      .page(1)
+      .pageSize(100)
+      .orderBy("newest")
+      .contentType("article")
+    println("Sending query to CAPI: \n" + searchQuery.toString)
+
+    val apiResponse = contentApiClient.getResponse(searchQuery)
+
+    val returnedResponse = Await.result(apiResponse, (20, SECONDS))
+    val articleContentAndUrl: List[(Option[ContentFields],String)] = for (result <- returnedResponse.results) yield {
+      (result.fields, result.webUrl) }
+    println("CAPI Query Success - Article: \n" + articleContentAndUrl.map(element => element._2).mkString)
+    articleContentAndUrl
+
+  }
+
+  def getMinByMins: List[(Option[ContentFields],String)] = {
+    val until = DateTime.now
+    val from = until.minusDays(7)
+
+    val searchQuery = new SearchQuery()
       .fromDate(from)
       .toDate(until)
       .showElements("all")
@@ -47,24 +73,23 @@ class ArticleUrls(key: String) {
       .pageSize(100)
       .orderBy("newest")
       .tag("tone/minutebyminute")
-    println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
+    println("Sending query to CAPI: \n" + searchQuery.toString)
 
-    val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
+    val apiResponse = contentApiClient.getResponse(searchQuery)
 
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
-    println("CAPI has returned a response")
-    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-      println("minBymin result: " + result.webUrl)
-      result.webUrl }
-    liveBlogUrlString
+    val liveBlogContentAndUrl: List[(Option[ContentFields],String)] = for (result <- returnedResponse.results) yield {
+      (result.fields, result.webUrl) }
+    println("CAPI Query Success - LiveBlog: \n" + liveBlogContentAndUrl.map(element => element._2).mkString)
+    liveBlogContentAndUrl
   }
 
 
-  def getInteractiveUrls: List[String] = {
+  def getInteractives: List[(Option[ContentFields],String)] = {
     val until = DateTime.now
-    val from = until.minusDays(30)
+    val from = until.minusDays(15)
 
-    val liveBlogSearchQuery = new SearchQuery()
+    val searchQuery = new SearchQuery()
       .fromDate(from)
       .toDate(until)
       .showElements("all")
@@ -74,23 +99,47 @@ class ArticleUrls(key: String) {
       .pageSize(100)
       .orderBy("newest")
       .contentType("interactive")
-    println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
+    println("Sending query to CAPI: \n" + searchQuery.toString)
 
-    val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
+    val apiResponse = contentApiClient.getResponse(searchQuery)
 
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
-    println("CAPI has returned a response")
-    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-      println("minBymin result: " + result.webUrl)
-      result.webUrl }
-    liveBlogUrlString
+
+    val interactiveContentAndUrl: List[(Option[ContentFields],String)] = for (result <- returnedResponse.results) yield {
+      (result.fields, result.webUrl) }
+    println("CAPI Query Success - Interactives: \n" + interactiveContentAndUrl.map(element => element._2).mkString)
+    interactiveContentAndUrl
   }
 
-  def getVideoUrls: List[String] = {
-    val until = DateTime.now
-    val from = until.minusDays(7)
+  def getFronts: List[(Option[ContentFields],String)] = {
+    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
+      "http://www.theguardian.com/us",
+      "http://www.theguardian.com/au",
+      "http://www.theguardian.com/uk-news",
+      "http://www.theguardian.com/world",
+      "http://www.theguardian.com/politics",
+      "http://www.theguardian.com/uk/sport",
+      "http://www.theguardian.com/football",
+      "http://www.theguardian.com/uk/commentisfree",
+      "http://www.theguardian.com/uk/culture",
+      "http://www.theguardian.com/uk/business",
+      "http://www.theguardian.com/uk/lifeandstyle",
+      "http://www.theguardian.com/fashion",
+      "http://www.theguardian.com/uk/environment",
+      "http://www.theguardian.com/uk/technology",
+      "http://www.theguardian.com/travel")
+    val emptyContentFields: Option[ContentFields] = None
+    val returnList:List[(Option[ContentFields],String)] = listofFronts.map(url => (emptyContentFields, url))
+    println("CAPI Query Success - Fronts: \n" + returnList.map(element => element._2).mkString)
+    returnList
+  }
 
-    val liveBlogSearchQuery = new SearchQuery()
+
+  def getVideoPages: List[(Option[ContentFields],String)] = {
+    val until = DateTime.now
+    val from = until.minusDays(2)
+
+    val searchQuery = new SearchQuery()
       .fromDate(from)
       .toDate(until)
       .showElements("all")
@@ -100,21 +149,19 @@ class ArticleUrls(key: String) {
       .pageSize(100)
       .orderBy("newest")
       .contentType("video")
-    println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
+    println("Sending query to CAPI: \n" + searchQuery.toString)
 
-    val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
+    val apiResponse = contentApiClient.getResponse(searchQuery)
 
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
-    println("CAPI has returned a response")
-    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-      println("minBymin result: " + result.webUrl)
-      result.webUrl }
-    liveBlogUrlString
+    val videoContentAndUrl: List[(Option[ContentFields],String)] = for (result <- returnedResponse.results) yield {
+      (result.fields, result.webUrl) }
+    videoContentAndUrl
   }
 
-  def getAudioUrls: List[String] = {
+  def getAudioPages: List[(Option[ContentFields],String)] = {
     val until = DateTime.now
-    val from = until.minusDays(7)
+    val from = until.minusDays(4)
 
     val liveBlogSearchQuery = new SearchQuery()
       .fromDate(from)
@@ -131,92 +178,16 @@ class ArticleUrls(key: String) {
     val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
 
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
-    println("CAPI has returned a response")
-    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-      println("minBymin result: " + result.webUrl)
-      result.webUrl }
-    liveBlogUrlString
+    val audioContentAndUrl: List[(Option[ContentFields],String)] = for (result <- returnedResponse.results) yield {
+      (result.fields, result.webUrl) }
+    audioContentAndUrl
   }
 
-
-  def getArticleUrls: List[String] = {
-    val until = DateTime.now
-    val from = until.minusDays(2)
-
-    val liveBlogSearchQuery = new SearchQuery()
-      .fromDate(from)
-      .toDate(until)
-      .showElements("all")
-      .showFields("all")
-      .showTags("all")
-      .page(1)
-      .pageSize(100)
-      .orderBy("newest")
-      .contentType("article")
-    println("Sending query to CAPI: \n" + liveBlogSearchQuery.toString)
-
-    val apiResponse = contentApiClient.getResponse(liveBlogSearchQuery)
-
-    val returnedResponse = Await.result(apiResponse, (20, SECONDS))
-    println("CAPI has returned a response")
-    val liveBlogUrlString: List[String] = for (result <- returnedResponse.results) yield {
-      println("minBymin result: " + result.webUrl)
-      result.webUrl }
-    liveBlogUrlString
-  }
-
-
-  def getFrontsUrls: List[String] = {
-    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
-      "http://www.theguardian.com/us",
-      "http://www.theguardian.com/au",
-      "http://www.theguardian.com/international",
-      "http://www.theguardian.com/uk-news",
-      "http://www.theguardian.com/world",
-      "http://www.theguardian.com/politics",
-      "http://www.theguardian.com/uk/sport",
-      "http://www.theguardian.com/football",
-      "http://www.theguardian.com/uk/commentisfree",
-      "http://www.theguardian.com/uk/culture",
-      "http://www.theguardian.com/uk/business",
-      "http://www.theguardian.com/uk/lifeandstyle",
-      "http://www.theguardian.com/fashion",
-      "http://www.theguardian.com/uk/environment",
-      "http://www.theguardian.com/uk/technology",
-      "http://www.theguardian.com/travel")
-    listofFronts
-  }
-
-  def getNetworkFrontUrls: List[String] = {
-    val listofFronts: List[String] = List("http://www.theguardian.com/uk",
-      "http://www.theguardian.com/us",
-      "http://www.theguardian.com/au",
-      "http://www.theguardian.com/international")
-    listofFronts
-  }
-
-  def getSectionFrontsUrls: List[String] = {
-    val listofFronts: List[String] = List("http://www.theguardian.com/uk-news",
-      "http://www.theguardian.com/world",
-      "http://www.theguardian.com/politics",
-      "http://www.theguardian.com/uk/sport",
-      "http://www.theguardian.com/football",
-      "http://www.theguardian.com/uk/commentisfree",
-      "http://www.theguardian.com/uk/culture",
-      "http://www.theguardian.com/uk/business",
-      "http://www.theguardian.com/uk/lifeandstyle",
-      "http://www.theguardian.com/fashion",
-      "http://www.theguardian.com/uk/environment",
-      "http://www.theguardian.com/uk/technology",
-      "http://www.theguardian.com/travel")
-    listofFronts
-  }
 
   /*def getContentTypeFronts: List[String] = {
     println("Creating CAPI query")
     val until = DateTime.now
     val from = until.minusHours(24)
-
     val FrontsSearchQuery = new SearchQuery()
       .fromDate(from)
       .toDate(until)
@@ -229,7 +200,6 @@ class ArticleUrls(key: String) {
       .orderBy("newest")
       .contentType("front")
     println("Sending query to CAPI: \n" + FrontsSearchQuery.toString)
-
     val apiResponse = contentApiClient.getResponse(FrontsSearchQuery)
     val returnedResponse = Await.result(apiResponse, (20, SECONDS))
     println("CAPI has returned response")
@@ -239,6 +209,5 @@ class ArticleUrls(key: String) {
     liveBlogUrlString
   }
 */
-
 }
 
