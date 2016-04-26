@@ -153,12 +153,12 @@ object App {
     //  Define new CAPI Query object
     val capiQuery = new ArticleUrls(contentApiKey)
     //get all content-type-lists
-    val articleUrls: List[String] = capiQuery.getArticleUrls
-    val liveBlogUrls: List[String] = capiQuery.getMinByMinUrls
-    val interactiveUrls: List[String] = capiQuery.getInteractiveUrls
-    val videoUrls: List[String] = capiQuery.getVideoUrls
-    val audioUrls: List[String] = capiQuery.getAudioUrls
-    val frontsUrls: List[String] = capiQuery.getFrontsUrls
+    val articleUrls: List[String] = capiQuery.getArticles
+    val liveBlogUrls: List[String] = capiQuery.getMinByMins
+    val interactiveUrls: List[String] = capiQuery.getInteractives
+    val videoUrls: List[String] = capiQuery.getVideoPages
+    val audioUrls: List[String] = capiQuery.getAudioPages
+    val frontsUrls: List[String] = capiQuery.getFronts
     println(DateTime.now + " Closing Content API query connection")
     capiQuery.shutDown
 
