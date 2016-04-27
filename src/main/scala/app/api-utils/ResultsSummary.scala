@@ -20,7 +20,7 @@ class ResultsSummary(resultsList: List[PerformanceResultsObject]) {
 
   val desktopAdsTimeToFirstByte: Int = desktopAdsResultsList.toSeq.map(_.timeToFirstByte).sum
   val desktopAdsResultArray = Array(
-    (desktopAdsResultsList.toSeq.map(_.timeToFirstByte).sum.toDouble/desktopAdsResultsList.length.toDouble),
+    desktopAdsResultsList.map(_.timeToFirstByte).sum.toDouble/desktopAdsResultsList.length.toDouble,
     (desktopAdsResultsList.toSeq.map(_.timeFirstPaintInMs).sum.toDouble/desktopAdsResultsList.length.toDouble),
     (desktopAdsResultsList.toSeq.map(_.timeDocCompleteInMs).sum.toDouble/desktopAdsResultsList.length.toDouble),
     (desktopAdsResultsList.toSeq.map(_.bytesInDocComplete).sum.toDouble/desktopAdsResultsList.length.toDouble),
@@ -88,7 +88,7 @@ class ResultsSummary(resultsList: List[PerformanceResultsObject]) {
 
 
   def generateCSVResultsTable(contentType: String): String = {
-    val summaryHeaders: String = "Content Type, Ads Displayed, Avg Time to First Paint (ms), Avg Time to Doc Complete (ms), Avg Bytes In Doc Complete (ms), Avg timeFullyLoaded (ms), Avg Bytes In Fully Loaded (ms), Avg Speed Index (ms)\n"
+    val summaryHeaders: String = "Content Type, Result Type, Avg Time to First Byte, Avg Time to First Paint (ms), Avg Time to Doc Complete (ms), Avg Bytes In Doc Complete (ms), Avg timeFullyLoaded (ms), Avg Bytes In Fully Loaded (ms), Avg US Prepaid Cost, Avg Postpaid Cost, Avg Speed Index (ms)\n"
     val desktopAdsRow: String = contentType + "," +
       "Desktop Ads Displayed" + "," +
       desktopAdsResultArray(0) + "," +
