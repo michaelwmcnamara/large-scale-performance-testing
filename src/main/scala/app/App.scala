@@ -30,8 +30,9 @@ object App {
     val configFileName = "config.conf"
     val emailFileName = "addresses.conf"
     val interactiveSampleFileName = "interactivesamples.conf"
+    val arbitaryUrlListFileName = "arbitaryUrlTest.conf"
 
-/*    val outputFileName = "liveBlogPerformanceData.html"
+    /*    val outputFileName = "liveBlogPerformanceData.html"
     val simpleOutputFileName = "liveBlogPerformanceDataExpurgated.html"
     val interactiveOutputFilename = "interactivePerformanceData.html"
     val videoOutputFilename =  "videoPerformanceData.html"
@@ -42,6 +43,7 @@ object App {
     val interactiveResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + interactiveOutputFilename
     val frontsResultsUrl: String = amazonDomain + "/" + s3BucketName + "/" + frontsOutputFilename
 */
+    val arbitaryUrlCSVName = "arbitaryUrlperformancedata.csv"
     val articleCSVName = "accumulatedarticleperformancedata.csv"
     val liveBlogCSVName = "accumulatedliveblogperformancedata.csv"
     val interactiveCSVName = "accumulatedinteractiveperformancedata.csv"
@@ -58,7 +60,7 @@ object App {
     val alertColor: String = "\"#f2dede\""
 
     //  Initialize results string - this will be used to accumulate the results from each test so that only one write to file is needed.
-/*    val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
+    /*    val htmlString = new HtmlStringOperations(averageColor, warningColor, alertColor, liveBlogResultsUrl, interactiveResultsUrl, frontsResultsUrl)
     var liveBlogResults: String = htmlString.initialisePageForLiveblog + htmlString.interactiveTable
     var interactiveResults: String = htmlString.initialisePageForInteractive + htmlString.initialiseTable
     var frontsResults: String = htmlString.initialisePageForFronts + htmlString.initialiseTable
@@ -77,6 +79,7 @@ object App {
 */
     val csvHeaders: String = "Url, Time of Test, Type of Test, Ads Displayed, Result Status, Time to First Paint (ms), Time to Doc Complete (ms), Bytes In Doc Complete (ms), timeFullyLoaded (ms), Bytes In Fully Loaded (ms), Speed Index (ms), Full Results, Element1 - Resource, Element1 - ContentType, Element1 - Bytes Downloaded,  Element2 - Resource, Element2 - ContentType, Element2 - Bytes Downloaded,  Element3 - Resource, Element3 - ContentType, Element3 - Bytes Downloaded,  Element4 - Resource, Element4 - ContentType, Element4 - Bytes Downloaded,  Element5 - Resource, Element5 - ContentType, Element5 - Bytes Downloaded"
     val summaryHeaders: String = "Content Type, Ads Displayed, Avg Time to First Paint (ms), Avg Time to Doc Complete (ms), Avg Bytes In Doc Complete (ms), Avg timeFullyLoaded (ms), Avg Bytes In Fully Loaded (ms), Avg Speed Index (ms)"
+    var arbitaryUrlCSVResults: String = csvHeaders
     var articleCSVResults: String = csvHeaders
     var liveBlogCSVResults: String = csvHeaders
     var interactiveCSVResults: String = csvHeaders
@@ -85,6 +88,7 @@ object App {
     var frontsCSVResults: String = csvHeaders
 
     var fullsummaryCSVResults: String = ""
+    var arbitaryUrlSummaryCSV: String = ""
     var articleSummaryCSV: String = ""
     var liveBlogSummaryCSV: String = ""
     var interactiveSummaryCSV: String = ""
@@ -92,6 +96,7 @@ object App {
     var audioSummaryCSV: String = ""
     var frontsSummaryCSV: String = ""
 
+    var arbitaryUrlSummaryList: List[PerformanceResultsObject] = List()
     var articleSummaryList: List[PerformanceResultsObject] = List()
     var liveBlogSummaryList: List[PerformanceResultsObject] = List()
     var interactiveummaryList: List[PerformanceResultsObject] = List()
@@ -109,12 +114,12 @@ object App {
     //Get config settings
     println("Extracting configuration values")
     if (!iamTestingLocally) {
-     println(DateTime.now + " retrieving config from S3 bucket: " + s3BucketName)
+      println(DateTime.now + " retrieving config from S3 bucket: " + s3BucketName)
       val returnTuple = s3Interface.getConfig
-      configArray = Array(returnTuple._1,returnTuple._2,returnTuple._3,returnTuple._4,returnTuple._5,returnTuple._6,returnTuple._7)
+      configArray = Array(returnTuple._1, returnTuple._2, returnTuple._3, returnTuple._4, returnTuple._5, returnTuple._6, returnTuple._7)
       urlFragments = returnTuple._8
     }
-     else {
+    else {
       println(DateTime.now + " retrieving local config file: " + configFileName)
       val configReader = new LocalFileOperations
       configArray = configReader.readInConfig(configFileName)
@@ -138,7 +143,7 @@ object App {
     val emailUsername: String = configArray(4)
     val emailPassword: String = configArray(5)
 
-/*    //obtain list of email addresses for alerting
+    /*    //obtain list of email addresses for alerting
     val emailAddresses: Array[List[String]] = s3Interface.getEmailAddresses
     val generalAlertsAddressList: List[String] = emailAddresses(0)
     val interactiveAlertsAddressList: List[String] = emailAddresses(1)*/
@@ -146,214 +151,242 @@ object App {
     //obtain list of interactive samples to determine average size
     val listofLargeInteractives: List[String] = s3Interface.getUrls(interactiveSampleFileName)
 
+    val arbitaryListofUrlsToTest: List[String] = s3Interface.getUrls(arbitaryUrlListFileName)
 
-    //Create Email Handler class
-    //val emailer: EmailOperations = new EmailOperations(emailUsername, emailPassword)
+    if (arbitaryListofUrlsToTest.isEmpty) {
+      //Create Email Handler class
+      //val emailer: EmailOperations = new EmailOperations(emailUsername, emailPassword)
 
-    //  Define new CAPI Query object
-    val capiQuery = new ArticleUrls(contentApiKey)
-    //get all content-type-lists
-    val articleUrls: List[String] = capiQuery.getArticles
-    val liveBlogUrls: List[String] = capiQuery.getMinByMins
-    val interactiveUrls: List[String] = capiQuery.getInteractives
-    val videoUrls: List[String] = capiQuery.getVideoPages
-    val audioUrls: List[String] = capiQuery.getAudioPages
-    val frontsUrls: List[String] = capiQuery.getFronts
-    println(DateTime.now + " Closing Content API query connection")
-    capiQuery.shutDown
+      //  Define new CAPI Query object
+      val capiQuery = new ArticleUrls(contentApiKey)
+      //get all content-type-lists
+      val articleUrls: List[String] = capiQuery.getArticles
+      val liveBlogUrls: List[String] = capiQuery.getMinByMins
+      val interactiveUrls: List[String] = capiQuery.getInteractives
+      val videoUrls: List[String] = capiQuery.getVideoPages
+      val audioUrls: List[String] = capiQuery.getAudioPages
+      val frontsUrls: List[String] = capiQuery.getFronts
+      println(DateTime.now + " Closing Content API query connection")
+      capiQuery.shutDown
 
 
-    // send all urls to webpagetest at once to enable parallel testing by test agents
-    val urlsToSend: List[String] = (articleUrls ::: liveBlogUrls ::: interactiveUrls ::: frontsUrls).distinct
-    //val urlsToSend: List[String] = (articleUrls).distinct
-    println("Combined list of urls: \n" + urlsToSend)
-    val resultUrlList: List[(String, String, Boolean)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+      // send all urls to webpagetest at once to enable parallel testing by test agents
+      val urlsToSend: List[String] = (articleUrls ::: liveBlogUrls ::: interactiveUrls ::: frontsUrls).distinct
+      //val urlsToSend: List[String] = (articleUrls).distinct
+      println("Combined list of urls: \n" + urlsToSend)
+      val resultUrlList: List[(String, String, Boolean)] = getResultPages(urlsToSend, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
 
-    if (articleUrls.nonEmpty) {
-      println("Generating average values for articles")
-      val articleResultsList = listenForResultPages(articleUrls, "article", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
-      articleSummaryList = articleResultsList
-      val articleCSVList: List[String] = articleResultsList.map(x => x.toCSVString())
-      val articleAverageResults = new ResultsSummary(articleResultsList)
-      articleSummaryCSV = articleAverageResults.generateCSVResultsTable("Article")
-      // write article results to string
-      articleCSVResults = articleCSVResults.concat(articleCSVList.mkString)
-      //write article results to file
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing article results to S3")
-        s3Interface.writeFileToS3(articleCSVName, articleCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(articleCSVName, articleCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
+      if (articleUrls.nonEmpty) {
+        println("Generating average values for articles")
+        val articleResultsList = listenForResultPages(articleUrls, "article", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        articleSummaryList = articleResultsList
+        val articleCSVList: List[String] = articleResultsList.map(x => x.toCSVString())
+        val articleAverageResults = new ResultsSummary(articleResultsList)
+        articleSummaryCSV = articleAverageResults.generateCSVResultsTable("Article")
+        // write article results to string
+        articleCSVResults = articleCSVResults.concat(articleCSVList.mkString)
+        //write article results to file
+        if (!iamTestingLocally) {
+          println(DateTime.now + " Writing article results to S3")
+          s3Interface.writeFileToS3(articleCSVName, articleCSVResults)
         }
+        else {
+          val outputWriter = new LocalFileOperations
+          val writeSuccess: Int = outputWriter.writeLocalResultFile(articleCSVName, articleCSVResults)
+          if (writeSuccess != 0) {
+            println("problem writing local outputfile")
+            System exit 1
+          }
+        }
+        println("article Performance Test Complete")
+
+      } else {
+        println("CAPI query found no articles")
       }
-      println("article Performance Test Complete")
-
-    } else {
-      println("CAPI query found no articles")
-    }
 
 
-    if (liveBlogUrls.nonEmpty) {
-      println("Generating average values for liveblogs")
-      val liveBlogResultsList = listenForResultPages(liveBlogUrls, "liveblog",resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
-      liveBlogSummaryList = liveBlogResultsList
-      val liveBlogCSVList: List[String] = liveBlogResultsList.map(x => x.toCSVString())
-      liveBlogCSVResults = liveBlogCSVResults.concat(liveBlogCSVList.mkString)
-      val liveBlogAverageResults = new ResultsSummary(liveBlogResultsList)
-      liveBlogSummaryCSV = liveBlogAverageResults.generateCSVResultsTable("LiveBlog")
+      if (liveBlogUrls.nonEmpty) {
+        println("Generating average values for liveblogs")
+        val liveBlogResultsList = listenForResultPages(liveBlogUrls, "liveblog", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        liveBlogSummaryList = liveBlogResultsList
+        val liveBlogCSVList: List[String] = liveBlogResultsList.map(x => x.toCSVString())
+        liveBlogCSVResults = liveBlogCSVResults.concat(liveBlogCSVList.mkString)
+        val liveBlogAverageResults = new ResultsSummary(liveBlogResultsList)
+        liveBlogSummaryCSV = liveBlogAverageResults.generateCSVResultsTable("LiveBlog")
 
-      //write liveblog results to file
+        //write liveblog results to file
+        if (!iamTestingLocally) {
+          println(DateTime.now + " Writing liveblog results to S3")
+          s3Interface.writeFileToS3(liveBlogCSVName, liveBlogCSVResults)
+        }
+        else {
+          val outputWriter = new LocalFileOperations
+          val writeSuccess: Int = outputWriter.writeLocalResultFile(liveBlogCSVName, liveBlogCSVResults)
+          if (writeSuccess != 0) {
+            println("problem writing local outputfile")
+            System exit 1
+          }
+        }
+        println("LiveBlog Performance Test Complete")
+
+      } else {
+        println("CAPI query found no liveblogs")
+      }
+
+      if (interactiveUrls.nonEmpty) {
+        println("Generating average values for interactives")
+        val interactiveResultsList = listenForResultPages(interactiveUrls, "interactive", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        interactiveummaryList = interactiveResultsList
+        val interactiveCSVList: List[String] = interactiveResultsList.map(x => x.toCSVString())
+        // write interactive results to string
+        interactiveCSVResults = interactiveCSVResults.concat(interactiveCSVList.mkString)
+        val interactiveAverageResults = new ResultsSummary(interactiveResultsList)
+        interactiveSummaryCSV = interactiveAverageResults.generateCSVResultsTable("Interactive")
+
+        //write interactive results to file
+        if (!iamTestingLocally) {
+          println(DateTime.now + " Writing interactive results to S3")
+          s3Interface.writeFileToS3(interactiveCSVName, interactiveCSVResults)
+        }
+        else {
+          val outputWriter = new LocalFileOperations
+          val writeSuccess: Int = outputWriter.writeLocalResultFile(interactiveCSVName, interactiveCSVResults)
+          if (writeSuccess != 0) {
+            println("problem writing local outputfile")
+            System exit 1
+          }
+        }
+        println("interactive Performance Test Complete")
+
+      } else {
+        println("CAPI query found no interactives")
+      }
+
+      if (videoUrls.nonEmpty) {
+        println("Generating average values for videos")
+        val videoResultsList = listenForResultPages(videoUrls, "video", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        videoSummaryList = videoResultsList
+        val videoCSVList: List[String] = videoResultsList.map(x => x.toCSVString())
+        // write video results to string
+        videoCSVResults = videoCSVResults.concat(videoCSVList.mkString)
+        val videoAverageResults = new ResultsSummary(videoResultsList)
+        videoSummaryCSV = videoAverageResults.generateCSVResultsTable("Video")
+
+        //write video results to file
+        if (!iamTestingLocally) {
+          println(DateTime.now + " Writing video results to S3")
+          s3Interface.writeFileToS3(videoCSVName, videoCSVResults)
+        }
+        else {
+          val outputWriter = new LocalFileOperations
+          val writeSuccess: Int = outputWriter.writeLocalResultFile(videoCSVName, videoCSVResults)
+          if (writeSuccess != 0) {
+            println("problem writing local outputfile")
+            System exit 1
+          }
+        }
+        println("video Performance Test Complete")
+
+      } else {
+        println("CAPI query found no video")
+      }
+
+      if (audioUrls.nonEmpty) {
+        println("Generating average values for audio pages")
+        val audioResultsList = listenForResultPages(audioUrls, "audio", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        audioSummaryList = audioResultsList
+        val audioCSVList: List[String] = audioResultsList.map(x => x.toCSVString())
+        // write audio results to string
+        audioCSVResults = audioCSVResults.concat(audioCSVList.mkString)
+        val audioAverageResults = new ResultsSummary(audioResultsList)
+        audioSummaryCSV = audioAverageResults.generateCSVResultsTable("Audio")
+
+        //write audio results to file
+        if (!iamTestingLocally) {
+          println(DateTime.now + " Writing audio results to S3")
+          s3Interface.writeFileToS3(audioCSVName, audioCSVResults)
+        }
+        else {
+          val outputWriter = new LocalFileOperations
+          val writeSuccess: Int = outputWriter.writeLocalResultFile(audioCSVName, audioCSVResults)
+          if (writeSuccess != 0) {
+            println("problem writing local outputfile")
+            System exit 1
+          }
+        }
+        println("audio Performance Test Complete")
+
+      } else {
+        println("CAPI query found no audio")
+      }
+
+      if (frontsUrls.nonEmpty) {
+        println("Generating average values for liveblogs")
+        val frontsResultsList = listenForResultPages(frontsUrls, "front", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        frontsSummaryList = frontsResultsList
+        val frontsCSVList: List[String] = frontsResultsList.map(x => x.toCSVString())
+        // write fronts results to string
+        frontsCSVResults = frontsCSVResults.concat(frontsCSVList.mkString)
+        val frontsAverageResults = new ResultsSummary(frontsResultsList)
+        frontsSummaryCSV = frontsAverageResults.generateCSVResultsTable("Front")
+        //write fronts results to file
+        if (!iamTestingLocally) {
+          println(DateTime.now + " Writing liveblog results to S3")
+          s3Interface.writeFileToS3(frontsCSVName, frontsCSVResults)
+        }
+        else {
+          val outputWriter = new LocalFileOperations
+          val writeSuccess: Int = outputWriter.writeLocalResultFile(frontsCSVName, frontsCSVResults)
+          if (writeSuccess != 0) {
+            println("problem writing local outputfile")
+            System exit 1
+          }
+        }
+        println("Fronts Performance Test Complete")
+
+      } else {
+        println("CAPI query found no fronts")
+      }
+
+      val fullSummaryLists: List[List[PerformanceResultsObject]] = List(articleSummaryList, liveBlogSummaryList, interactiveummaryList, videoSummaryList, audioSummaryList, frontsSummaryList)
+      fullsummaryCSVResults = articleSummaryCSV + liveBlogSummaryCSV + interactiveSummaryCSV + frontsSummaryCSV
       if (!iamTestingLocally) {
         println(DateTime.now + " Writing liveblog results to S3")
-        s3Interface.writeFileToS3(liveBlogCSVName, liveBlogCSVResults)
+        s3Interface.writeFileToS3(summaryCSVFilename, fullsummaryCSVResults)
       }
       else {
         val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(liveBlogCSVName, liveBlogCSVResults)
+        val writeSuccess: Int = outputWriter.writeLocalResultFile(summaryCSVFilename, fullsummaryCSVResults)
         if (writeSuccess != 0) {
           println("problem writing local outputfile")
           System exit 1
         }
       }
-      println("LiveBlog Performance Test Complete")
-
     } else {
-      println("CAPI query found no liveblogs")
-    }
-
-    if (interactiveUrls.nonEmpty) {
-      println("Generating average values for interactives")
-      val interactiveResultsList = listenForResultPages(interactiveUrls, "interactive", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
-      interactiveummaryList = interactiveResultsList
-      val interactiveCSVList: List[String] = interactiveResultsList.map(x => x.toCSVString())
-      // write interactive results to string
-      interactiveCSVResults = interactiveCSVResults.concat(interactiveCSVList.mkString)
-      val interactiveAverageResults = new ResultsSummary(interactiveResultsList)
-      interactiveSummaryCSV = interactiveAverageResults.generateCSVResultsTable("Interactive")
-
-      //write interactive results to file
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing interactive results to S3")
-        s3Interface.writeFileToS3(interactiveCSVName, interactiveCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(interactiveCSVName, interactiveCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
+        println("Testing arbitary list of urls")
+        val resultUrlList: List[(String, String, Boolean)] = getResultPages(arbitaryListofUrlsToTest, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        val arbitaryUrlResultsList = listenForResultPages(arbitaryListofUrlsToTest, "article", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
+        arbitaryUrlSummaryList = arbitaryUrlResultsList
+        val articleCSVList: List[String] = arbitaryUrlResultsList.map(x => x.toCSVString())
+        val arbitaryUrlAverageResults = new ResultsSummary(arbitaryUrlResultsList)
+        arbitaryUrlSummaryCSV = arbitaryUrlAverageResults.generateCSVResultsTable("Article")
+        // write article results to string
+        arbitaryUrlCSVResults = arbitaryUrlCSVResults.concat(articleCSVList.mkString)
+        //write article results to file
+        if (!iamTestingLocally) {
+          println(DateTime.now + " Writing article results to S3")
+          s3Interface.writeFileToS3(arbitaryUrlCSVName, arbitaryUrlCSVResults)
         }
-      }
-      println("interactive Performance Test Complete")
-
-    } else {
-      println("CAPI query found no interactives")
-    }
-
-    if (videoUrls.nonEmpty) {
-      println("Generating average values for videos")
-      val videoResultsList = listenForResultPages(videoUrls, "video", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
-      videoSummaryList = videoResultsList
-      val videoCSVList: List[String] = videoResultsList.map(x => x.toCSVString())
-      // write video results to string
-      videoCSVResults = videoCSVResults.concat(videoCSVList.mkString)
-      val videoAverageResults = new ResultsSummary(videoResultsList)
-      videoSummaryCSV = videoAverageResults.generateCSVResultsTable("Video")
-
-      //write video results to file
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing video results to S3")
-        s3Interface.writeFileToS3(videoCSVName, videoCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(videoCSVName, videoCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
+        else {
+          val outputWriter = new LocalFileOperations
+          val writeSuccess: Int = outputWriter.writeLocalResultFile(arbitaryUrlCSVName, arbitaryUrlCSVResults)
+          if (writeSuccess != 0) {
+            println("problem writing local outputfile")
+            System exit 1
+          }
         }
-      }
-      println("video Performance Test Complete")
+        println("article Performance Test Complete")
 
-    } else {
-      println("CAPI query found no video")
-    }
-
-    if (audioUrls.nonEmpty) {
-      println("Generating average values for audio pages")
-      val audioResultsList = listenForResultPages(audioUrls, "audio", resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
-      audioSummaryList = audioResultsList
-      val audioCSVList: List[String] = audioResultsList.map(x => x.toCSVString())
-      // write audio results to string
-      audioCSVResults = audioCSVResults.concat(audioCSVList.mkString)
-      val audioAverageResults = new ResultsSummary(audioResultsList)
-      audioSummaryCSV = audioAverageResults.generateCSVResultsTable("Audio")
-
-      //write audio results to file
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing audio results to S3")
-        s3Interface.writeFileToS3(audioCSVName, audioCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(audioCSVName, audioCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
-        }
-      }
-      println("audio Performance Test Complete")
-
-    } else {
-      println("CAPI query found no audio")
-    }
-
-    if (frontsUrls.nonEmpty) {
-      println("Generating average values for liveblogs")
-      val frontsResultsList = listenForResultPages(frontsUrls, "front",resultUrlList, wptBaseUrl, wptApiKey, wptLocation, urlFragments)
-      frontsSummaryList = frontsResultsList
-      val frontsCSVList: List[String] = frontsResultsList.map(x => x.toCSVString())
-      // write fronts results to string
-      frontsCSVResults = frontsCSVResults.concat(frontsCSVList.mkString)
-      val frontsAverageResults = new ResultsSummary(frontsResultsList)
-      frontsSummaryCSV = frontsAverageResults.generateCSVResultsTable("Front")
-      //write fronts results to file
-      if (!iamTestingLocally) {
-        println(DateTime.now + " Writing liveblog results to S3")
-        s3Interface.writeFileToS3(frontsCSVName, frontsCSVResults)
-      }
-      else {
-        val outputWriter = new LocalFileOperations
-        val writeSuccess: Int = outputWriter.writeLocalResultFile(frontsCSVName, frontsCSVResults)
-        if (writeSuccess != 0) {
-          println("problem writing local outputfile")
-          System exit 1
-        }
-      }
-      println("Fronts Performance Test Complete")
-
-    } else {
-      println("CAPI query found no fronts")
-    }
-
-    val fullSummaryLists: List[List[PerformanceResultsObject]] = List(articleSummaryList, liveBlogSummaryList, interactiveummaryList, videoSummaryList, audioSummaryList, frontsSummaryList)
-    fullsummaryCSVResults = articleSummaryCSV + liveBlogSummaryCSV + interactiveSummaryCSV + frontsSummaryCSV
-    if (!iamTestingLocally) {
-      println(DateTime.now + " Writing liveblog results to S3")
-      s3Interface.writeFileToS3(summaryCSVFilename, fullsummaryCSVResults)
-    }
-    else {
-      val outputWriter = new LocalFileOperations
-      val writeSuccess: Int = outputWriter.writeLocalResultFile(summaryCSVFilename, fullsummaryCSVResults)
-      if (writeSuccess != 0) {
-        println("problem writing local outputfile")
-        System exit 1
-      }
     }
 
     println("Job complete")
