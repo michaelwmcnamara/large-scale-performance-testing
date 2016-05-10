@@ -98,27 +98,33 @@ class S3Operations(s3BucketName: String, configFile: String, emailFile: String) 
 
   def getUrls(fileName: String): List[String] = {
     println(DateTime.now + " retrieving url file from S3 bucket: " + bucket)
+    val fileExists = doesFileExist(fileName)
+    if(fileExists) {
+      println("Obtaining list of urls: " + fileName + " from S3")
+      val s3Object = s3Client.getObject(new GetObjectRequest(bucket, fileName))
+      val objectData = s3Object.getObjectContent
 
-    println("Obtaining list of urls: " + fileName + " from S3")
-    val s3Object = s3Client.getObject(new GetObjectRequest(bucket, fileName))
-    val objectData = s3Object.getObjectContent
+      println("Converting to string")
+      val configString = scala.io.Source.fromInputStream(objectData).mkString
 
-    println("Converting to string")
-    val configString = scala.io.Source.fromInputStream(objectData).mkString
+      println("calling parseString on ConfigFactory object")
+      val conf = ConfigFactory.parseString(configString)
+      println("conf: \n" + conf)
 
-    println("calling parseString on ConfigFactory object")
-    val conf = ConfigFactory.parseString(configString)
-    println("conf: \n" + conf)
-
-    println("returning config object")
-    val interactives = conf.getStringList("sample.large.interactives").toList
-    if (interactives.nonEmpty){
-      println(DateTime.now + " Config retrieval successful. \n You have retrieved the following users\n" + interactives)
-      interactives
-    }
-    else {
-      println(DateTime.now + " ERROR: Problem retrieving config file - one or more parameters not retrieved")
-      s3Client.shutdown()
+      println("returning config object")
+      val urlList = conf.getStringList("sample.large.interactives").toList
+      if (urlList.nonEmpty) {
+        println(DateTime.now + " Config retrieval successful. \n You have retrieved the following urls\n" + urlList)
+        urlList
+      }
+      else {
+        println(DateTime.now + " ERROR: Problem retrieving config file - one or more parameters not retrieved")
+        s3Client.shutdown()
+        val emptyList: List[String] = List()
+        emptyList
+      }
+    } else {
+      println("Error: File does not exist. Returning Empty List")
       val emptyList: List[String] = List()
       emptyList
     }
