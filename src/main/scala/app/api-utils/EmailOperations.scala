@@ -2,14 +2,12 @@ package app.apiutils
 
 import javax.mail.internet.InternetAddress
 
-//import courier._, Defaults._
+
 import scala.concurrent.Await
 import scala.xml.Text
 
-//import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import javax.mail._
-;
+import javax.mail._;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
