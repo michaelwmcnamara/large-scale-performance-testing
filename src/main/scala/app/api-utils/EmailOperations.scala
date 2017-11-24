@@ -28,9 +28,6 @@ class EmailOperations(passedUserName: String, passedPassword: String) {
 
  
   def send(emailAddressList: List[String], messageBody: String):Boolean = {
-//    val username: String = "Michael.McNamara@guardian.co.uk"
-//    val altfrom: String = "pageperformancetesterbot@gmail.com"
-//    val password: String = "keprlztdbnyvgqsc"
     val internetAddressList: List[InternetAddress] = emailAddressList.map(emailAddress => new InternetAddress(emailAddress))
 
     val props: Properties = new Properties
